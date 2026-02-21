@@ -3,404 +3,456 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>JD Match Resume Generator</title>
+  <title>JD Match Resume Generator - HireReady</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
-    /* JD MATCH PAGE STYLES */
-    .jdmatch-container {
-      min-height: 100vh;
+    /* THEME: Hybrid Services Portal - Dark Glassmorphism */
+    * { box-sizing: border-box; }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
       color: #e2e8f0;
-      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
     }
 
-    .jdmatch-header {
+    .jdm-wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* HEADER */
+    .jdm-header {
       display: flex;
       align-items: center;
       gap: 20px;
-      padding: 20px 40px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      padding: 16px 40px;
       background: rgba(15, 23, 42, 0.8);
       backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(6, 182, 212, 0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
 
-    .jdmatch-back-button {
+    .jdm-back-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       padding: 8px 12px;
-      background: rgba(148, 163, 184, 0.1);
-      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: rgba(148, 163, 184, 0.05);
+      border: 1px solid rgba(148, 163, 184, 0.15);
       border-radius: 6px;
-      color: #e2e8f0;
+      color: #cbd5e1;
+      font-size: 13px;
+      font-weight: 500;
       cursor: pointer;
-      font-size: 14px;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
     }
 
-    .jdmatch-back-button:hover {
-      background: rgba(148, 163, 184, 0.2);
-      border-color: rgba(148, 163, 184, 0.3);
+    .jdm-back-btn:hover {
+      background: rgba(6, 182, 212, 0.1);
+      border-color: rgba(6, 182, 212, 0.3);
+      color: #06b6d4;
     }
 
-    .jdmatch-title {
-      font-size: 24px;
+    .jdm-title {
+      flex: 1;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #06b6d4, #0891b2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* HERO SECTION */
+    .jdm-hero {
+      padding: 40px;
+      text-align: center;
+      border-bottom: 1px solid rgba(6, 182, 212, 0.1);
+    }
+
+    .jdm-hero-title {
+      font-size: 32px;
       font-weight: 700;
+      margin: 0 0 8px;
+      color: #e2e8f0;
+    }
+
+    .jdm-hero-subtitle {
+      font-size: 14px;
+      color: #94a3b8;
       margin: 0;
     }
 
-    .jdmatch-main {
-      max-width: 1200px;
+    /* MAIN LAYOUT - 2 Column on Desktop */
+    .jdm-main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 24px;
+      padding: 40px;
+      max-width: 1400px;
       margin: 0 auto;
-      padding: 40px 20px;
+      width: 100%;
     }
 
-    .jdmatch-tabs {
+    @media (max-width: 1024px) {
+      .jdm-main {
+        grid-template-columns: 1fr;
+      }
+      .jdm-sidebar {
+        display: none;
+      }
+      .jdm-hero {
+        padding: 24px;
+      }
+    }
+
+    /* NAV TABS */
+    .jdm-nav {
       display: flex;
-      gap: 10px;
-      margin-bottom: 30px;
+      gap: 8px;
+      margin-bottom: 24px;
       border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      padding-bottom: 0;
     }
 
-    .jdmatch-tab-btn {
-      padding: 12px 24px;
+    .jdm-nav-btn {
+      padding: 12px 16px;
       background: transparent;
       border: none;
       border-bottom: 2px solid transparent;
-      color: rgba(226, 232, 240, 0.6);
-      font-size: 14px;
-      font-weight: 500;
+      color: #64748b;
+      font-size: 13px;
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
+      position: relative;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
-    .jdmatch-tab-btn.active {
+    .jdm-nav-btn:hover {
+      color: #cbd5e1;
+    }
+
+    .jdm-nav-btn.active {
       color: #06b6d4;
       border-bottom-color: #06b6d4;
     }
 
-    .jdmatch-tab-btn:hover {
-      color: #e2e8f0;
-    }
-
-    .jdmatch-tab-pane {
+    /* PANEL CONTAINER */
+    .jdm-panel {
       display: none;
-      animation: fadeIn 0.3s ease;
+      animation: fadeInUp 0.3s ease;
     }
 
-    .jdmatch-tab-pane.active {
+    .jdm-panel.active {
       display: block;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
-    /* FORM STYLES */
-    .jdmatch-form-group {
+    /* FORM SECTION */
+    .jdm-form-group {
       margin-bottom: 24px;
     }
 
-    .jdmatch-form-label {
+    .jdm-label {
       display: block;
       margin-bottom: 8px;
       font-weight: 600;
-      font-size: 14px;
+      font-size: 13px;
       color: #cbd5e1;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
-    .jdmatch-form-input,
-    .jdmatch-form-textarea {
+    .jdm-hint {
+      display: block;
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 8px;
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
+    .jdm-input,
+    .jdm-textarea {
       width: 100%;
-      padding: 12px;
+      padding: 12px 14px;
       background: rgba(148, 163, 184, 0.05);
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      border-radius: 6px;
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      border-radius: 8px;
       color: #e2e8f0;
-      font-family: 'Inter', sans-serif;
+      font-family: inherit;
       font-size: 14px;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
     }
 
-    .jdmatch-form-input:focus,
-    .jdmatch-form-textarea:focus {
+    .jdm-input:focus,
+    .jdm-textarea:focus {
       outline: none;
-      background: rgba(148, 163, 184, 0.1);
+      background: rgba(6, 182, 212, 0.05);
       border-color: #06b6d4;
       box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
     }
 
-    .jdmatch-form-textarea {
+    .jdm-textarea {
       resize: vertical;
-      min-height: 100px;
-      font-family: 'Inter', sans-serif;
+      min-height: 120px;
+      font-family: inherit;
     }
 
-    /* TARGET MATCH SECTION */
-    .jdmatch-target-match {
+    /* TARGET MATCH with SLIDER */
+    .jdm-target-section {
       background: rgba(148, 163, 184, 0.05);
       border: 1px solid rgba(148, 163, 184, 0.1);
       border-radius: 8px;
-      padding: 20px;
+      padding: 18px;
       margin-bottom: 24px;
     }
 
-    .jdmatch-target-match-label {
-      display: block;
-      margin-bottom: 16px;
-      font-weight: 600;
-      color: #cbd5e1;
-    }
-
-    .jdmatch-radio-group {
+    .jdm-radio-group {
       display: flex;
-      gap: 24px;
-      margin-bottom: 16px;
+      gap: 16px;
+      margin-bottom: 12px;
     }
 
-    .jdmatch-radio-option {
+    .jdm-radio-option {
       display: flex;
       align-items: center;
       gap: 8px;
       cursor: pointer;
     }
 
-    .jdmatch-radio-option input[type="radio"] {
+    .jdm-radio-option input[type="radio"] {
       cursor: pointer;
       width: 16px;
       height: 16px;
+      accent-color: #06b6d4;
     }
 
-    .jdmatch-radio-option label {
+    .jdm-radio-option label {
       cursor: pointer;
       margin: 0;
-      font-size: 14px;
-    }
-
-    .jdmatch-manual-input-group {
-      display: none;
-      margin-top: 16px;
-    }
-
-    .jdmatch-manual-input-group.active {
-      display: block;
-    }
-
-    .jdmatch-manual-input-wrapper {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .jdmatch-manual-input-wrapper input {
-      width: 120px;
-    }
-
-    .jdmatch-manual-value-display {
-      font-size: 14px;
-      color: #06b6d4;
-      font-weight: 600;
-    }
-
-    /* SKILLS SECTION */
-    .jdmatch-skills-input {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-
-    .jdmatch-skills-input input {
-      flex: 1;
-      padding: 10px;
-      background: rgba(148, 163, 184, 0.05);
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      border-radius: 6px;
-      color: #e2e8f0;
-      font-size: 14px;
-    }
-
-    .jdmatch-skills-input button {
-      padding: 10px 16px;
-      background: rgba(6, 182, 212, 0.2);
-      border: 1px solid rgba(6, 182, 212, 0.5);
-      border-radius: 6px;
-      color: #06b6d4;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .jdmatch-skills-input button:hover {
-      background: rgba(6, 182, 212, 0.3);
-      border-color: #06b6d4;
-    }
-
-    .jdmatch-skills-tags {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 12px;
-      min-height: 32px;
-    }
-
-    .jdmatch-skill-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 12px;
-      background: rgba(6, 182, 212, 0.15);
-      border: 1px solid rgba(6, 182, 212, 0.3);
-      border-radius: 20px;
-      color: #06b6d4;
       font-size: 13px;
-    }
-
-    .jdmatch-skill-tag button {
-      background: none;
-      border: none;
-      color: #06b6d4;
-      cursor: pointer;
-      padding: 0;
-      font-size: 16px;
-      line-height: 1;
-      transition: all 0.2s;
-    }
-
-    .jdmatch-skill-tag button:hover {
-      color: #0891b2;
-    }
-
-    /* BASE RESUME SECTION */
-    .jdmatch-base-resume {
-      background: rgba(148, 163, 184, 0.05);
-      border: 1px solid rgba(148, 163, 184, 0.1);
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 24px;
-    }
-
-    .jdmatch-base-resume-header {
-      font-weight: 600;
-      margin-bottom: 16px;
       color: #cbd5e1;
     }
 
-    .jdmatch-base-resume-tabs {
+    .jdm-slider-group {
+      display: none;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    .jdm-slider-group.active {
+      display: block;
+    }
+
+    .jdm-slider-wrapper {
       display: flex;
       gap: 12px;
-      margin-bottom: 16px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .jdm-slider {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(148, 163, 184, 0.2);
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .jdm-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #06b6d4, #0891b2);
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
+    }
+
+    .jdm-slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #06b6d4, #0891b2);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
+    }
+
+    .jdm-slider-input {
+      width: 70px;
+      padding: 8px 10px;
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      border-radius: 6px;
+      color: #06b6d4;
+      font-weight: 600;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .jdm-slider-value-display {
+      min-width: 80px;
+      text-align: right;
+      font-size: 13px;
+      color: #06b6d4;
+      font-weight: 600;
+    }
+
+    /* SKILLS INPUT - COMMA SEPARATED */
+    .jdm-skills-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .jdm-skills-input {
+      padding: 12px 14px;
+    }
+
+    /* BASE RESUME */
+    .jdm-resume-panel {
+      background: rgba(148, 163, 184, 0.05);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 24px;
+    }
+
+    .jdm-resume-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
       border-bottom: 1px solid rgba(148, 163, 184, 0.1);
     }
 
-    .jdmatch-base-resume-tab {
+    .jdm-resume-tab-btn {
       padding: 8px 12px;
       background: transparent;
       border: none;
       border-bottom: 2px solid transparent;
-      color: rgba(226, 232, 240, 0.6);
+      color: #64748b;
+      font-size: 12px;
       cursor: pointer;
-      font-size: 13px;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
     }
 
-    .jdmatch-base-resume-tab.active {
+    .jdm-resume-tab-btn.active {
       color: #06b6d4;
       border-bottom-color: #06b6d4;
     }
 
-    .jdmatch-base-resume-content {
+    .jdm-resume-content {
       display: none;
     }
 
-    .jdmatch-base-resume-content.active {
+    .jdm-resume-content.active {
       display: block;
     }
 
-    .jdmatch-upload-area {
+    .jdm-upload-area {
       border: 2px dashed rgba(6, 182, 212, 0.3);
       border-radius: 8px;
-      padding: 24px;
+      padding: 20px;
       text-align: center;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
       margin-bottom: 12px;
     }
 
-    .jdmatch-upload-area:hover {
+    .jdm-upload-area:hover {
       border-color: rgba(6, 182, 212, 0.6);
       background: rgba(6, 182, 212, 0.05);
     }
 
-    .jdmatch-upload-area input {
+    .jdm-upload-area input {
       display: none;
     }
 
-    .jdmatch-upload-text {
+    .jdm-upload-text {
       color: #94a3b8;
-      font-size: 13px;
+      font-size: 12px;
     }
 
-    .jdmatch-base-resume-actions {
+    .jdm-resume-actions {
       display: flex;
       gap: 8px;
     }
 
-    .jdmatch-base-resume-actions button {
-      padding: 8px 12px;
-      font-size: 13px;
+    .jdm-btn-secondary {
+      flex: 1;
+      padding: 10px 12px;
+      border: 1px solid rgba(148, 163, 184, 0.2);
       border-radius: 6px;
-      border: none;
+      background: rgba(148, 163, 184, 0.05);
+      color: #cbd5e1;
+      font-weight: 600;
+      font-size: 12px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
     }
 
-    .jdmatch-base-resume-save {
-      background: rgba(34, 197, 94, 0.2);
-      color: #22c55e;
-      border: 1px solid rgba(34, 197, 94, 0.3);
+    .jdm-btn-secondary:hover {
+      background: rgba(148, 163, 184, 0.1);
+      border-color: rgba(148, 163, 184, 0.3);
     }
 
-    .jdmatch-base-resume-save:hover {
-      background: rgba(34, 197, 94, 0.3);
-    }
-
-    .jdmatch-base-resume-clear {
-      background: rgba(239, 68, 68, 0.2);
-      color: #ef4444;
-      border: 1px solid rgba(239, 68, 68, 0.3);
-    }
-
-    .jdmatch-base-resume-clear:hover {
-      background: rgba(239, 68, 68, 0.3);
-    }
-
-    /* BUTTONS */
-    .jdmatch-button-primary {
-      padding: 12px 24px;
+    /* PRIMARY BUTTON */
+    .jdm-btn-primary {
+      width: 100%;
+      padding: 14px;
       background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       color: white;
       font-weight: 600;
       font-size: 14px;
       cursor: pointer;
-      transition: all 0.3s;
-      width: 100%;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
     }
 
-    .jdmatch-button-primary:hover:not(:disabled) {
+    .jdm-btn-primary:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 8px 16px rgba(6, 182, 212, 0.3);
+      box-shadow: 0 12px 24px rgba(6, 182, 212, 0.3);
     }
 
-    .jdmatch-button-primary:disabled {
+    .jdm-btn-primary:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
 
-    .jdmatch-button-primary.loading {
+    .jdm-btn-primary.loading {
       background: linear-gradient(90deg, #06b6d4 0%, #0891b2 50%, #06b6d4 100%);
       background-size: 200% 100%;
       animation: shimmer 1.5s infinite;
@@ -411,188 +463,192 @@
       100% { background-position: -200% 0; }
     }
 
-    /* OUTPUT SECTION */
-    .jdmatch-output-section {
-      background: rgba(148, 163, 184, 0.05);
-      border: 1px solid rgba(148, 163, 184, 0.1);
-      border-radius: 8px;
-      padding: 24px;
-      margin-top: 24px;
-      display: none;
-    }
-
-    .jdmatch-output-section.active {
-      display: block;
-    }
-
-    .jdmatch-metrics-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    /* RIGHT SIDEBAR */
+    .jdm-sidebar {
+      display: flex;
+      flex-direction: column;
       gap: 16px;
-      margin-bottom: 24px;
+      position: sticky;
+      top: 80px;
+      height: fit-content;
     }
 
-    .jdmatch-metric-card {
-      background: rgba(6, 182, 212, 0.1);
+    .jdm-card {
+      background: rgba(148, 163, 184, 0.05);
       border: 1px solid rgba(6, 182, 212, 0.2);
       border-radius: 8px;
-      padding: 16px;
-      text-align: center;
+      padding: 18px;
+      backdrop-filter: blur(10px);
+      transition: all 0.2s ease;
     }
 
-    .jdmatch-metric-label {
+    .jdm-card:hover {
+      border-color: rgba(6, 182, 212, 0.4);
+      background: rgba(6, 182, 212, 0.08);
+      box-shadow: 0 8px 32px rgba(6, 182, 212, 0.1);
+    }
+
+    .jdm-card-title {
       font-size: 12px;
-      color: #94a3b8;
-      margin-bottom: 8px;
+      font-weight: 700;
+      color: #cbd5e1;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-    }
-
-    .jdmatch-metric-value {
-      font-size: 32px;
-      font-weight: 700;
-      color: #06b6d4;
-    }
-
-    .jdmatch-preview-section {
-      margin-top: 24px;
-    }
-
-    .jdmatch-preview-title {
-      font-weight: 600;
       margin-bottom: 12px;
-      color: #cbd5e1;
     }
 
-    .jdmatch-preview-iframe {
-      width: 100%;
-      height: 600px;
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      border-radius: 8px;
-      background: white;
+    .jdm-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 4px;
+      color: #22c55e;
+      font-size: 11px;
+      font-weight: 600;
+      margin: 6px 0;
     }
 
-    .jdmatch-download-buttons {
+    .jdm-status-badge.empty {
+      color: #94a3b8;
+      background: rgba(148, 163, 184, 0.05);
+      border-color: rgba(148, 163, 184, 0.2);
+    }
+
+    .jdm-summary-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    .jdm-summary-item:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .jdm-summary-label {
+      color: #64748b;
+    }
+
+    .jdm-summary-value {
+      color: #06b6d4;
+      font-weight: 600;
+    }
+
+    /* TEMPLATES SECTION */
+    .jdm-templates-controls {
       display: flex;
       gap: 12px;
-      margin-top: 20px;
-      flex-wrap: wrap;
+      margin-bottom: 20px;
     }
 
-    .jdmatch-download-btn {
-      flex: 1;
-      min-width: 120px;
-      padding: 10px 16px;
-      border-radius: 6px;
-      border: none;
-      font-weight: 600;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .jdmatch-download-html {
-      background: rgba(168, 85, 247, 0.2);
-      color: #a855f7;
-      border: 1px solid rgba(168, 85, 247, 0.3);
-    }
-
-    .jdmatch-download-html:hover {
-      background: rgba(168, 85, 247, 0.3);
-    }
-
-    .jdmatch-download-pdf {
-      background: rgba(244, 63, 94, 0.2);
-      color: #f43f5e;
-      border: 1px solid rgba(244, 63, 94, 0.3);
-    }
-
-    .jdmatch-download-pdf:hover {
-      background: rgba(244, 63, 94, 0.3);
-    }
-
-    .jdmatch-download-doc {
-      background: rgba(59, 130, 246, 0.2);
-      color: #3b82f6;
-      border: 1px solid rgba(59, 130, 246, 0.3);
-    }
-
-    .jdmatch-download-doc:hover {
-      background: rgba(59, 130, 246, 0.3);
-    }
-
-    /* TEMPLATES TAB */
-    .jdmatch-templates-gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 20px;
-    }
-
-    .jdmatch-template-card {
+    .jdm-search-box,
+    .jdm-sort-select {
+      padding: 10px 12px;
       background: rgba(148, 163, 184, 0.05);
-      border: 2px solid rgba(148, 163, 184, 0.2);
+      border: 1px solid rgba(148, 163, 184, 0.15);
+      border-radius: 6px;
+      color: #cbd5e1;
+      font-size: 13px;
+    }
+
+    .jdm-search-box {
+      flex: 1;
+    }
+
+    .jdm-sort-select {
+      cursor: pointer;
+    }
+
+    .jdm-templates-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
+    }
+
+    .jdm-template-card {
+      background: rgba(148, 163, 184, 0.05);
+      border: 2px solid rgba(148, 163, 184, 0.15);
       border-radius: 8px;
-      padding: 16px;
+      padding: 14px;
       text-align: center;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.3s ease;
       position: relative;
     }
 
-    .jdmatch-template-card:hover {
-      border-color: rgba(6, 182, 212, 0.5);
+    .jdm-template-card:hover {
+      border-color: rgba(6, 182, 212, 0.4);
       background: rgba(6, 182, 212, 0.05);
-      transform: translateY(-4px);
+      transform: translateY(-2px);
     }
 
-    .jdmatch-template-card.selected {
+    .jdm-template-card.selected {
       border-color: #06b6d4;
       background: rgba(6, 182, 212, 0.1);
     }
 
-    .jdmatch-template-preview {
+    .jdm-template-preview {
       width: 100%;
-      height: 200px;
+      height: 120px;
       background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(148, 163, 184, 0.05) 100%);
       border: 1px solid rgba(148, 163, 184, 0.1);
-      border-radius: 6px;
-      margin-bottom: 12px;
+      border-radius: 4px;
+      margin-bottom: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
+      color: #64748b;
+      font-size: 11px;
     }
 
-    .jdmatch-template-name {
+    .jdm-template-name {
       font-weight: 600;
       color: #cbd5e1;
-      margin-bottom: 8px;
-      font-size: 14px;
+      margin-bottom: 6px;
+      font-size: 12px;
     }
 
-    .jdmatch-template-select-btn {
+    .jdm-template-tag {
+      display: inline-block;
+      font-size: 10px;
+      color: #64748b;
+      background: rgba(148, 163, 184, 0.1);
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-bottom: 8px;
+    }
+
+    .jdm-template-select-btn {
       width: 100%;
       padding: 8px;
-      background: rgba(6, 182, 212, 0.2);
+      background: rgba(6, 182, 212, 0.15);
       border: 1px solid rgba(6, 182, 212, 0.3);
       border-radius: 6px;
       color: #06b6d4;
       font-weight: 600;
-      font-size: 13px;
+      font-size: 11px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
     }
 
-    .jdmatch-template-select-btn:hover {
-      background: rgba(6, 182, 212, 0.3);
+    .jdm-template-select-btn:hover {
+      background: rgba(6, 182, 212, 0.25);
     }
 
-    .jdmatch-template-card.selected .jdmatch-template-select-btn {
+    .jdm-template-card.selected .jdm-template-select-btn {
       background: rgba(34, 197, 94, 0.2);
-      border-color: rgba(34, 197, 94, 0.5);
+      border-color: #22c55e;
       color: #22c55e;
     }
 
-    .jdmatch-template-checkmark {
+    .jdm-template-checkmark {
       position: absolute;
       top: 8px;
       right: 8px;
@@ -600,387 +656,560 @@
       height: 24px;
       background: #22c55e;
       border-radius: 50%;
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: center;
       color: white;
       font-weight: bold;
-      display: none;
     }
 
-    .jdmatch-template-card.selected .jdmatch-template-checkmark {
+    .jdm-template-card.selected .jdm-template-checkmark {
       display: flex;
     }
 
-    /* HISTORY TAB */
-    .jdmatch-history-empty {
+    /* HISTORY SECTION */
+    .jdm-history-empty {
       text-align: center;
       padding: 60px 20px;
       color: #64748b;
     }
 
-    .jdmatch-history-list {
+    .jdm-history-list {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 12px;
     }
 
-    .jdmatch-history-item {
+    .jdm-history-item {
       background: rgba(148, 163, 184, 0.05);
       border: 1px solid rgba(148, 163, 184, 0.1);
       border-radius: 8px;
-      padding: 16px;
-      transition: all 0.2s;
+      padding: 0;
+      overflow: hidden;
+      transition: all 0.2s ease;
     }
 
-    .jdmatch-history-item:hover {
+    .jdm-history-item:hover {
       border-color: rgba(6, 182, 212, 0.3);
       background: rgba(6, 182, 212, 0.05);
     }
 
-    .jdmatch-history-header {
+    .jdm-history-header {
+      padding: 12px 14px;
+      cursor: pointer;
       display: flex;
       justify-content: space-between;
-      align-items: start;
-      margin-bottom: 12px;
+      align-items: center;
+      user-select: none;
     }
 
-    .jdmatch-history-company {
+    .jdm-history-title {
       font-weight: 600;
       color: #cbd5e1;
-      font-size: 15px;
-    }
-
-    .jdmatch-history-date {
-      font-size: 12px;
-      color: #64748b;
-    }
-
-    .jdmatch-history-snippet {
       font-size: 13px;
-      color: #94a3b8;
-      margin-bottom: 12px;
-      line-height: 1.4;
     }
 
-    .jdmatch-history-metrics {
+    .jdm-history-meta {
+      font-size: 11px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .jdm-history-expand-icon {
+      color: #64748b;
+      font-size: 18px;
+      transition: transform 0.2s ease;
+    }
+
+    .jdm-history-item.expanded .jdm-history-expand-icon {
+      transform: rotate(180deg);
+    }
+
+    .jdm-history-content {
+      display: none;
+      padding: 0 14px 14px;
+      border-top: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    .jdm-history-item.expanded .jdm-history-content {
+      display: block;
+    }
+
+    .jdm-history-metrics {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      grid-template-columns: repeat(2, 1fr);
       gap: 8px;
       margin-bottom: 12px;
-      font-size: 12px;
+      font-size: 11px;
     }
 
-    .jdmatch-history-metric {
+    .jdm-history-metric {
       background: rgba(6, 182, 212, 0.1);
       padding: 8px;
-      border-radius: 6px;
-      text-align: center;
+      border-radius: 4px;
     }
 
-    .jdmatch-history-metric-label {
+    .jdm-history-metric-label {
       color: #64748b;
       display: block;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
-    .jdmatch-history-metric-value {
+    .jdm-history-metric-value {
       color: #06b6d4;
       font-weight: 600;
+      font-size: 12px;
     }
 
-    .jdmatch-history-actions {
+    .jdm-history-actions {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
     }
 
-    .jdmatch-history-action-btn {
-      padding: 6px 12px;
-      border: none;
-      border-radius: 6px;
-      font-size: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
+    .jdm-action-btn {
       flex: 1;
-      min-width: 70px;
+      min-width: 60px;
+      padding: 6px 8px;
+      border: none;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 600;
     }
 
-    .jdmatch-history-view {
+    .jdm-action-btn.view {
       background: rgba(6, 182, 212, 0.2);
       color: #06b6d4;
       border: 1px solid rgba(6, 182, 212, 0.3);
     }
 
-    .jdmatch-history-view:hover {
+    .jdm-action-btn.view:hover {
       background: rgba(6, 182, 212, 0.3);
     }
 
-    .jdmatch-history-delete {
+    .jdm-action-btn.download {
+      background: rgba(106, 90, 205, 0.2);
+      color: #8b7acd;
+      border: 1px solid rgba(106, 90, 205, 0.3);
+    }
+
+    .jdm-action-btn.download:hover {
+      background: rgba(106, 90, 205, 0.3);
+    }
+
+    .jdm-action-btn.delete {
       background: rgba(239, 68, 68, 0.2);
       color: #ef4444;
       border: 1px solid rgba(239, 68, 68, 0.3);
     }
 
-    .jdmatch-history-delete:hover {
+    .jdm-action-btn.delete:hover {
       background: rgba(239, 68, 68, 0.3);
     }
 
-    /* SETTINGS TAB */
-    .jdmatch-settings-panel {
-      max-width: 600px;
-    }
-
-    .jdmatch-settings-section {
+    /* SETTINGS */
+    .jdm-settings-item {
       background: rgba(148, 163, 184, 0.05);
       border: 1px solid rgba(148, 163, 184, 0.1);
       border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 20px;
+      padding: 18px;
+      margin-bottom: 16px;
     }
 
-    .jdmatch-settings-title {
+    .jdm-settings-item-title {
       font-weight: 600;
       color: #cbd5e1;
-      margin-bottom: 12px;
-    }
-
-    .jdmatch-settings-text {
+      margin-bottom: 8px;
       font-size: 13px;
-      color: #94a3b8;
-      margin-bottom: 12px;
-      line-height: 1.5;
     }
 
-    .jdmatch-clear-all-btn {
-      padding: 10px 16px;
-      background: rgba(239, 68, 68, 0.2);
+    .jdm-settings-item-text {
+      font-size: 12px;
+      color: #94a3b8;
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+
+    .jdm-btn-danger {
+      padding: 10px 12px;
+      background: rgba(239, 68, 68, 0.15);
       border: 1px solid rgba(239, 68, 68, 0.3);
       border-radius: 6px;
       color: #ef4444;
       font-weight: 600;
-      font-size: 13px;
+      font-size: 12px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
     }
 
-    .jdmatch-clear-all-btn:hover {
-      background: rgba(239, 68, 68, 0.3);
+    .jdm-btn-danger:hover {
+      background: rgba(239, 68, 68, 0.25);
+    }
+
+    /* RESULTS SECTION */
+    .jdm-results {
+      display: none;
+      animation: fadeInUp 0.3s ease;
+    }
+
+    .jdm-results.active {
+      display: block;
+    }
+
+    .jdm-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .jdm-metric-card {
+      background: rgba(6, 182, 212, 0.1);
+      border: 1px solid rgba(6, 182, 212, 0.2);
+      border-radius: 8px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .jdm-metric-label {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .jdm-metric-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #06b6d4;
+    }
+
+    .jdm-preview-btn {
+      width: 100%;
+      padding: 12px;
+      background: rgba(168, 85, 247, 0.15);
+      border: 1px solid rgba(168, 85, 247, 0.3);
+      border-radius: 8px;
+      color: #a855f7;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      margin-bottom: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .jdm-preview-btn:hover {
+      background: rgba(168, 85, 247, 0.25);
+    }
+
+    .jdm-download-group {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .jdm-download-btn {
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .jdm-download-btn.pdf {
+      background: rgba(244, 63, 94, 0.2);
+      color: #f43f5e;
+      border: 1px solid rgba(244, 63, 94, 0.3);
+    }
+
+    .jdm-download-btn.pdf:hover {
+      background: rgba(244, 63, 94, 0.3);
+    }
+
+    .jdm-download-btn.doc {
+      background: rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .jdm-download-btn.doc:hover {
+      background: rgba(59, 130, 246, 0.3);
+    }
+
+    .jdm-download-btn.html {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .jdm-download-btn.html:hover {
+      background: rgba(34, 197, 94, 0.3);
     }
 
     /* TOAST */
-    .jdmatch-toast {
+    .jdm-toast {
       position: fixed;
       bottom: 20px;
       right: 20px;
-      padding: 14px 20px;
-      background: #1e293b;
+      padding: 12px 16px;
+      background: rgba(30, 41, 59, 0.95);
       border: 1px solid rgba(148, 163, 184, 0.2);
       border-radius: 6px;
       color: #e2e8f0;
-      font-size: 13px;
+      font-size: 12px;
       z-index: 9999;
-      animation: slideIn 0.3s ease;
+      animation: slideInRight 0.3s ease;
+      backdrop-filter: blur(10px);
     }
 
-    .jdmatch-toast.success {
+    .jdm-toast.success {
       border-color: rgba(34, 197, 94, 0.3);
       background: rgba(34, 197, 94, 0.1);
       color: #22c55e;
     }
 
-    .jdmatch-toast.error {
+    .jdm-toast.error {
       border-color: rgba(239, 68, 68, 0.3);
       background: rgba(239, 68, 68, 0.1);
       color: #ef4444;
     }
 
-    @keyframes slideIn {
+    @keyframes slideInRight {
       from {
-        transform: translateY(20px);
+        transform: translateX(400px);
         opacity: 0;
       }
       to {
-        transform: translateY(0);
+        transform: translateX(0);
         opacity: 1;
       }
     }
 
     /* RESPONSIVE */
     @media (max-width: 768px) {
-      .jdmatch-header {
-        padding: 16px 20px;
+      .jdm-header {
+        padding: 12px 20px;
       }
 
-      .jdmatch-main {
-        padding: 20px 16px;
+      .jdm-main {
+        padding: 20px;
       }
 
-      .jdmatch-templates-gallery {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      .jdm-templates-grid {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
       }
 
-      .jdmatch-radio-group {
-        flex-direction: column;
-        gap: 12px;
+      .jdm-metrics-grid {
+        grid-template-columns: 1fr;
       }
 
-      .jdmatch-download-buttons {
-        flex-direction: column;
+      .jdm-download-group {
+        grid-template-columns: 1fr;
       }
     }
   </style>
 </head>
-<body class="jdmatch-container">
-  <div class="jdmatch-header">
-    <button class="jdmatch-back-button" onclick="goBack()">← Back</button>
-    <h1 class="jdmatch-title">📝 JD Match Resume Generator</h1>
-  </div>
-
-  <div class="jdmatch-main">
-    <!-- TAB NAVIGATION -->
-    <div class="jdmatch-tabs">
-      <button class="jdmatch-tab-btn active" onclick="switchTab('generate')">Generate</button>
-      <button class="jdmatch-tab-btn" onclick="switchTab('templates')">Templates</button>
-      <button class="jdmatch-tab-btn" onclick="switchTab('history')">History</button>
-      <button class="jdmatch-tab-btn" onclick="switchTab('settings')">Settings</button>
+<body>
+  <div class="jdm-wrapper">
+    <!-- HEADER -->
+    <div class="jdm-header">
+      <button class="jdm-back-btn" onclick="goBack()">← Back to Portal</button>
+      <h1 class="jdm-title">JD Match Resume Generator</h1>
+      <div></div>
     </div>
 
-    <!-- GENERATE TAB -->
-    <div id="generate" class="jdmatch-tab-pane active">
-      <form id="generateForm" onsubmit="handleGenerateSubmit(event)">
-        <!-- Company Name -->
-        <div class="jdmatch-form-group">
-          <label class="jdmatch-form-label">Company Name *</label>
-          <input type="text" id="companyName" class="jdmatch-form-input" placeholder="e.g., TechCorp Inc" required>
+    <!-- HERO SECTION -->
+    <div class="jdm-hero">
+      <h2 class="jdm-hero-title">Transform Your Resume to Match Any Job</h2>
+      <p class="jdm-hero-subtitle">Paste a job description and generate an ATS-optimized resume tailored to the role with data-driven metrics</p>
+    </div>
+
+    <!-- MAIN 2-COLUMN LAYOUT -->
+    <div class="jdm-main">
+      <!-- LEFT COLUMN: FORM & CONTENT -->
+      <div>
+        <!-- NAV TABS -->
+        <div class="jdm-nav">
+          <button class="jdm-nav-btn active" onclick="switchPanel('generate')">Generate</button>
+          <button class="jdm-nav-btn" onclick="switchPanel('templates')">Templates</button>
+          <button class="jdm-nav-btn" onclick="switchPanel('history')">History</button>
+          <button class="jdm-nav-btn" onclick="switchPanel('settings')">Settings</button>
         </div>
 
-        <!-- Job Description -->
-        <div class="jdmatch-form-group">
-          <label class="jdmatch-form-label">Job Description *</label>
-          <textarea id="jobDescription" class="jdmatch-form-textarea" placeholder="Paste the full job description here..." required></textarea>
-        </div>
-
-        <!-- Base Resume -->
-        <div class="jdmatch-base-resume">
-          <div class="jdmatch-base-resume-header">Base Resume (Reference)</div>
-          <div class="jdmatch-base-resume-tabs">
-            <button type="button" class="jdmatch-base-resume-tab active" onclick="switchBaseResumeTab('paste')">Paste Text</button>
-            <button type="button" class="jdmatch-base-resume-tab" onclick="switchBaseResumeTab('upload')">Upload File</button>
-          </div>
-
-          <!-- Paste Tab -->
-          <div id="pasteTab" class="jdmatch-base-resume-content active">
-            <textarea id="baseResumePaste" class="jdmatch-form-textarea" placeholder="Paste your existing resume or CV here..."></textarea>
-          </div>
-
-          <!-- Upload Tab -->
-          <div id="uploadTab" class="jdmatch-base-resume-content">
-            <div class="jdmatch-upload-area" onclick="document.getElementById('baseResumeFile').click()">
-              <input type="file" id="baseResumeFile" accept=".txt,.docx,.doc" onchange="handleFileUpload(event)">
-              <div class="jdmatch-upload-text">📁 Click to upload .txt or .docx file</div>
+        <!-- GENERATE PANEL -->
+        <div id="generate" class="jdm-panel active">
+          <form id="generateForm" onsubmit="handleGenerateSubmit(event)" style="margin-bottom: 24px;">
+            <!-- Company Name -->
+            <div class="jdm-form-group">
+              <label class="jdm-label">Company Name</label>
+              <input type="text" id="companyName" class="jdm-input" placeholder="E.g., Stripe, Linear, Vercel" required>
             </div>
-            <div id="uploadStatus" style="font-size: 13px; color: #94a3b8; margin-top: 8px;"></div>
-          </div>
 
-          <div class="jdmatch-base-resume-actions" style="margin-top: 12px;">
-            <button type="button" class="jdmatch-base-resume-save" onclick="saveBaseResume()">Save Resume</button>
-            <button type="button" class="jdmatch-base-resume-clear" onclick="clearBaseResume()">Clear</button>
-          </div>
-        </div>
-
-        <!-- Target Match -->
-        <div class="jdmatch-target-match">
-          <label class="jdmatch-target-match-label">Target Match %</label>
-          <div class="jdmatch-radio-group">
-            <div class="jdmatch-radio-option">
-              <input type="radio" id="autoMode" name="targetMode" value="auto" checked onchange="toggleManualInput()">
-              <label for="autoMode">Auto (90-95% random)</label>
+            <!-- Job Description -->
+            <div class="jdm-form-group">
+              <label class="jdm-label">Job Description</label>
+              <span class="jdm-hint">Paste the full JD to get precise matching</span>
+              <textarea id="jobDescription" class="jdm-textarea" placeholder="Paste job description here…" required></textarea>
             </div>
-            <div class="jdmatch-radio-option">
-              <input type="radio" id="manualMode" name="targetMode" value="manual" onchange="toggleManualInput()">
-              <label for="manualMode">Manual</label>
+
+            <!-- Base Resume Panel -->
+            <div class="jdm-resume-panel">
+              <div class="jdm-resume-tabs">
+                <button type="button" class="jdm-resume-tab-btn active" onclick="switchResumeTab('paste')">Paste Text</button>
+                <button type="button" class="jdm-resume-tab-btn" onclick="switchResumeTab('upload')">Upload File</button>
+              </div>
+
+              <div id="pasteTab" class="jdm-resume-content active">
+                <textarea id="baseResumePaste" class="jdm-textarea" style="margin-bottom: 12px;" placeholder="Paste your existing resume…"></textarea>
+              </div>
+
+              <div id="uploadTab" class="jdm-resume-content">
+                <div class="jdm-upload-area" onclick="document.getElementById('baseResumeFile').click()">
+                  <input type="file" id="baseResumeFile" accept=".txt,.docx,.doc" onchange="handleFileUpload(event)">
+                  <div class="jdm-upload-text">📁 Click to upload .txt or .docx</div>
+                </div>
+                <div id="uploadStatus" style="font-size: 12px; color: #94a3b8; margin-top: 8px;"></div>
+              </div>
+
+              <div class="jdm-resume-actions" style="margin-top: 12px;">
+                <button type="button" class="jdm-btn-secondary" onclick="saveBaseResume()">Save Resume</button>
+                <button type="button" class="jdm-btn-secondary" onclick="clearBaseResume()">Clear</button>
+              </div>
+            </div>
+
+            <!-- Target Match -->
+            <div class="jdm-target-section">
+              <label style="display: block; margin-bottom: 12px; font-weight: 600; font-size: 13px; color: #cbd5e1;">Target Match %</label>
+              <div class="jdm-radio-group">
+                <div class="jdm-radio-option">
+                  <input type="radio" id="autoMode" name="targetMode" value="auto" checked onchange="toggleSlider()">
+                  <label for="autoMode">Auto (90–95%)</label>
+                </div>
+                <div class="jdm-radio-option">
+                  <input type="radio" id="manualMode" name="targetMode" value="manual" onchange="toggleSlider()">
+                  <label for="manualMode">Manual</label>
+                </div>
+              </div>
+
+              <div id="sliderGroup" class="jdm-slider-group">
+                <div class="jdm-slider-wrapper">
+                  <input type="range" id="targetSlider" class="jdm-slider" min="90" max="99" value="92" oninput="updateSliderValue(this.value)">
+                  <input type="number" id="targetInput" class="jdm-slider-input" min="90" max="99" value="92" oninput="updateSliderValue(this.value)">
+                  <div class="jdm-slider-value-display" id="sliderDisplay">92%</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Must Include Skills (Comma-Separated) -->
+            <div class="jdm-form-group">
+              <label class="jdm-label">Must Include Skills</label>
+              <span class="jdm-hint">Comma-separated, e.g., React, Node.js, TypeScript</span>
+              <input type="text" id="skillsInput" class="jdm-input" placeholder="React, Node.js, TypeScript, AWS">
+            </div>
+
+            <!-- Generate Button -->
+            <button type="submit" class="jdm-btn-primary" id="generateBtn">Generate Resume</button>
+          </form>
+
+          <!-- Results Section -->
+          <div id="results" class="jdm-results">
+            <div style="margin-bottom: 20px;">
+              <h3 style="font-size: 16px; font-weight: 700; color: #e2e8f0; margin-bottom: 12px;">Generated Resume</h3>
+            </div>
+
+            <div class="jdm-metrics-grid" id="metricsGrid"></div>
+
+            <button class="jdm-preview-btn" onclick="previewResume()">📄 Preview Resume</button>
+
+            <div class="jdm-download-group">
+              <button class="jdm-download-btn pdf" onclick="downloadPDF()">PDF</button>
+              <button class="jdm-download-btn doc" onclick="downloadDOC()">DOC</button>
+              <button class="jdm-download-btn html" onclick="downloadHTML()">HTML</button>
+            </div>
+
+            <button class="jdm-btn-primary" onclick="saveToHistory()" style="margin-top: 14px;">Save to History</button>
+          </div>
+        </div>
+
+        <!-- TEMPLATES PANEL -->
+        <div id="templates" class="jdm-panel">
+          <div class="jdm-templates-controls">
+            <input type="text" id="templateSearch" class="jdm-search-box" placeholder="Search templates…" oninput="filterTemplates()">
+            <select id="templateSort" class="jdm-sort-select" onchange="filterTemplates()">
+              <option value="default">Default</option>
+              <option value="modern">Modern</option>
+              <option value="clean">Clean</option>
+              <option value="professional">Professional</option>
+            </select>
+          </div>
+          <div class="jdm-templates-grid" id="templatesGrid"></div>
+        </div>
+
+        <!-- HISTORY PANEL -->
+        <div id="history" class="jdm-panel">
+          <div id="historyContainer"></div>
+        </div>
+
+        <!-- SETTINGS PANEL -->
+        <div id="settings" class="jdm-panel">
+          <div style="max-width: 600px;">
+            <div class="jdm-settings-item">
+              <div class="jdm-settings-item-title">Base Resume</div>
+              <div class="jdm-settings-item-text" id="baseResumeInfo">No base resume saved yet. Add one in the Generate tab.</div>
+            </div>
+
+            <div class="jdm-settings-item">
+              <div class="jdm-settings-item-title">Selected Template</div>
+              <div class="jdm-settings-item-text">Currently: <strong id="currentTemplateInfo">Template 01</strong></div>
+            </div>
+
+            <div class="jdm-settings-item">
+              <div class="jdm-settings-item-title">Data & Privacy</div>
+              <div class="jdm-settings-item-text">All data is stored locally in your browser. No information is transmitted to external servers except during resume generation. History is automatically deleted after 15 days of inactivity.</div>
+            </div>
+
+            <div class="jdm-settings-item">
+              <div class="jdm-settings-item-title">Clear All Data</div>
+              <div class="jdm-settings-item-text">Delete all saved templates, base resume, and history. This action cannot be undone.</div>
+              <button class="jdm-btn-danger" onclick="clearAllData()">Clear All Data</button>
             </div>
           </div>
-
-          <div id="manualInputGroup" class="jdmatch-manual-input-group">
-            <div class="jdmatch-manual-input-wrapper">
-              <label style="font-size: 13px; color: #94a3b8;">Target Match %:</label>
-              <input type="number" id="manualPercentage" class="jdmatch-form-input" min="10" max="100" value="92" oninput="updateManualValue()">
-              <div class="jdmatch-manual-value-display" id="percentageDisplay">92%</div>
-            </div>
-          </div>
         </div>
-
-        <!-- Must Include Skills -->
-        <div class="jdmatch-form-group">
-          <label class="jdmatch-form-label">Must Include Skills (Optional)</label>
-          <div class="jdmatch-skills-input">
-            <input type="text" id="skillInput" class="jdmatch-form-input" placeholder="e.g., React" onkeypress="handleSkillKeypress(event)">
-            <button type="button" onclick="addSkill()" class="jdmatch-skills-input button">Add Skill</button>
-          </div>
-          <div class="jdmatch-skills-tags" id="skillsTags"></div>
-          <button type="button" class="jdmatch-base-resume-clear" onclick="clearAllSkills()" style="font-size: 12px; padding: 6px 12px;">Clear all skills</button>
-        </div>
-
-        <!-- Selected Template -->
-        <div class="jdmatch-form-group">
-          <label class="jdmatch-form-label">Selected Template</label>
-          <div style="padding: 12px; background: rgba(6, 182, 212, 0.1); border-radius: 6px; border: 1px solid rgba(6, 182, 212, 0.2); color: #06b6d4; font-size: 14px;" id="selectedTemplateDisplay">Template 01</div>
-        </div>
-
-        <!-- Generate Button -->
-        <button type="submit" class="jdmatch-button-primary" id="generateBtn">Generate Resume</button>
-      </form>
-
-      <!-- Output Section -->
-      <div class="jdmatch-output-section" id="outputSection">
-        <div class="jdmatch-metrics-grid" id="metricsGrid"></div>
-        <div class="jdmatch-preview-section">
-          <div class="jdmatch-preview-title">Resume Preview</div>
-          <iframe class="jdmatch-preview-iframe" id="previewFrame"></iframe>
-        </div>
-        <div class="jdmatch-download-buttons">
-          <button class="jdmatch-download-btn jdmatch-download-html" onclick="downloadHTML()">📄 Download HTML</button>
-          <button class="jdmatch-download-btn jdmatch-download-pdf" onclick="downloadPDF()">📕 Download PDF</button>
-          <button class="jdmatch-download-btn jdmatch-download-doc" onclick="downloadDOC()">📘 Download DOC</button>
-        </div>
-        <button class="jdmatch-button-primary" onclick="saveToHistory()" style="margin-top: 16px;">Save to History</button>
       </div>
-    </div>
 
-    <!-- TEMPLATES TAB -->
-    <div id="templates" class="jdmatch-tab-pane">
-      <div class="jdmatch-templates-gallery" id="templatesGallery"></div>
-    </div>
-
-    <!-- HISTORY TAB -->
-    <div id="history" class="jdmatch-tab-pane">
-      <div id="historyContainer"></div>
-    </div>
-
-    <!-- SETTINGS TAB -->
-    <div id="settings" class="jdmatch-tab-pane">
-      <div class="jdmatch-settings-panel">
-        <div class="jdmatch-settings-section">
-          <div class="jdmatch-settings-title">Base Resume</div>
-          <div class="jdmatch-settings-text" id="baseResumeInfo">No base resume saved yet. Add one in the Generate tab to help tailor your resume.</div>
+      <!-- RIGHT SIDEBAR -->
+      <div class="jdm-sidebar">
+        <!-- Configuration Summary -->
+        <div class="jdm-card">
+          <div class="jdm-card-title">Configuration</div>
+          <div class="jdm-summary-item">
+            <span class="jdm-summary-label">Template:</span>
+            <span class="jdm-summary-value" id="sidebarTemplate">Template 01</span>
+          </div>
+          <div class="jdm-summary-item">
+            <span class="jdm-summary-label">Target:</span>
+            <span class="jdm-summary-value" id="sidebarTarget">Auto (90–95%)</span>
+          </div>
+          <div class="jdm-summary-item">
+            <span class="jdm-summary-label">Skills:</span>
+            <span class="jdm-summary-value" id="sidebarSkills">–</span>
+          </div>
+          <div class="jdm-summary-item">
+            <span class="jdm-summary-label">Base Resume:</span>
+            <span class="jdm-summary-value" id="sidebarResume">Not saved</span>
+          </div>
         </div>
 
-        <div class="jdmatch-settings-section">
-          <div class="jdmatch-settings-title">Default Template</div>
-          <div class="jdmatch-settings-text">Currently selected: <strong id="currentTemplateInfo">Template 01</strong></div>
-        </div>
-
-        <div class="jdmatch-settings-section">
-          <div class="jdmatch-settings-title">Data & Privacy</div>
-          <div class="jdmatch-settings-text">All your data (resumes, history, templates) is stored locally in your browser. No data is sent to servers except during resume generation. History is automatically deleted after 15 days.</div>
-        </div>
-
-        <div class="jdmatch-settings-section">
-          <div class="jdmatch-settings-title">Clear All Data</div>
-          <div class="jdmatch-settings-text">This will delete all saved templates, base resume, and history. This action cannot be undone.</div>
-          <button class="jdmatch-clear-all-btn" onclick="clearAllData()">Clear All Data</button>
+        <!-- Output Actions (appears after generation) -->
+        <div id="outputActionsCard" class="jdm-card" style="display: none;">
+          <div class="jdm-card-title">Quick Actions</div>
+          <button class="jdm-btn-primary" style="margin-bottom: 8px; font-size: 12px; padding: 10px;" onclick="saveToHistory()">Save to History</button>
+          <button class="jdm-btn-secondary" style="width: 100%; margin-bottom: 0;" onclick="previewResume()">Preview</button>
         </div>
       </div>
     </div>
@@ -989,21 +1218,35 @@
   <!-- TOAST CONTAINER -->
   <div id="toastContainer"></div>
 
+  <!-- PREVIEW MODAL (Hidden until needed) -->
+  <div id="previewModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 10000; padding: 20px;">
+    <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border: 1px solid rgba(6, 182, 212, 0.2); border-radius: 8px; max-width: 900px; margin: auto; height: 100%; display: flex; flex-direction: column; padding: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="color: #e2e8f0; margin: 0; font-size: 18px;">Resume Preview</h3>
+        <button onclick="document.getElementById('previewModal').style.display='none'" style="background: none; border: none; color: #64748b; font-size: 24px; cursor: pointer;">×</button>
+      </div>
+      <iframe id="previewIframe" style="flex: 1; border: none; border-radius: 6px; background: white;"></iframe>
+    </div>
+  </div>
+
   <script>
-    // =======================
-    // GLOBAL STATE & UTILITIES
-    // =======================
+    // ========================
+    // GLOBAL STATE
+    // ========================
     let currentCandidateId = null;
     let currentGeneration = null;
-    let skillsList = [];
     let baseResumeText = '';
     let selectedTemplate = 'template_01';
 
     const TEMPLATES = Array.from({length: 12}, (_, i) => ({
       id: `template_${String(i + 1).padStart(2, '0')}`,
-      name: `Template ${String(i + 1).padStart(2, '0')}`
+      name: `Template ${String(i + 1).padStart(2, '0')}`,
+      tag: ['Modern', 'Clean', 'Professional', 'Classic'][i % 4]
     }));
 
+    // ========================
+    // UTILITY FUNCTIONS
+    // ========================
     function getCandidateId() {
       const params = new URLSearchParams(window.location.search);
       return params.get('cid') || sessionStorage.getItem('candidateId') || 'test_candidate';
@@ -1016,127 +1259,96 @@
     function showToast(message, type = 'info') {
       const container = document.getElementById('toastContainer');
       const toast = document.createElement('div');
-      toast.className = `jdmatch-toast ${type}`;
+      toast.className = `jdm-toast ${type}`;
       toast.textContent = message;
       container.appendChild(toast);
       setTimeout(() => toast.remove(), 3000);
     }
 
     function goBack() {
-      window.location.href = `user.html?cid=${currentCandidateId}`;
+      window.location.href = `user.html?cid=${encodeURIComponent(currentCandidateId)}`;
     }
 
-    // =======================
-    // TAB SWITCHING
-    // =======================
-    function switchTab(tabName) {
-      document.querySelectorAll('.jdmatch-tab-pane').forEach(pane => pane.classList.remove('active'));
-      document.querySelectorAll('.jdmatch-tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.getElementById(tabName).classList.add('active');
+    function updateSidebar() {
+      document.getElementById('sidebarTemplate').textContent = TEMPLATES.find(t => t.id === selectedTemplate)?.name || 'Template 01';
+      const targetMode = document.querySelector('input[name="targetMode"]:checked').value;
+      if (targetMode === 'manual') {
+        const value = document.getElementById('targetSlider').value;
+        document.getElementById('sidebarTarget').textContent = `Manual (${value}%)`;
+      } else {
+        document.getElementById('sidebarTarget').textContent = 'Auto (90–95%)';
+      }
+      const skills = document.getElementById('skillsInput').value;
+      document.getElementById('sidebarSkills').textContent = skills ? skills.split(',').length + ' skills' : '–';
+      document.getElementById('sidebarResume').textContent = baseResumeText ? 'Saved' : 'Not saved';
+    }
+
+    // ========================
+    // PANEL SWITCHING
+    // ========================
+    function switchPanel(panelName) {
+      document.querySelectorAll('.jdm-panel').forEach(pane => pane.classList.remove('active'));
+      document.querySelectorAll('.jdm-nav-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(panelName).classList.add('active');
       event.target.classList.add('active');
 
-      if (tabName === 'templates') renderTemplatesGallery();
-      if (tabName === 'history') renderHistory();
-      if (tabName === 'settings') updateSettings();
+      if (panelName === 'templates') renderTemplatesGrid();
+      if (panelName === 'history') renderHistory();
+      if (panelName === 'settings') updateSettings();
     }
 
-    function switchBaseResumeTab(tabName) {
-      document.querySelectorAll('.jdmatch-base-resume-content').forEach(tab => tab.classList.remove('active'));
-      document.querySelectorAll('.jdmatch-base-resume-tab').forEach(btn => btn.classList.remove('active'));
+    function switchResumeTab(tabName) {
+      document.querySelectorAll('.jdm-resume-content').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('.jdm-resume-tab-btn').forEach(b => b.classList.remove('active'));
       document.getElementById(tabName === 'paste' ? 'pasteTab' : 'uploadTab').classList.add('active');
       event.target.classList.add('active');
     }
 
-    // =======================
-    // TARGET MATCH INPUT
-    // =======================
-    function toggleManualInput() {
+    // ========================
+    // SLIDER CONTROLS
+    // ========================
+    function toggleSlider() {
       const isManual = document.getElementById('manualMode').checked;
-      document.getElementById('manualInputGroup').classList.toggle('active', isManual);
+      document.getElementById('sliderGroup').classList.toggle('active', isManual);
+      updateSidebar();
     }
 
-    function updateManualValue() {
-      const value = document.getElementById('manualPercentage').value;
-      document.getElementById('percentageDisplay').textContent = value + '%';
+    function updateSliderValue(value) {
+      value = Math.max(90, Math.min(99, parseInt(value)));
+      document.getElementById('targetSlider').value = value;
+      document.getElementById('targetInput').value = value;
+      document.getElementById('sliderDisplay').textContent = value + '%';
+      updateSidebar();
     }
 
-    // =======================
-    // SKILLS MANAGEMENT
-    // =======================
-    function addSkill() {
-      const input = document.getElementById('skillInput');
-      const skill = input.value.trim();
-      if (!skill) {
-        showToast('Please enter a skill name', 'error');
-        return;
-      }
-      if (skillsList.includes(skill)) {
-        showToast('This skill is already added', 'error');
-        return;
-      }
-      skillsList.push(skill);
-      input.value = '';
-      renderSkillsTags();
-    }
-
-    function handleSkillKeypress(event) {
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        addSkill();
-      }
-    }
-
-    function removeSkill(skill) {
-      skillsList = skillsList.filter(s => s !== skill);
-      renderSkillsTags();
-    }
-
-    function clearAllSkills() {
-      skillsList = [];
-      renderSkillsTags();
-    }
-
-    function renderSkillsTags() {
-      const container = document.getElementById('skillsTags');
-      container.innerHTML = skillsList.map(skill => `
-        <div class="jdmatch-skill-tag">
-          ${skill}
-          <button type="button" onclick="removeSkill('${skill}')" style="all: unset; cursor: pointer;">×</button>
-        </div>
-      `).join('');
-    }
-
-    // =======================
+    // ========================
     // BASE RESUME
-    // =======================
+    // ========================
     async function handleFileUpload(event) {
       const file = event.target.files[0];
       if (!file) return;
-
       const status = document.getElementById('uploadStatus');
       if (file.name.endsWith('.txt')) {
         const text = await file.text();
         document.getElementById('baseResumePaste').value = text;
         status.textContent = '✓ File loaded. Click "Save Resume" to save.';
         status.style.color = '#22c55e';
-      } else if (file.name.endsWith('.docx') || file.name.endsWith('.doc')) {
-        status.textContent = '⚠ DOCX/DOC parsing requires additional library. Please paste the content manually or convert to .txt';
-        status.style.color = '#f59e0b';
       } else {
-        status.textContent = '✗ Unsupported file type. Use .txt or .docx';
-        status.style.color = '#ef4444';
+        status.textContent = '⚠ Conversion support limited. Paste manually if needed.';
+        status.style.color = '#f59e0b';
       }
     }
 
     function saveBaseResume() {
       const text = document.getElementById('baseResumePaste').value.trim();
       if (!text) {
-        showToast('Please paste or upload a resume first', 'error');
+        showToast('Please paste a resume first', 'error');
         return;
       }
       baseResumeText = text;
       localStorage.setItem(getStorageKey('base_resume'), text);
       showToast('Base resume saved!', 'success');
+      updateSidebar();
     }
 
     function clearBaseResume() {
@@ -1144,19 +1356,42 @@
       document.getElementById('baseResumePaste').value = '';
       localStorage.removeItem(getStorageKey('base_resume'));
       showToast('Base resume cleared', 'success');
+      updateSidebar();
     }
 
-    // =======================
+    // ========================
     // TEMPLATES
-    // =======================
-    function renderTemplatesGallery() {
-      const gallery = document.getElementById('templatesGallery');
-      gallery.innerHTML = TEMPLATES.map(template => `
-        <div class="jdmatch-template-card ${selectedTemplate === template.id ? 'selected' : ''}" onclick="selectTemplate('${template.id}')">
-          <div class="jdmatch-template-checkmark">✓</div>
-          <div class="jdmatch-template-preview"></div>
-          <div class="jdmatch-template-name">${template.name}</div>
-          <button type="button" class="jdmatch-template-select-btn">${selectedTemplate === template.id ? '✓ Selected' : 'Select'}</button>
+    // ========================
+    function renderTemplatesGrid() {
+      const grid = document.getElementById('templatesGrid');
+      grid.innerHTML = TEMPLATES.map(template => `
+        <div class="jdm-template-card ${selectedTemplate === template.id ? 'selected' : ''}" onclick="selectTemplate('${template.id}')">
+          <div class="jdm-template-checkmark">✓</div>
+          <div class="jdm-template-preview"></div>
+          <div class="jdm-template-name">${template.name}</div>
+          <span class="jdm-template-tag">${template.tag}</span>
+          <button type="button" class="jdm-template-select-btn">${selectedTemplate === template.id ? '✓ Selected' : 'Select'}</button>
+        </div>
+      `).join('');
+    }
+
+    function filterTemplates() {
+      const search = document.getElementById('templateSearch').value.toLowerCase();
+      const sort = document.getElementById('templateSort').value;
+      const grid = document.getElementById('templatesGrid');
+      
+      let filtered = TEMPLATES.filter(t => t.name.toLowerCase().includes(search) || t.tag.toLowerCase().includes(search));
+      if (sort !== 'default') {
+        filtered = filtered.filter(t => t.tag.toLowerCase() === sort.toLowerCase());
+      }
+
+      grid.innerHTML = filtered.map(template => `
+        <div class="jdm-template-card ${selectedTemplate === template.id ? 'selected' : ''}" onclick="selectTemplate('${template.id}')">
+          <div class="jdm-template-checkmark">✓</div>
+          <div class="jdm-template-preview"></div>
+          <div class="jdm-template-name">${template.name}</div>
+          <span class="jdm-template-tag">${template.tag}</span>
+          <button type="button" class="jdm-template-select-btn">${selectedTemplate === template.id ? '✓ Selected' : 'Select'}</button>
         </div>
       `).join('');
     }
@@ -1164,24 +1399,25 @@
     function selectTemplate(templateId) {
       selectedTemplate = templateId;
       localStorage.setItem(getStorageKey('selected_template'), templateId);
-      document.getElementById('selectedTemplateDisplay').textContent = TEMPLATES.find(t => t.id === templateId).name;
-      renderTemplatesGallery();
+      renderTemplatesGrid();
       showToast(`${TEMPLATES.find(t => t.id === templateId).name} selected!`, 'success');
+      updateSidebar();
     }
 
-    // =======================
+    // ========================
     // FORM SUBMISSION
-    // =======================
+    // ========================
     async function handleGenerateSubmit(event) {
       event.preventDefault();
 
       const companyName = document.getElementById('companyName').value.trim();
       const jobDescription = document.getElementById('jobDescription').value.trim();
+      const skillsRaw = document.getElementById('skillsInput').value.trim();
       const targetMode = document.querySelector('input[name="targetMode"]:checked').value;
-      const targetValue = targetMode === 'manual' ? parseInt(document.getElementById('manualPercentage').value) : 85;
+      const targetValue = targetMode === 'manual' ? parseInt(document.getElementById('targetSlider').value) : null;
 
       if (!companyName || !jobDescription) {
-        showToast('Please fill in all required fields', 'error');
+        showToast('Please fill company name and job description', 'error');
         return;
       }
 
@@ -1205,7 +1441,7 @@
             jobDescription,
             targetMatchMode: targetMode,
             targetMatchValue: targetValue,
-            mustIncludeSkills: skillsList,
+            mustIncludeSkills: skillsRaw,
             templateId: selectedTemplate,
             baseResumeText: baseResumeText
           })
@@ -1220,12 +1456,13 @@
         }
 
         if (!response.ok || (data && data.ok === false)) {
-          throw new Error(data?.error || responseText || 'Generation failed');
+          throw new Error(data?.error || 'Generation failed');
         }
 
         currentGeneration = data;
-        displayOutput(data);
-        showToast('Resume generated successfully!', 'success');
+        displayResults(data);
+        showToast('Resume generated!', 'success');
+        document.getElementById('outputActionsCard').style.display = 'block';
 
       } catch (error) {
         showToast(`Error: ${error.message}`, 'error');
@@ -1236,64 +1473,58 @@
       }
     }
 
-    function displayOutput(data) {
-      const outputSection = document.getElementById('outputSection');
+    function displayResults(data) {
+      const results = document.getElementById('results');
       const metricsGrid = document.getElementById('metricsGrid');
-      const previewFrame = document.getElementById('previewFrame');
 
       metricsGrid.innerHTML = `
-        <div class="jdmatch-metric-card">
-          <div class="jdmatch-metric-label">JD Match</div>
-          <div class="jdmatch-metric-value">${data.metrics?.jdMatch || '—'}%</div>
+        <div class="jdm-metric-card">
+          <div class="jdm-metric-label">JD Match</div>
+          <div class="jdm-metric-value">${data.metrics?.jdMatch || '–'}%</div>
         </div>
-        <div class="jdmatch-metric-card">
-          <div class="jdmatch-metric-label">ATS Friendliness</div>
-          <div class="jdmatch-metric-value">${data.metrics?.atsFriendliness || '—'}%</div>
+        <div class="jdm-metric-card">
+          <div class="jdm-metric-label">ATS Friendliness</div>
+          <div class="jdm-metric-value">${data.metrics?.atsFriendliness || '–'}%</div>
         </div>
-        <div class="jdmatch-metric-card">
-          <div class="jdmatch-metric-label">HR Catchiness</div>
-          <div class="jdmatch-metric-value">${data.metrics?.hrCatchiness || '—'}%</div>
+        <div class="jdm-metric-card">
+          <div class="jdm-metric-label">HR Catchiness</div>
+          <div class="jdm-metric-value">${data.metrics?.hrCatchiness || '–'}%</div>
         </div>
-        <div class="jdmatch-metric-card">
-          <div class="jdmatch-metric-label">Shortlist Chance</div>
-          <div class="jdmatch-metric-value">${data.metrics?.chancesOfShortlisting || '—'}%</div>
+        <div class="jdm-metric-card">
+          <div class="jdm-metric-label">Shortlist Chance</div>
+          <div class="jdm-metric-value">${data.metrics?.chancesOfShortlisting || '–'}%</div>
         </div>
       `;
 
-      previewFrame.srcdoc = data.resumeHtml;
-      outputSection.classList.add('active');
+      results.classList.add('active');
     }
 
-    // =======================
-    // DOWNLOADS
-    // =======================
-    function downloadHTML() {
+    function previewResume() {
       if (!currentGeneration) return;
-      const element = document.createElement('a');
-      element.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(currentGeneration.resumeHtml);
-      element.download = currentGeneration.filename.replace('.pdf', '.html');
-      element.click();
-      showToast('HTML downloaded!', 'success');
+      document.getElementById('previewIframe').srcdoc = currentGeneration.resumeHtml;
+      document.getElementById('previewModal').style.display = 'block';
     }
 
+    // ========================
+    // DOWNLOADS
+    // ========================
     function downloadPDF() {
       if (!currentGeneration) return;
-      const element = document.getElementById('previewFrame');
       const opt = {
         margin: 10,
         filename: currentGeneration.filename,
         image: {type: 'jpeg', quality: 0.98},
-        html2canvas: {scale: 2},
         jsPDF: {orientation: 'portrait', unit: 'mm', format: 'a4'}
       };
-      html2pdf().set(opt).from(element.srcdoc).set({html2canvas: {allowTaint: true, useCORS: true}}).save();
-      showToast('PDF generated!', 'success');
+      const wrapper = document.createElement('div');
+      wrapper.innerHTML = currentGeneration.resumeHtml;
+      html2pdf().set(opt).from(wrapper).save();
+      showToast('PDF downloaded!', 'success');
     }
 
     function downloadDOC() {
       if (!currentGeneration) return;
-      const html = currentGeneration.resumeHtml;
-      const doc = `<html><head><meta charset='utf-8'></head><body>${html}</body></html>`;
+      const doc = `<html><head><meta charset='utf-8'></head><body>${currentGeneration.resumeHtml}</body></html>`;
       const blob = new Blob([doc], {type: 'application/msword'});
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -1303,9 +1534,18 @@
       showToast('DOC downloaded!', 'success');
     }
 
-    // =======================
+    function downloadHTML() {
+      if (!currentGeneration) return;
+      const link = document.createElement('a');
+      link.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(currentGeneration.resumeHtml);
+      link.download = currentGeneration.filename.replace('.pdf', '.html');
+      link.click();
+      showToast('HTML downloaded!', 'success');
+    }
+
+    // ========================
     // HISTORY
-    // =======================
+    // ========================
     function saveToHistory() {
       if (!currentGeneration) return;
       const history = JSON.parse(localStorage.getItem(getStorageKey('resume_history')) || '[]');
@@ -1315,147 +1555,145 @@
         companyName: document.getElementById('companyName').value,
         templateId: selectedTemplate,
         targetMatch: currentGeneration.targetMatch,
-        mustIncludeSkills: skillsList.join(', '),
-        shortJDSnippet: document.getElementById('jobDescription').value.substring(0, 120),
+        mustIncludeSkills: document.getElementById('skillsInput').value,
+        shortJDSnippet: document.getElementById('jobDescription').value.substring(0, 100),
         resumeHtml: currentGeneration.resumeHtml,
         metrics: currentGeneration.metrics,
         filename: currentGeneration.filename
       });
       localStorage.setItem(getStorageKey('resume_history'), JSON.stringify(history));
-      showToast('Resume saved to history!', 'success');
+      showToast('Saved to history!', 'success');
     }
 
     function renderHistory() {
       const container = document.getElementById('historyContainer');
       let history = JSON.parse(localStorage.getItem(getStorageKey('resume_history')) || '[]');
 
-      // Auto-delete old entries
+      // Auto-delete >15 days
       const fifteenDaysAgo = Date.now() - (15 * 24 * 60 * 60 * 1000);
       history = history.filter(item => new Date(item.createdAt).getTime() > fifteenDaysAgo);
       localStorage.setItem(getStorageKey('resume_history'), JSON.stringify(history));
 
       if (history.length === 0) {
-        container.innerHTML = '<div class="jdmatch-history-empty">No resume history yet. Generate and save a resume to see it here.</div>';
+        container.innerHTML = '<div class="jdm-history-empty">No history yet. Generate and save a resume.</div>';
         return;
       }
 
-      container.innerHTML = `<div class="jdmatch-history-list">${history.map((item, idx) => `
-        <div class="jdmatch-history-item">
-          <div class="jdmatch-history-header">
+      container.innerHTML = `<div class="jdm-history-list">${history.map((item, idx) => `
+        <div class="jdm-history-item">
+          <div class="jdm-history-header" onclick="toggleHistoryItem(${idx})">
             <div>
-              <div class="jdmatch-history-company">${item.companyName}</div>
-              <div class="jdmatch-history-date">${new Date(item.createdAt).toLocaleDateString()}</div>
+              <div class="jdm-history-title">${item.companyName}</div>
+              <div class="jdm-history-meta">${new Date(item.createdAt).toLocaleDateString()} • ${TEMPLATES.find(t => t.id === item.templateId)?.name || 'Template'}</div>
             </div>
+            <div class="jdm-history-expand-icon">▼</div>
           </div>
-          <div class="jdmatch-history-snippet">${item.shortJDSnippet}...</div>
-          <div class="jdmatch-history-metrics">
-            <div class="jdmatch-history-metric">
-              <span class="jdmatch-history-metric-label">JD Match</span>
-              <span class="jdmatch-history-metric-value">${item.metrics?.jdMatch || '—'}%</span>
+          <div class="jdm-history-content" id="hist-${idx}">
+            <div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">${item.shortJDSnippet}...</div>
+            <div class="jdm-history-metrics">
+              <div class="jdm-history-metric"><span class="jdm-history-metric-label">JD Match</span><span class="jdm-history-metric-value">${item.metrics?.jdMatch || '–'}%</span></div>
+              <div class="jdm-history-metric"><span class="jdm-history-metric-label">ATS</span><span class="jdm-history-metric-value">${item.metrics?.atsFriendliness || '–'}%</span></div>
+              <div class="jdm-history-metric"><span class="jdm-history-metric-label">HR</span><span class="jdm-history-metric-value">${item.metrics?.hrCatchiness || '–'}%</span></div>
             </div>
-            <div class="jdmatch-history-metric">
-              <span class="jdmatch-history-metric-label">ATS</span>
-              <span class="jdmatch-history-metric-value">${item.metrics?.atsFriendliness || '—'}%</span>
+            <div class="jdm-history-actions">
+              <button class="jdm-action-btn view" onclick="viewHistory(${idx})">View</button>
+              <button class="jdm-action-btn download" onclick="downloadHistoryHTML(${idx})">HTML</button>
+              <button class="jdm-action-btn download" onclick="downloadHistoryPDF(${idx})">PDF</button>
+              <button class="jdm-action-btn download" onclick="downloadHistoryDOC(${idx})">DOC</button>
+              <button class="jdm-action-btn delete" onclick="deleteHistory(${idx})">Delete</button>
             </div>
-            <div class="jdmatch-history-metric">
-              <span class="jdmatch-history-metric-label">HR</span>
-              <span class="jdmatch-history-metric-value">${item.metrics?.hrCatchiness || '—'}%</span>
-            </div>
-          </div>
-          <div class="jdmatch-history-actions">
-            <button class="jdmatch-history-action-btn jdmatch-history-view" onclick="viewHistoryItem(${idx})">View</button>
-            <button class="jdmatch-history-action-btn jdmatch-download-html" onclick="downloadHistoryHTML(${idx})">HTML</button>
-            <button class="jdmatch-history-action-btn jdmatch-download-pdf" onclick="downloadHistoryPDF(${idx})">PDF</button>
-            <button class="jdmatch-history-action-btn jdmatch-download-doc" onclick="downloadHistoryDOC(${idx})">DOC</button>
-            <button class="jdmatch-history-action-btn jdmatch-history-delete" onclick="deleteHistoryItem(${idx})">Delete</button>
           </div>
         </div>
       `).join('')}</div>`;
     }
 
-    function viewHistoryItem(idx) {
+    function toggleHistoryItem(idx) {
+      const item = document.getElementById(`hist-${idx}`).parentElement;
+      item.classList.toggle('expanded');
+    }
+
+    function viewHistory(idx) {
       const history = JSON.parse(localStorage.getItem(getStorageKey('resume_history')) || '[]');
-      const item = history[idx];
-      window.open(`data:text/html;charset=utf-8,${encodeURIComponent(item.resumeHtml)}`, '_blank');
+      window.open(`data:text/html;charset=utf-8,${encodeURIComponent(history[idx].resumeHtml)}`, '_blank');
     }
 
     function downloadHistoryHTML(idx) {
       const history = JSON.parse(localStorage.getItem(getStorageKey('resume_history')) || '[]');
-      const item = history[idx];
       const link = document.createElement('a');
-      link.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(item.resumeHtml);
-      link.download = item.filename.replace('.pdf', '.html');
+      link.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(history[idx].resumeHtml);
+      link.download = history[idx].filename.replace('.pdf', '.html');
       link.click();
     }
 
     function downloadHistoryPDF(idx) {
       const history = JSON.parse(localStorage.getItem(getStorageKey('resume_history')) || '[]');
-      const item = history[idx];
-      const opt = {margin: 10, filename: item.filename, image: {type: 'jpeg', quality: 0.98}, jsPDF: {orientation: 'portrait', unit: 'mm', format: 'a4'}};
+      const opt = {margin: 10, filename: history[idx].filename, image: {type: 'jpeg', quality: 0.98}, jsPDF: {orientation: 'portrait', unit: 'mm', format: 'a4'}};
       const wrapper = document.createElement('div');
-      wrapper.innerHTML = item.resumeHtml;
+      wrapper.innerHTML = history[idx].resumeHtml;
       html2pdf().set(opt).from(wrapper).save();
     }
 
     function downloadHistoryDOC(idx) {
       const history = JSON.parse(localStorage.getItem(getStorageKey('resume_history')) || '[]');
-      const item = history[idx];
-      const blob = new Blob([`<html><head><meta charset='utf-8'></head><body>${item.resumeHtml}</body></html>`], {type: 'application/msword'});
+      const blob = new Blob([`<html><head><meta charset='utf-8'></head><body>${history[idx].resumeHtml}</body></html>`], {type: 'application/msword'});
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = item.filename.replace('.pdf', '.doc');
+      link.download = history[idx].filename.replace('.pdf', '.doc');
       link.click();
     }
 
-    function deleteHistoryItem(idx) {
-      if (!confirm('Delete this resume from history?')) return;
+    function deleteHistory(idx) {
+      if (!confirm('Delete this resume?')) return;
       let history = JSON.parse(localStorage.getItem(getStorageKey('resume_history')) || '[]');
       history.splice(idx, 1);
       localStorage.setItem(getStorageKey('resume_history'), JSON.stringify(history));
       renderHistory();
-      showToast('Resume deleted', 'success');
+      showToast('Deleted', 'success');
     }
 
-    // =======================
+    // ========================
     // SETTINGS
-    // =======================
+    // ========================
     function updateSettings() {
-      const info = baseResumeText ? `Saved: ${baseResumeText.substring(0, 50)}...` : 'No base resume saved';
+      const info = baseResumeText ? `Saved (${baseResumeText.length} chars)` : 'Not saved';
       document.getElementById('baseResumeInfo').textContent = info;
       document.getElementById('currentTemplateInfo').textContent = TEMPLATES.find(t => t.id === selectedTemplate)?.name || 'Template 01';
     }
 
     function clearAllData() {
-      if (!confirm('Clear all data? This cannot be undone.')) return;
+      if (!confirm('Clear all data? Cannot undo.')) return;
       localStorage.removeItem(getStorageKey('base_resume'));
       localStorage.removeItem(getStorageKey('selected_template'));
       localStorage.removeItem(getStorageKey('resume_history'));
       baseResumeText = '';
-      skillsList = [];
       selectedTemplate = 'template_01';
       document.getElementById('baseResumePaste').value = '';
-      document.getElementById('skillInput').value = '';
-      renderSkillsTags();
-      renderTemplatesGallery();
+      document.getElementById('skillsInput').value = '';
+      renderTemplatesGrid();
       updateSettings();
+      updateSidebar();
       showToast('All data cleared', 'success');
     }
 
-    // =======================
-    // INITIALIZATION
-    // =======================
-    function init() {
+    // ========================
+    // INIT
+    // ========================
+    document.addEventListener('DOMContentLoaded', () => {
       currentCandidateId = getCandidateId();
       baseResumeText = localStorage.getItem(getStorageKey('base_resume')) || '';
       selectedTemplate = localStorage.getItem(getStorageKey('selected_template')) || 'template_01';
 
-      document.getElementById('selectedTemplateDisplay').textContent = TEMPLATES.find(t => t.id === selectedTemplate)?.name || 'Template 01';
-      renderSkillsTags();
-      renderTemplatesGallery();
-    }
+      renderTemplatesGrid();
+      updateSidebar();
 
-    document.addEventListener('DOMContentLoaded', init);
+      // Close preview modal on backdrop click
+      document.getElementById('previewModal').addEventListener('click', (e) => {
+        if (e.target.id === 'previewModal') {
+          e.target.style.display = 'none';
+        }
+      });
+    });
   </script>
 </body>
 </html>
