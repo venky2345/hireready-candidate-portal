@@ -11,7 +11,8 @@ const path = require('path');
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Content-Type': 'application/json'
 };
 
 const respond = (statusCode, body) => ({
@@ -21,19 +22,20 @@ const respond = (statusCode, body) => ({
 });
 
 exports.handler = async (event, context) => {
-  if (event.httpMethod === 'OPTIONS') {
-    return respond(200, '');
-  }
-
-  if (event.httpMethod !== 'POST') {
-    return respond(405, { error: 'Method not allowed' });
-  }
-
-  let payload;
   try {
-    payload = JSON.parse(event.body || '{}');
+    if (event.httpMethod === 'OPTIONS') {
+      return respond(200, '');
+    }
+
+    if (event.httpMethod !== 'POST') {
+      return respond(405, { ok: false, error: 'Method not allowed' });
+    }
+
+    let payload;
+    try {
+      payload = JSON.parse(event.body || '{}');
   } catch (error) {
-    return respond(400, { error: 'Invalid JSON body' });
+    return respond(400, { ok: false, error: 'Invalid JSON body' });
   }
 
   const {
@@ -45,13 +47,17 @@ exports.handler = async (event, context) => {
     mustIncludeSkills = ''
   } = payload;
 
-  if (!candidateId || !companyName || !jobDescription) {
-    return respond(400, { error: 'Missing required fields: candidateId, companyName, jobDescription' });
+  if (!jobDescription || !jobDescription.trim()) {
+    return respond(400, { ok: false, error: 'jobDescription is required' });
+  }
+
+  if (!candidateId || !companyName) {
+    return respond(400, { ok: false, error: 'Missing required fields: candidateId, companyName' });
   }
 
   const openaiKey = process.env.OPENAI_API_KEY;
   if (!openaiKey) {
-    return respond(500, { error: 'OPENAI_API_KEY missing' });
+    return respond(500, { ok: false, error: 'OPENAI_API_KEY is not set' });
   }
 
   const targetMode = String(targetMatchMode).toLowerCase();
@@ -73,8 +79,16 @@ exports.handler = async (event, context) => {
   }
 
   // Read resume template
-  const templatePath = path.join(__dirname, 'templates', 'resume_template_locked.html');
-  const templateHtml = fs.readFileSync(templatePath, 'utf-8');
+  let templateHtml;
+  try {
+    const templatePath = path.join(__dirname, 'templates', 'resume_template_locked.html');
+    templateHtml = fs.readFileSync(templatePath, 'utf-8');
+  } catch (readError) {
+    console.error('Template read error', readError);
+    return respond(500, { ok: false, error: 'Locked template file not found or unreadable' });
+  }
+
+  console.log('generateResume request', { hasJD: Boolean(jobDescription && jobDescription.trim()), targetMatch, hasMustSkills: Boolean(mustIncludeSkills && (Array.isArray(mustIncludeSkills) ? mustIncludeSkills.length > 0 : mustIncludeSkills.trim())) });
 
   const systemPrompt = `You are a professional resume writer. You MUST:
 1. Use the provided resume template structure EXACTLY - do not modify HTML tags, CSS, or element counts
@@ -130,14 +144,14 @@ Requirements:
   if (!response.ok) {
     const error = await response.json();
     console.error('OpenAI API error:', error);
-    return respond(500, { error: 'OpenAI API error: ' + (error.error?.message || 'Unknown error') });
+    return respond(500, { ok: false, error: 'OpenAI API error: ' + (error.error?.message || 'Unknown error') });
   }
 
   const data = await response.json();
   const content = data.choices?.[0]?.message?.content;
 
   if (!content) {
-    return respond(500, { error: 'No response from OpenAI' });
+    return respond(500, { ok: false, error: 'No response from OpenAI' });
   }
 
   let resumeData;
@@ -147,11 +161,11 @@ Requirements:
     resumeData = JSON.parse(jsonStr);
   } catch (parseError) {
     console.error('JSON parse error:', parseError, 'Content:', content);
-    return respond(500, { error: 'Failed to parse OpenAI response as JSON' });
+    return respond(500, { ok: false, error: 'Failed to parse OpenAI response as JSON' });
   }
 
   if (!resumeData.filename || !resumeData.resumeHtml || !resumeData.addedSkills) {
-    return respond(500, { error: 'Invalid response structure from OpenAI' });
+    return respond(500, { ok: false, error: 'Invalid response structure from OpenAI' });
   }
 
   const rawMetrics = resumeData.metrics || {};
@@ -167,14 +181,19 @@ Requirements:
     chancesOfShortlisting: clamp90(rawMetrics.chancesOfShortlisting ?? rawMetrics.shortlistChance, 93)
   };
 
-  const responseBody = {
-    filename: resumeData.filename,
-    resumeHtml: resumeData.resumeHtml,
-    roleTitle: resumeData.roleTitle || '',
-    targetMatch,
-    metrics,
-    addedSkills: Array.isArray(resumeData.addedSkills) ? resumeData.addedSkills : []
-  };
+    const responseBody = {
+      ok: true,
+      filename: resumeData.filename,
+      resumeHtml: resumeData.resumeHtml,
+      roleTitle: resumeData.roleTitle || '',
+      targetMatch,
+      metrics,
+      addedSkills: Array.isArray(resumeData.addedSkills) ? resumeData.addedSkills : []
+    };
 
-  return respond(200, responseBody);
+    return respond(200, responseBody);
+  } catch (err) {
+    console.error('generateResume error', err);
+    return respond(500, { ok: false, error: 'Resume generation failed. Check Netlify function logs.' });
+  }
 };

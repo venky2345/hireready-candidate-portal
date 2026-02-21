@@ -3348,6 +3348,8 @@
         if (loading) loading.style.display = 'block';
         
         try {
+          console.log('Calling generateResume', { endpoint: '/.netlify/functions/generateResume', hasJD: Boolean(jobDescription && jobDescription.trim()) });
+          
           const response = await fetch('/.netlify/functions/generateResume', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -3361,20 +3363,25 @@
             })
           });
           
-          if (!response.ok) {
-            let errorMsg = response.statusText;
-            try {
-              const error = await response.json();
-              errorMsg = error.error || error.message || errorMsg;
-            } catch (e) {
-              const text = await response.text();
-              if (text) errorMsg = text;
-            }
+          const responseText = await response.text();
+          let parsed;
+          
+          try {
+            parsed = JSON.parse(responseText);
+          } catch (parseErr) {
+            console.error('Failed to parse response', { status: response.status, responseText });
+            showToast('Error: Invalid server response', 'error');
+            return;
+          }
+          
+          if (!response.ok || parsed.ok === false) {
+            const errorMsg = parsed.error || responseText || 'Unknown error';
+            console.error('generateResume failed', { status: response.status, responseText });
             showToast('Error: ' + errorMsg, 'error');
             return;
           }
           
-          const data = await response.json();
+          const data = parsed;
           currentGeneration = data;
           
           // Sanitize HTML - remove scripts and on* attributes
@@ -3417,7 +3424,8 @@
           await loadJDMatchHistory();
           
         } catch (error) {
-          showToast('Error generating resume: ' + error.message, 'error');
+          console.error('generateResume exception', error);
+          showToast('Error: ' + error.message, 'error');
         } finally {
           if (genBtn) genBtn.disabled = false;
           if (loading) loading.style.display = 'none';
