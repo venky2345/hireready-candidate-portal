@@ -1286,7 +1286,7 @@
         html2canvas: {scale: 2},
         jsPDF: {orientation: 'portrait', unit: 'mm', format: 'a4'}
       };
-      html2pdf().set(opt).fromFram(element).save();
+      html2pdf().set(opt).from(element.srcdoc).set({html2canvas: {allowTaint: true, useCORS: true}}).save();
       showToast('PDF generated!', 'success');
     }
 
