@@ -9,17 +9,21 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js"></script>
   <style>
-    /* THEME: Hybrid Services Portal - Dark Glassmorphism */
+    /* THEME: HireReady - Using existing design tokens from styles.css */
     * { box-sizing: border-box; }
     
     body {
       margin: 0;
       padding: 0;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-      color: #e2e8f0;
+      background: linear-gradient(135deg, var(--bg0) 0%, var(--bg1) 50%, #1a1420 100%);
+      color: var(--text);
       min-height: 100vh;
+      background-attachment: fixed;
     }
 
     .jdm-wrapper {
@@ -28,29 +32,30 @@
       flex-direction: column;
     }
 
-    /* HEADER */
+    /* HEADER - Match HireReady topbar style */
     .jdm-header {
       display: flex;
       align-items: center;
       gap: 20px;
-      padding: 16px 40px;
-      background: rgba(15, 23, 42, 0.8);
+      padding: 16px 28px;
+      background: var(--panel);
       backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(6, 182, 212, 0.1);
+      border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
       z-index: 100;
+      box-shadow: var(--shadow);
     }
 
     .jdm-back-btn {
       display: flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 12px;
-      background: rgba(148, 163, 184, 0.05);
-      border: 1px solid rgba(148, 163, 184, 0.15);
-      border-radius: 6px;
-      color: #cbd5e1;
+      padding: 8px 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted2);
       font-size: 13px;
       font-weight: 500;
       cursor: pointer;
@@ -58,9 +63,9 @@
     }
 
     .jdm-back-btn:hover {
-      background: rgba(6, 182, 212, 0.1);
-      border-color: rgba(6, 182, 212, 0.3);
-      color: #06b6d4;
+      background: rgba(182, 156, 255, 0.1);
+      border-color: rgba(182, 156, 255, 0.3);
+      color: var(--accentA);
     }
 
     .jdm-title {
@@ -68,7 +73,7 @@
       text-align: center;
       font-size: 18px;
       font-weight: 600;
-      background: linear-gradient(135deg, #06b6d4, #0891b2);
+      background: linear-gradient(90deg, var(--accentA) 0%, var(--accentB) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -76,31 +81,32 @@
 
     /* HERO SECTION */
     .jdm-hero {
-      padding: 40px;
+      padding: 40px 28px;
       text-align: center;
-      border-bottom: 1px solid rgba(6, 182, 212, 0.1);
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
     }
 
     .jdm-hero-title {
       font-size: 32px;
       font-weight: 700;
       margin: 0 0 8px;
-      color: #e2e8f0;
+      color: var(--text);
     }
 
     .jdm-hero-subtitle {
       font-size: 14px;
-      color: #94a3b8;
+      color: var(--muted2);
       margin: 0;
     }
 
-    /* MAIN LAYOUT - 2 Column on Desktop */
+    /* MAIN LAYOUT - 2 Column on Desktop, uses HireReady spacing */
     .jdm-main {
       flex: 1;
       display: grid;
       grid-template-columns: 1fr 420px;
-      gap: 24px;
-      padding: 40px;
+      gap: 22px;
+      padding: 28px;
       max-width: 1400px;
       margin: 0 auto;
       width: 100%;
@@ -109,6 +115,8 @@
     @media (max-width: 1024px) {
       .jdm-main {
         grid-template-columns: 1fr;
+        padding: 20px;
+        gap: 16px;
       }
       .jdm-sidebar {
         display: none;
@@ -118,12 +126,12 @@
       }
     }
 
-    /* NAV TABS */
+    /* NAV TABS - Match HireReady tab style */
     .jdm-nav {
       display: flex;
       gap: 8px;
       margin-bottom: 24px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      border-bottom: 1px solid var(--border);
       padding-bottom: 0;
     }
 
@@ -132,7 +140,7 @@
       background: transparent;
       border: none;
       border-bottom: 2px solid transparent;
-      color: #64748b;
+      color: var(--muted2);
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
@@ -143,12 +151,12 @@
     }
 
     .jdm-nav-btn:hover {
-      color: #cbd5e1;
+      color: var(--text);
     }
 
     .jdm-nav-btn.active {
-      color: #06b6d4;
-      border-bottom-color: #06b6d4;
+      color: var(--accentA);
+      border-bottom-color: var(--accentA);
     }
 
     /* PANEL CONTAINER */
@@ -172,7 +180,7 @@
       }
     }
 
-    /* FORM SECTION */
+    /* FORM SECTION - Match HireReady form styling */
     .jdm-form-group {
       margin-bottom: 24px;
     }
@@ -182,7 +190,7 @@
       margin-bottom: 8px;
       font-weight: 600;
       font-size: 13px;
-      color: #cbd5e1;
+      color: var(--text);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -190,7 +198,7 @@
     .jdm-hint {
       display: block;
       font-size: 12px;
-      color: #64748b;
+      color: var(--muted2);
       margin-bottom: 8px;
       font-weight: 400;
       text-transform: none;
@@ -201,10 +209,10 @@
     .jdm-textarea {
       width: 100%;
       padding: 12px 14px;
-      background: rgba(148, 163, 184, 0.05);
-      border: 1px solid rgba(148, 163, 184, 0.15);
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
       border-radius: 8px;
-      color: #e2e8f0;
+      color: var(--text);
       font-family: inherit;
       font-size: 14px;
       transition: all 0.2s ease;
@@ -213,9 +221,9 @@
     .jdm-input:focus,
     .jdm-textarea:focus {
       outline: none;
-      background: rgba(6, 182, 212, 0.05);
-      border-color: #06b6d4;
-      box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+      background: rgba(182, 156, 255, 0.06);
+      border-color: rgba(182, 156, 255, 0.4);
+      box-shadow: 0 0 0 3px rgba(182, 156, 255, 0.1);
     }
 
     .jdm-textarea {
@@ -226,9 +234,9 @@
 
     /* TARGET MATCH with SLIDER */
     .jdm-target-section {
-      background: rgba(148, 163, 184, 0.05);
-      border: 1px solid rgba(148, 163, 184, 0.1);
-      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
       padding: 18px;
       margin-bottom: 24px;
     }
@@ -250,21 +258,21 @@
       cursor: pointer;
       width: 16px;
       height: 16px;
-      accent-color: #06b6d4;
+      accent-color: var(--accentA);
     }
 
     .jdm-radio-option label {
       cursor: pointer;
       margin: 0;
       font-size: 13px;
-      color: #cbd5e1;
+      color: var(--text);
     }
 
     .jdm-slider-group {
       display: none;
       margin-top: 14px;
       padding-top: 14px;
-      border-top: 1px solid rgba(148, 163, 184, 0.1);
+      border-top: 1px solid var(--border);
     }
 
     .jdm-slider-group.active {
@@ -282,7 +290,7 @@
       flex: 1;
       height: 6px;
       border-radius: 3px;
-      background: rgba(148, 163, 184, 0.2);
+      background: rgba(255, 255, 255, 0.08);
       outline: none;
       -webkit-appearance: none;
     }
@@ -293,28 +301,28 @@
       width: 18px;
       height: 18px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #06b6d4, #0891b2);
+      background: linear-gradient(135deg, var(--accentA), var(--accentB));
       cursor: pointer;
-      box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
+      box-shadow: 0 2px 8px rgba(182, 156, 255, 0.4);
     }
 
     .jdm-slider::-moz-range-thumb {
       width: 18px;
       height: 18px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #06b6d4, #0891b2);
+      background: linear-gradient(135deg, var(--accentA), var(--accentB));
       cursor: pointer;
       border: none;
-      box-shadow: 0 2px 8px rgba(6, 182, 212, 0.3);
+      box-shadow: 0 2px 8px rgba(182, 156, 255, 0.4);
     }
 
     .jdm-slider-input {
       width: 70px;
       padding: 8px 10px;
-      background: rgba(6, 182, 212, 0.1);
-      border: 1px solid rgba(6, 182, 212, 0.3);
+      background: rgba(182, 156, 255, 0.1);
+      border: 1px solid rgba(182, 156, 255, 0.3);
       border-radius: 6px;
-      color: #06b6d4;
+      color: var(--accentA);
       font-weight: 600;
       font-size: 13px;
       text-align: center;
@@ -324,7 +332,7 @@
       min-width: 80px;
       text-align: right;
       font-size: 13px;
-      color: #06b6d4;
+      color: var(--accentA);
       font-weight: 600;
     }
 
@@ -341,9 +349,9 @@
 
     /* BASE RESUME */
     .jdm-resume-panel {
-      background: rgba(148, 163, 184, 0.05);
-      border: 1px solid rgba(148, 163, 184, 0.1);
-      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
       padding: 18px;
       margin-bottom: 24px;
     }
@@ -352,7 +360,7 @@
       display: flex;
       gap: 8px;
       margin-bottom: 14px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      border-bottom: 1px solid var(--border);
     }
 
     .jdm-resume-tab-btn {
@@ -360,15 +368,15 @@
       background: transparent;
       border: none;
       border-bottom: 2px solid transparent;
-      color: #64748b;
+      color: var(--muted2);
       font-size: 12px;
       cursor: pointer;
       transition: all 0.2s ease;
     }
 
     .jdm-resume-tab-btn.active {
-      color: #06b6d4;
-      border-bottom-color: #06b6d4;
+      color: var(--accentA);
+      border-bottom-color: var(--accentA);
     }
 
     .jdm-resume-content {
@@ -380,7 +388,7 @@
     }
 
     .jdm-upload-area {
-      border: 2px dashed rgba(6, 182, 212, 0.3);
+      border: 2px dashed rgba(182, 156, 255, 0.3);
       border-radius: 8px;
       padding: 20px;
       text-align: center;
@@ -390,8 +398,8 @@
     }
 
     .jdm-upload-area:hover {
-      border-color: rgba(6, 182, 212, 0.6);
-      background: rgba(6, 182, 212, 0.05);
+      border-color: rgba(182, 156, 255, 0.6);
+      background: rgba(182, 156, 255, 0.05);
     }
 
     .jdm-upload-area input {
@@ -399,7 +407,7 @@
     }
 
     .jdm-upload-text {
-      color: #94a3b8;
+      color: var(--muted2);
       font-size: 12px;
     }
 
@@ -411,10 +419,10 @@
     .jdm-btn-secondary {
       flex: 1;
       padding: 10px 12px;
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      border-radius: 6px;
-      background: rgba(148, 163, 184, 0.05);
-      color: #cbd5e1;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text);
       font-weight: 600;
       font-size: 12px;
       cursor: pointer;
@@ -422,17 +430,17 @@
     }
 
     .jdm-btn-secondary:hover {
-      background: rgba(148, 163, 184, 0.1);
-      border-color: rgba(148, 163, 184, 0.3);
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.12);
     }
 
-    /* PRIMARY BUTTON */
+    /* PRIMARY BUTTON - Match HireReady button style */
     .jdm-btn-primary {
       width: 100%;
       padding: 14px;
-      background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+      background: linear-gradient(135deg, var(--accentA) 0%, var(--accentB) 100%);
       border: none;
-      border-radius: 8px;
+      border-radius: 12px;
       color: white;
       font-weight: 600;
       font-size: 14px;
@@ -444,7 +452,7 @@
 
     .jdm-btn-primary:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 12px 24px rgba(6, 182, 212, 0.3);
+      box-shadow: 0 12px 24px rgba(182, 156, 255, 0.3);
     }
 
     .jdm-btn-primary:disabled {
@@ -453,14 +461,9 @@
     }
 
     .jdm-btn-primary.loading {
-      background: linear-gradient(90deg, #06b6d4 0%, #0891b2 50%, #06b6d4 100%);
+      background: linear-gradient(90deg, var(--accentA) 0%, var(--accentB) 50%, var(--accentA) 100%);
       background-size: 200% 100%;
       animation: shimmer 1.5s infinite;
-    }
-
-    @keyframes shimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
     }
 
     /* RIGHT SIDEBAR */
@@ -474,47 +477,27 @@
     }
 
     .jdm-card {
-      background: rgba(148, 163, 184, 0.05);
-      border: 1px solid rgba(6, 182, 212, 0.2);
-      border-radius: 8px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
       padding: 18px;
       backdrop-filter: blur(10px);
       transition: all 0.2s ease;
     }
 
     .jdm-card:hover {
-      border-color: rgba(6, 182, 212, 0.4);
-      background: rgba(6, 182, 212, 0.08);
-      box-shadow: 0 8px 32px rgba(6, 182, 212, 0.1);
+      border-color: rgba(182, 156, 255, 0.4);
+      background: rgba(182, 156, 255, 0.08);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     }
 
     .jdm-card-title {
       font-size: 12px;
       font-weight: 700;
-      color: #cbd5e1;
+      color: var(--text);
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-bottom: 12px;
-    }
-
-    .jdm-status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 8px;
-      background: rgba(34, 197, 94, 0.15);
-      border: 1px solid rgba(34, 197, 94, 0.3);
-      border-radius: 4px;
-      color: #22c55e;
-      font-size: 11px;
-      font-weight: 600;
-      margin: 6px 0;
-    }
-
-    .jdm-status-badge.empty {
-      color: #94a3b8;
-      background: rgba(148, 163, 184, 0.05);
-      border-color: rgba(148, 163, 184, 0.2);
     }
 
     .jdm-summary-item {
@@ -523,7 +506,7 @@
       font-size: 12px;
       margin-bottom: 8px;
       padding-bottom: 8px;
-      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+      border-bottom: 1px solid var(--border);
     }
 
     .jdm-summary-item:last-child {
@@ -533,11 +516,11 @@
     }
 
     .jdm-summary-label {
-      color: #64748b;
+      color: var(--muted2);
     }
 
     .jdm-summary-value {
-      color: #06b6d4;
+      color: var(--accentA);
       font-weight: 600;
     }
 
@@ -551,10 +534,10 @@
     .jdm-search-box,
     .jdm-sort-select {
       padding: 10px 12px;
-      background: rgba(148, 163, 184, 0.05);
-      border: 1px solid rgba(148, 163, 184, 0.15);
-      border-radius: 6px;
-      color: #cbd5e1;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
       font-size: 13px;
     }
 
@@ -572,45 +555,76 @@
       gap: 16px;
     }
 
+    /* TEMPLATE CARD - FIX FOR BLANK PREVIEWS */
     .jdm-template-card {
-      background: rgba(148, 163, 184, 0.05);
-      border: 2px solid rgba(148, 163, 184, 0.15);
-      border-radius: 8px;
+      background: var(--panel);
+      border: 2px solid var(--border);
+      border-radius: 12px;
       padding: 14px;
       text-align: center;
       cursor: pointer;
       transition: all 0.3s ease;
       position: relative;
+      display: flex;
+      flex-direction: column;
     }
 
     .jdm-template-card:hover {
-      border-color: rgba(6, 182, 212, 0.4);
-      background: rgba(6, 182, 212, 0.05);
+      border-color: rgba(182, 156, 255, 0.4);
+      background: rgba(182, 156, 255, 0.05);
       transform: translateY(-2px);
     }
 
     .jdm-template-card.selected {
-      border-color: #06b6d4;
-      background: rgba(6, 182, 212, 0.1);
+      border-color: var(--accentA);
+      background: rgba(182, 156, 255, 0.1);
     }
 
+    /* TEMPLATE PREVIEW - Now with image or fallback */
     .jdm-template-preview {
       width: 100%;
       height: 120px;
-      background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(148, 163, 184, 0.05) 100%);
-      border: 1px solid rgba(148, 163, 184, 0.1);
-      border-radius: 4px;
+      background: linear-gradient(135deg, rgba(182, 156, 255, 0.1) 0%, rgba(109, 169, 255, 0.08) 100%);
+      border: 1px solid var(--border);
+      border-radius: 8px;
       margin-bottom: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #64748b;
+      color: var(--muted2);
       font-size: 11px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .jdm-template-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    .jdm-template-preview.loading::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      animation: skeletonShimmer 1.5s infinite;
+    }
+
+    @keyframes skeletonShimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .jdm-template-preview.error {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.3);
     }
 
     .jdm-template-name {
       font-weight: 600;
-      color: #cbd5e1;
+      color: var(--text);
       margin-bottom: 6px;
       font-size: 12px;
     }
@@ -618,8 +632,8 @@
     .jdm-template-tag {
       display: inline-block;
       font-size: 10px;
-      color: #64748b;
-      background: rgba(148, 163, 184, 0.1);
+      color: var(--muted2);
+      background: rgba(255, 255, 255, 0.05);
       padding: 2px 6px;
       border-radius: 3px;
       margin-bottom: 8px;
@@ -628,10 +642,10 @@
     .jdm-template-select-btn {
       width: 100%;
       padding: 8px;
-      background: rgba(6, 182, 212, 0.15);
-      border: 1px solid rgba(6, 182, 212, 0.3);
+      background: rgba(182, 156, 255, 0.15);
+      border: 1px solid rgba(182, 156, 255, 0.3);
       border-radius: 6px;
-      color: #06b6d4;
+      color: var(--accentA);
       font-weight: 600;
       font-size: 11px;
       cursor: pointer;
@@ -639,7 +653,7 @@
     }
 
     .jdm-template-select-btn:hover {
-      background: rgba(6, 182, 212, 0.25);
+      background: rgba(182, 156, 255, 0.25);
     }
 
     .jdm-template-card.selected .jdm-template-select-btn {
@@ -661,6 +675,7 @@
       justify-content: center;
       color: white;
       font-weight: bold;
+      font-size: 14px;
     }
 
     .jdm-template-card.selected .jdm-template-checkmark {
@@ -681,17 +696,17 @@
     }
 
     .jdm-history-item {
-      background: rgba(148, 163, 184, 0.05);
-      border: 1px solid rgba(148, 163, 184, 0.1);
-      border-radius: 8px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
       padding: 0;
       overflow: hidden;
       transition: all 0.2s ease;
     }
 
     .jdm-history-item:hover {
-      border-color: rgba(6, 182, 212, 0.3);
-      background: rgba(6, 182, 212, 0.05);
+      border-color: rgba(182, 156, 255, 0.4);
+      background: rgba(182, 156, 255, 0.08);
     }
 
     .jdm-history-header {
@@ -705,18 +720,18 @@
 
     .jdm-history-title {
       font-weight: 600;
-      color: #cbd5e1;
+      color: var(--text);
       font-size: 13px;
     }
 
     .jdm-history-meta {
       font-size: 11px;
-      color: #64748b;
+      color: var(--muted2);
       margin-top: 2px;
     }
 
     .jdm-history-expand-icon {
-      color: #64748b;
+      color: var(--accentA);
       font-size: 18px;
       transition: transform 0.2s ease;
     }
@@ -728,7 +743,7 @@
     .jdm-history-content {
       display: none;
       padding: 0 14px 14px;
-      border-top: 1px solid rgba(148, 163, 184, 0.1);
+      border-top: 1px solid var(--border);
     }
 
     .jdm-history-item.expanded .jdm-history-content {
@@ -744,21 +759,25 @@
     }
 
     .jdm-history-metric {
-      background: rgba(6, 182, 212, 0.1);
+      background: rgba(182, 156, 255, 0.1);
       padding: 8px;
-      border-radius: 4px;
+      border-radius: 8px;
+      border: 1px solid rgba(182, 156, 255, 0.2);
     }
 
     .jdm-history-metric-label {
-      color: #64748b;
+      color: var(--muted2);
       display: block;
       margin-bottom: 2px;
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.5px;
     }
 
     .jdm-history-metric-value {
-      color: #06b6d4;
-      font-weight: 600;
-      font-size: 12px;
+      color: var(--accentA);
+      font-weight: 700;
+      font-size: 14px;
     }
 
     .jdm-history-actions {
@@ -772,7 +791,7 @@
       min-width: 60px;
       padding: 6px 8px;
       border: none;
-      border-radius: 4px;
+      border-radius: 8px;
       font-size: 11px;
       cursor: pointer;
       transition: all 0.2s ease;
@@ -780,54 +799,57 @@
     }
 
     .jdm-action-btn.view {
-      background: rgba(6, 182, 212, 0.2);
-      color: #06b6d4;
-      border: 1px solid rgba(6, 182, 212, 0.3);
+      background: rgba(182, 156, 255, 0.15);
+      color: var(--accentA);
+      border: 1px solid rgba(182, 156, 255, 0.3);
     }
 
     .jdm-action-btn.view:hover {
-      background: rgba(6, 182, 212, 0.3);
+      background: rgba(182, 156, 255, 0.25);
+      transform: scale(1.02);
     }
 
     .jdm-action-btn.download {
-      background: rgba(106, 90, 205, 0.2);
-      color: #8b7acd;
-      border: 1px solid rgba(106, 90, 205, 0.3);
+      background: rgba(34, 197, 94, 0.15);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
     }
 
     .jdm-action-btn.download:hover {
-      background: rgba(106, 90, 205, 0.3);
+      background: rgba(34, 197, 94, 0.25);
+      transform: scale(1.02);
     }
 
     .jdm-action-btn.delete {
-      background: rgba(239, 68, 68, 0.2);
+      background: rgba(239, 68, 68, 0.15);
       color: #ef4444;
       border: 1px solid rgba(239, 68, 68, 0.3);
     }
 
     .jdm-action-btn.delete:hover {
-      background: rgba(239, 68, 68, 0.3);
+      background: rgba(239, 68, 68, 0.25);
+      transform: scale(1.02);
     }
 
     /* SETTINGS */
     .jdm-settings-item {
-      background: rgba(148, 163, 184, 0.05);
-      border: 1px solid rgba(148, 163, 184, 0.1);
-      border-radius: 8px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
       padding: 18px;
       margin-bottom: 16px;
     }
 
     .jdm-settings-item-title {
       font-weight: 600;
-      color: #cbd5e1;
+      color: var(--text);
       margin-bottom: 8px;
       font-size: 13px;
     }
 
     .jdm-settings-item-text {
       font-size: 12px;
-      color: #94a3b8;
+      color: var(--muted2);
       line-height: 1.5;
       margin-bottom: 12px;
     }
@@ -836,7 +858,7 @@
       padding: 10px 12px;
       background: rgba(239, 68, 68, 0.15);
       border: 1px solid rgba(239, 68, 68, 0.3);
-      border-radius: 6px;
+      border-radius: 8px;
       color: #ef4444;
       font-weight: 600;
       font-size: 12px;
@@ -846,6 +868,7 @@
 
     .jdm-btn-danger:hover {
       background: rgba(239, 68, 68, 0.25);
+      transform: scale(1.02);
     }
 
     /* RESULTS SECTION */
@@ -866,16 +889,23 @@
     }
 
     .jdm-metric-card {
-      background: rgba(6, 182, 212, 0.1);
-      border: 1px solid rgba(6, 182, 212, 0.2);
-      border-radius: 8px;
+      background: rgba(182, 156, 255, 0.1);
+      border: 1px solid rgba(182, 156, 255, 0.2);
+      border-radius: 12px;
       padding: 14px;
       text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .jdm-metric-card:hover {
+      border-color: rgba(182, 156, 255, 0.4);
+      background: rgba(182, 156, 255, 0.15);
+      transform: translateY(-2px);
     }
 
     .jdm-metric-label {
       font-size: 11px;
-      color: #94a3b8;
+      color: var(--muted2);
       margin-bottom: 6px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -884,16 +914,16 @@
     .jdm-metric-value {
       font-size: 28px;
       font-weight: 700;
-      color: #06b6d4;
+      color: var(--accentA);
     }
 
     .jdm-preview-btn {
       width: 100%;
       padding: 12px;
-      background: rgba(168, 85, 247, 0.15);
-      border: 1px solid rgba(168, 85, 247, 0.3);
-      border-radius: 8px;
-      color: #a855f7;
+      background: rgba(182, 156, 255, 0.15);
+      border: 1px solid rgba(182, 156, 255, 0.3);
+      border-radius: 12px;
+      color: var(--accentA);
       font-weight: 600;
       font-size: 13px;
       cursor: pointer;
@@ -902,7 +932,9 @@
     }
 
     .jdm-preview-btn:hover {
-      background: rgba(168, 85, 247, 0.25);
+      background: rgba(182, 156, 255, 0.25);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(182, 156, 255, 0.3);
     }
 
     .jdm-download-group {
@@ -914,7 +946,7 @@
     .jdm-download-btn {
       padding: 10px;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       font-weight: 600;
       font-size: 11px;
       cursor: pointer;
@@ -922,33 +954,36 @@
     }
 
     .jdm-download-btn.pdf {
-      background: rgba(244, 63, 94, 0.2);
-      color: #f43f5e;
-      border: 1px solid rgba(244, 63, 94, 0.3);
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
     }
 
     .jdm-download-btn.pdf:hover {
-      background: rgba(244, 63, 94, 0.3);
+      background: rgba(239, 68, 68, 0.25);
+      transform: scale(1.02);
     }
 
     .jdm-download-btn.doc {
-      background: rgba(59, 130, 246, 0.2);
-      color: #3b82f6;
-      border: 1px solid rgba(59, 130, 246, 0.3);
+      background: rgba(109, 169, 255, 0.15);
+      color: var(--accentB);
+      border: 1px solid rgba(109, 169, 255, 0.3);
     }
 
     .jdm-download-btn.doc:hover {
-      background: rgba(59, 130, 246, 0.3);
+      background: rgba(109, 169, 255, 0.25);
+      transform: scale(1.02);
     }
 
     .jdm-download-btn.html {
-      background: rgba(34, 197, 94, 0.2);
+      background: rgba(34, 197, 94, 0.15);
       color: #22c55e;
       border: 1px solid rgba(34, 197, 94, 0.3);
     }
 
     .jdm-download-btn.html:hover {
-      background: rgba(34, 197, 94, 0.3);
+      background: rgba(34, 197, 94, 0.25);
+      transform: scale(1.02);
     }
 
     /* TOAST */
@@ -956,27 +991,36 @@
       position: fixed;
       bottom: 20px;
       right: 20px;
-      padding: 12px 16px;
-      background: rgba(30, 41, 59, 0.95);
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      border-radius: 6px;
-      color: #e2e8f0;
-      font-size: 12px;
+      padding: 14px 18px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
       z-index: 9999;
       animation: slideInRight 0.3s ease;
       backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      max-width: 350px;
     }
 
     .jdm-toast.success {
       border-color: rgba(34, 197, 94, 0.3);
-      background: rgba(34, 197, 94, 0.1);
-      color: #22c55e;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: white;
     }
 
     .jdm-toast.error {
       border-color: rgba(239, 68, 68, 0.3);
-      background: rgba(239, 68, 68, 0.1);
-      color: #ef4444;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: white;
+    }
+
+    .jdm-toast.info {
+      border-color: rgba(182, 156, 255, 0.3);
+      background: linear-gradient(135deg, var(--accentA), var(--accentB));
+      color: white;
     }
 
     @keyframes slideInRight {
@@ -1241,7 +1285,8 @@
     const TEMPLATES = Array.from({length: 12}, (_, i) => ({
       id: `template_${String(i + 1).padStart(2, '0')}`,
       name: `Template ${String(i + 1).padStart(2, '0')}`,
-      tag: ['Modern', 'Clean', 'Professional', 'Classic'][i % 4]
+      tag: ['Modern', 'Clean', 'Professional', 'Classic'][i % 4],
+      previewThumbnail: `https://via.placeholder.com/300x400/6B46C1/FFFFFF?text=Template+${String(i + 1).padStart(2, '0')}`
     }));
 
     // ========================
@@ -1367,7 +1412,12 @@
       grid.innerHTML = TEMPLATES.map(template => `
         <div class="jdm-template-card ${selectedTemplate === template.id ? 'selected' : ''}" onclick="selectTemplate('${template.id}')">
           <div class="jdm-template-checkmark">✓</div>
-          <div class="jdm-template-preview"></div>
+          <div class="jdm-template-preview loading">
+            <img src="${template.previewThumbnail}" 
+                 alt="${template.name}" 
+                 onload="this.parentElement.classList.remove('loading')"
+                 onerror="this.parentElement.classList.add('error'); this.parentElement.innerHTML='<div style=\\'text-align:center;color:var(--muted2);font-size:11px;\\'>Preview unavailable</div>'"/>
+          </div>
           <div class="jdm-template-name">${template.name}</div>
           <span class="jdm-template-tag">${template.tag}</span>
           <button type="button" class="jdm-template-select-btn">${selectedTemplate === template.id ? '✓ Selected' : 'Select'}</button>
@@ -1388,7 +1438,12 @@
       grid.innerHTML = filtered.map(template => `
         <div class="jdm-template-card ${selectedTemplate === template.id ? 'selected' : ''}" onclick="selectTemplate('${template.id}')">
           <div class="jdm-template-checkmark">✓</div>
-          <div class="jdm-template-preview"></div>
+          <div class="jdm-template-preview loading">
+            <img src="${template.previewThumbnail}" 
+                 alt="${template.name}" 
+                 onload="this.parentElement.classList.remove('loading')"
+                 onerror="this.parentElement.classList.add('error'); this.parentElement.innerHTML='<div style=\\'text-align:center;color:var(--muted2);font-size:11px;\\'>Preview unavailable</div>'"/>
+          </div>
           <div class="jdm-template-name">${template.name}</div>
           <span class="jdm-template-tag">${template.tag}</span>
           <button type="button" class="jdm-template-select-btn">${selectedTemplate === template.id ? '✓ Selected' : 'Select'}</button>
