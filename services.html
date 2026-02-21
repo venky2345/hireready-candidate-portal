@@ -1,0 +1,3584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- TEST CHECKLIST: 1) Open services.html?cid=... from admin.html 2) Console shows FIREBASE_PROJECT_OK hirereadyservices-9a8de and AUTH_STATE email 3) SERVICES_ADMIN_CHECK isAdmin true 4) Save a service with no permission errors -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HireReady Services - Admin Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+  <!-- Premium SaaS Header -->
+  <header class="hr-topbar" id="mainTopbar" style="display: none;">
+    <div class="hr-topbar__inner">
+      <!-- Left Zone: Back Button -->
+      <div class="hr-topbar__left">
+        <a id="backToAdminLink" href="admin.html" class="hr-btn hr-btn--ghost">
+          <span class="hr-btn__icon">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 18l-6-6 6-6"/>
+              <path d="M9 12h12"/>
+            </svg>
+          </span>
+          <span class="hr-btn__text">Back</span>
+        </a>
+      </div>
+
+      <!-- Center Zone: Brand Title (Cinematic) -->
+      <div class="hr-topbar__center">
+        <div class="hr-brand" aria-label="HireReady Suite">
+          <span class="hr-brand__title">HireReady Suite</span>
+        </div>
+      </div>
+
+      <!-- Right Zone: Action Buttons (hide for candidates) -->
+      <div class="hr-topbar__right">
+        <button class="hr-btn hr-btn--ghost" id="refreshBtn" onclick="loadAllData()" title="Refresh data">
+          <span class="hr-btn__icon">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12a9 9 0 0 1-15.4 6.4"/>
+              <path d="M3 12a9 9 0 0 1 15.4-6.4"/>
+              <path d="M3 16v2h2"/>
+              <path d="M21 8V6h-2"/>
+            </svg>
+          </span>
+          <span class="hr-btn__text">Refresh</span>
+        </button>
+        <button class="hr-btn hr-btn--primary" onclick="saveAll()" id="saveAllBtn" title="Save all changes">
+          <span class="hr-btn__icon">
+            <svg viewBox="0 0 24 24" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <path d="M17 21v-8H7v8"/>
+              <path d="M7 3v5h8"/>
+            </svg>
+          </span>
+          <span class="hr-btn__text">Save All</span>
+        </button>
+        <!-- Candidate Controls (show for candidates) -->
+        <div id="candidateTopbarArea" style="display:none; align-items:center; gap:10px;">
+          <div style="position: relative;">
+            <button id="candidateProfileBtn" class="candidate-profile-btn" title="Profile Menu" aria-label="Profile Menu">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+              </svg>
+              <span class="candidate-profile-btn__text">Profile</span>
+            </button>
+            <div id="candidateProfileDropdown" class="candidate-profile-dropdown" style="display:none;">
+              <div class="candidate-profile-header">
+                <div class="candidate-profile-icon">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                  </svg>
+                </div>
+                <div id="dropdownCandidateName" class="candidate-profile-name">Loading...</div>
+              </div>
+              <div id="dropdownCandidateId" class="candidate-profile-id">ID: -</div>
+              <div id="dropdownCandidateStatus" class="candidate-profile-status">
+                <span class="candidate-profile-status-label">Status:</span>
+                <span class="candidate-status-pill sub-pill-active">ACTIVE</span>
+              </div>
+              <div class="candidate-profile-divider"></div>
+              <div class="candidate-profile-info-list">
+                <div class="candidate-profile-info-row">
+                  <span class="candidate-profile-info-label">Plan:</span>
+                  <span id="dropdownCandidatePlan" class="candidate-profile-info-value">-</span>
+                </div>
+                <div class="candidate-profile-info-row">
+                  <span class="candidate-profile-info-label">Ends On:</span>
+                  <span id="dropdownCandidateEndsOn" class="candidate-profile-info-value">-</span>
+                </div>
+                <div class="candidate-profile-info-row">
+                  <span class="candidate-profile-info-label">Period:</span>
+                  <span id="dropdownCandidatePeriod" class="candidate-profile-info-value">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="hr-btn hr-btn--ghost" id="candidateLogoutBtn" style="display:none;" title="Logout">Logout</button>
+        </div>
+      </div>
+    </div>
+  </header>
+  <style>
+    /* Premium SaaS Header Layout */
+    .hr-topbar {
+      position: sticky;
+      top: 0;
+      width: 100%;
+      left: 0;
+      z-index: 100;
+      height: 68px;
+      background: #0f121c;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-left: 24px;
+      padding-right: 24px;
+    }
+
+    .hr-topbar__inner {
+      max-width: none;
+      width: 100%;
+      padding: 0;
+      margin: 0 auto;
+      height: 100%;
+      display: grid;
+      grid-template-columns: 0 1fr 0;
+      align-items: center;
+      gap: 0;
+      justify-items: center;
+    }
+
+    .hr-topbar__left {
+      justify-self: start;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hr-topbar__center {
+      justify-self: center;
+    }
+
+    .hr-topbar__right {
+      justify-self: end;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Cinematic Brand Title */
+    .hr-brand {
+      position: relative;
+      display: inline-block;
+      padding: 0 12px;
+    }
+
+    .hr-brand__title {
+      position: relative;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #a78bfa 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      white-space: nowrap;
+      z-index: 1;
+    }
+
+    /* Soft Radiant Glow Behind Title */
+    .hr-brand::before {
+      content: '';
+      position: absolute;
+      inset: -8px;
+      background: radial-gradient(
+        ellipse 600px 70px at 50% 50%,
+        rgba(129, 140, 248, 0.12),
+        transparent
+      );
+      filter: blur(14px);
+      opacity: 0.7;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* Soft Beam Underline */
+    .hr-brand::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(129, 140, 248, 0.35) 50%,
+        transparent
+      );
+      opacity: 0.6;
+    }
+
+    /* Cinematic Light Sweep Animation */
+    .hr-brand__title::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.12) 50%,
+        transparent 100%
+      );
+      animation: cinematicSweep 8s ease-in-out infinite;
+      pointer-events: none;
+      mix-blend-mode: overlay;
+    }
+
+    @keyframes cinematicSweep {
+      0%, 100% {
+        transform: translateX(-200%);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      50% {
+        transform: translateX(0%);
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateX(200%);
+        opacity: 0;
+      }
+    }
+
+    /* Premium Button Styles */
+    .hr-btn {
+      height: 40px;
+      padding: 0 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.92);
+      text-decoration: none;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+      transition: transform 200ms ease, background 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+    }
+
+    .hr-btn--ghost {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+    }
+
+    .hr-btn--ghost:hover {
+      background: rgba(255, 255, 255, 0.10);
+      border-color: rgba(216, 180, 254, 0.35);
+      box-shadow: 0 8px 24px rgba(216, 180, 254, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .hr-btn--primary {
+      background: rgba(216, 180, 254, 0.16);
+      border: 1px solid rgba(216, 180, 254, 0.30);
+    }
+
+    .hr-btn--primary:hover {
+      background: rgba(216, 180, 254, 0.24);
+      border-color: rgba(216, 180, 254, 0.45);
+      box-shadow: 0 8px 24px rgba(216, 180, 254, 0.20);
+      transform: translateY(-1px);
+    }
+
+    .hr-btn:active {
+      transform: translateY(0);
+    }
+
+    .hr-btn__icon {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hr-btn__icon svg {
+      width: 100%;
+      height: 100%;
+      stroke: currentColor;
+      fill: none;
+    }
+
+    .hr-btn__text {
+      display: inline;
+    }
+
+    /* Responsive Behavior */
+    @media (max-width: 720px) {
+      .hr-btn__text {
+        display: none;
+      }
+      .hr-topbar {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+      .hr-brand__title {
+        font-size: 16px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hr-topbar {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+      .hr-brand__title {
+        font-size: 14px;
+      }
+    }
+
+    .main-content {
+      padding-top: 0;
+    }
+  </style>
+
+  <!-- File Protocol Warning Banner (shows only on file:// protocol) -->
+  <div id="fileProtocolWarning" style="display: none; background: rgba(255, 207, 90, 0.08); border-bottom: 1px solid rgba(255, 207, 90, 0.3); padding: 14px 24px; text-align: center; font-size: 14px; color: var(--warn); backdrop-filter: blur(8px);">
+    <span style="display: inline-flex; align-items: center; gap: 8px;">
+      <strong>⚠ Warning:</strong> Running from <code style="background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px; font-size: 13px;">file://</code> protocol. For proper authentication and session sharing, please use a local server (http://localhost) or Netlify URL.
+    </span>
+  </div>
+
+  <!-- Login Screen (shown when not authenticated) -->
+  <div id="loginScreen" style="display: none; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <div style="width: 100%; max-width: 420px; background: var(--card); border-radius: 16px; box-shadow: var(--shadow-lg); overflow: hidden;">
+      <div style="background: var(--accent); color: white; padding: 32px 24px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 12px;">
+        <span class="ico-tile" aria-hidden="true" style="background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.25); color: white;"><svg viewBox="0 0 24 24"><path d="M12 2l1.2 4.1L17 7.3l-3.8 1.2L12 12l-1.2-3.5L7 7.3l3.8-1.2z"/><path d="M19 11l.8 2.7L22 14.5l-2.2.8L19 18l-.8-2.7-2.2-.8 2.2-.8z"/><path d="M6 13l.7 2.3L9 16l-2.3.7L6 19l-.7-2.3L3 16l2.3-.7z"/></svg></span>
+        <div>
+          <h1 style="font-size: 28px; margin-bottom: 8px;">HireReady Services</h1>
+          <p style="opacity: 0.9; font-size: 14px;">Admin Access Required</p>
+        </div>
+      </div>
+      <div style="padding: 32px 24px;">
+        <div id="loginError" class="error-message" style="display: none; background: var(--danger-light); color: var(--danger); padding: 12px 16px; border-radius: var(--radius); font-size: 14px; margin-bottom: 20px; border-left: 4px solid var(--danger);"></div>
+        
+        <form onsubmit="handleAdminLogin(event)">
+          <div class="form-group">
+            <label class="form-label" for="adminLoginEmail">Admin Email</label>
+            <input type="email" class="form-input" id="adminLoginEmail" placeholder="admin@example.com" required autocomplete="email">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="adminLoginPassword">Password</label>
+            <input type="password" class="form-input" id="adminLoginPassword" placeholder="Enter your password" required autocomplete="current-password">
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="adminLoginBtn" style="width: 100%;">
+            Sign In as Admin
+          </button>
+        </form>
+
+        <p style="margin-top: 20px; text-align: center; font-size: 13px; color: var(--text-muted);">
+          <a href="admin.html" style="color: var(--accent); text-decoration: none;">← Back to Admin Console</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Access Denied Screen -->
+  <div id="accessDeniedScreen" style="display: none; min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 24px;">
+    <span class="ico-tile" aria-hidden="true" style="background: rgba(182,156,255,0.10); border-color: rgba(182,156,255,0.22); margin-bottom: 16px;"><svg viewBox="0 0 24 24"><path d="M22 12a10 10 0 1 0-10 10 10 10 0 0 0 10-10z"/><path d="M15 9l-6 6"/><path d="M9 9l6 6"/></svg></span>
+    <h2 style="font-size: 24px; margin-bottom: 12px;">Access Denied</h2>
+    <p style="color: var(--text-muted); font-size: 16px; margin-bottom: 24px; text-align: center;" id="accessDeniedMessage">
+      This page is for administrators only.
+    </p>
+    <a href="admin.html" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px;"><span class="ico-tile sm" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/><path d="M9 12h12"/></svg></span>Back to Admin Console</a>
+  </div>
+
+  <!-- No Candidate Selected Screen -->
+  <div id="noCandidateScreen" style="display: none; min-height: 100vh; display: flex; align-items: center; justify-content: center; flex-direction: column; padding: 24px;">
+    <span class="ico-tile" aria-hidden="true" style="background: rgba(182,156,255,0.10); border-color: rgba(182,156,255,0.22); margin-bottom: 16px; opacity: 0.5;"><svg viewBox="0 0 24 24"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h6"/></svg></span>
+    <h2 style="font-size: 24px; margin-bottom: 12px;">No Candidate Selected</h2>
+    <p style="color: var(--text-muted); font-size: 16px; margin-bottom: 24px; text-align: center;">
+      Please select a candidate from the Admin Console first.
+    </p>
+    <a href="admin.html" class="btn btn-primary">← Back to Admin Console</a>
+  </div>
+
+  <!-- Checking Access Screen -->
+  <div id="checkingAccessScreen" style="display: flex; min-height: 100vh; align-items: center; justify-content: center; flex-direction: column; padding: 24px;">
+    <div style="width: 48px; height: 48px; border: 4px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 16px;"></div>
+    <p style="color: var(--text-muted); font-size: 16px;">Checking access...</p>
+  </div>
+
+  <!-- Main Layout -->
+  <div class="layout" id="mainLayout" style="display: none;">
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+      <div class="container">
+        <!-- Loading State -->
+        <div id="loadingState">
+          <div class="card">
+            <div class="skeleton skeleton-text" style="width: 40%;"></div>
+            <div class="skeleton skeleton-text" style="width: 60%;"></div>
+            <div class="skeleton skeleton-input"></div>
+            <div class="skeleton skeleton-input"></div>
+            <div class="skeleton skeleton-input"></div>
+          </div>
+        </div>
+
+        <!-- Info Row - 2-Column Grid (Desktop) -->
+        <div id="infoRow" class="info-row" style="display: none;">
+          <div class="hrx-centerStack">
+            <div class="card" id="candidateInfoBlock">
+              <div class="title" style="margin-bottom: 10px;">Candidate</div>
+              <div class="candidate-info-name" id="candName">Loading...</div>
+              <div class="candidate-info-id" id="candId">Candidate ID: -</div>
+            </div>
+            <div class="card" id="subscriptionCard">
+              <div class="title">Subscription Summary</div>
+              <div class="subscription-pill-wrapper">
+                <span class="sub-pill sub-pill-active" id="subStatus">ACTIVE</span>
+              </div>
+              <div class="hrx-subGrid">
+                <div class="hrx-subTile" data-kind="plan">
+                  <div class="hrx-subLabel">PLAN</div>
+                  <div class="hrx-subValue" id="subPlan">Standard</div>
+                </div>
+                <div class="hrx-subTile" data-kind="endsOn">
+                  <div class="hrx-subLabel">ENDS ON</div>
+                  <div class="hrx-subValue" id="subEndsOn">-</div>
+                </div>
+                <div class="hrx-subTile" data-kind="period">
+                  <div class="hrx-subLabel">PERIOD</div>
+                  <div class="hrx-subValue" id="subPeriod">-</div>
+                </div>
+                <div class="hrx-subTile" data-kind="status">
+                  <div class="hrx-subLabel">STATUS</div>
+                  <div class="hrx-subValue" id="subStatusValue">ACTIVE</div>
+                </div>
+              </div>
+            </div>
+          
+          <!-- Subscription Management Panel (Admin Only) -->
+          <div class="hrx-subManageCard" id="subscriptionMgmtPanel" style="display: none;">
+            <div class="subscription-panel-card" style="background: rgba(31, 27, 46, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(182, 156, 255, 0.15); border-radius: 16px; padding: 28px; box-shadow: 0 8px 32px rgba(182, 156, 255, 0.08);">
+              <div class="subscription-panel-title" style="font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 24px; text-align: center;">Subscription Management</div>
+              
+              <div class="subscription-form-row">
+                <div class="subscription-form-group">
+                  <label class="subscription-form-label">Plan Type</label>
+                  <select id="subscriptionPlanSelect" class="subscription-form-select">
+                    <option value="demo3days">Demo (3 Days)</option>
+                    <option value="demo7days">Demo (7 Days)</option>
+                    <option value="1month">1 Month</option>
+                    <option value="2months">2 Months</option>
+                    <option value="3months">3 Months</option>
+                    <option value="6months">6 Months</option>
+                    <option value="12months">12 Months</option>
+                  </select>
+                </div>
+
+                <div class="subscription-form-group">
+                  <label class="subscription-form-label">Start Date</label>
+                  <input type="date" id="subscriptionStartDate" class="subscription-form-input">
+                </div>
+
+                <div class="subscription-form-group">
+                  <label class="subscription-form-label">End Date (Auto)</label>
+                  <input type="date" id="subscriptionEndDate" class="subscription-form-input" readonly>
+                </div>
+
+                <div class="subscription-form-group">
+                  <label class="subscription-form-label">Status</label>
+                  <div class="subscription-status-control" role="radiogroup" aria-label="Subscription status">
+                    <label class="subscription-status-option">
+                      <input type="radio" name="subscriptionStatusControl" id="subscriptionStatusActive" value="ACTIVE">
+                      <span class="subscription-status-text">ACTIVE</span>
+                    </label>
+                    <label class="subscription-status-option">
+                      <input type="radio" name="subscriptionStatusControl" id="subscriptionStatusInactive" value="INACTIVE">
+                      <span class="subscription-status-text">INACTIVE</span>
+                    </label>
+                    <label class="subscription-status-option">
+                      <input type="radio" name="subscriptionStatusControl" id="subscriptionStatusOnHold" value="ON HOLD">
+                      <span class="subscription-status-text">ON HOLD</span>
+                    </label>
+                  </div>
+                  <div style="margin-top: 8px;">
+                    <span class="subscription-status-pill" id="subscriptionStatusPill">ACTIVE</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display: flex; gap: 12px; margin-top: 20px;">
+                <button class="btn-subscription-save" onclick="saveSubscription()">Apply Plan</button>
+                <button class="btn-subscription-reset" onclick="refreshSubscriptionStatus()">Refresh Status</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Resume History (show for candidates only) -->
+        <div class="card" id="resumeHistoryCard" style="display: none;">
+          <div class="title" style="margin-bottom: 16px;">My Generated Resumes</div>
+          <div id="resumeHistoryList" style="display: none;">
+            <div style="max-height: 500px; overflow-y: auto;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                <thead>
+                  <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: var(--muted);">
+                    <th style="padding: 12px 8px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Date</th>
+                    <th style="padding: 12px 8px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Company</th>
+                    <th style="padding: 12px 8px; text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Role</th>
+                    <th style="padding: 12px 8px; text-align: center; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">JD Match</th>
+                    <th style="padding: 12px 8px; text-align: center; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Skills</th>
+                  </tr>
+                </thead>
+                <tbody id="resumeHistoryTableBody">
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div id="resumeHistoryEmpty" style="text-align: center; padding: 32px 24px; color: var(--muted);">
+            <p style="font-size: 14px;">No generated resumes in the last 15 days</p>
+          </div>
+        </div>
+      </div>
+      <style>
+        /* Info Row Layout */
+        .info-row {
+          margin: 0 auto 40px;
+        }
+        
+        /* Centered Stack Wrapper */
+        .hrx-centerStack {
+          width: 100%;
+          max-width: 760px;
+          margin: 0 auto;
+          display: flex;
+          flex-direction: column;
+          gap: 18px;
+        }
+
+        .hrx-subGrid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 14px;
+        }
+        
+        .hrx-subTile {
+          border-radius: 14px;
+          background: rgba(20, 18, 28, 0.45);
+          border: 1px solid rgba(255, 255, 255, 0.10);
+          padding: 16px 18px;
+          min-height: 92px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          gap: 8px;
+        }
+        
+        .hrx-subLabel {
+          font-size: 12px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+          opacity: 0.70;
+          color: var(--muted);
+        }
+        
+        .hrx-subValue {
+          font-size: 18px;
+          font-weight: 700;
+          line-height: 1.25;
+          color: var(--text);
+        }
+        
+        .hrx-subTile[data-kind="period"] .hrx-subValue {
+          font-size: 16px;
+          line-height: 1.25;
+        }
+        
+        /* Resume History Table Styles */
+        #resumeHistoryTableBody tr {
+          border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+          transition: background-color 0.2s;
+        }
+        #resumeHistoryTableBody tr:hover {
+          background-color: rgba(182, 156, 255, 0.05);
+          cursor: pointer;
+        }
+        #resumeHistoryTableBody td {
+          padding: 14px 8px;
+          color: var(--text);
+        }
+        .resume-history-match {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 48px;
+          height: 28px;
+          border-radius: 8px;
+          font-weight: 600;
+          font-size: 13px;
+        }
+        .resume-history-match.high {
+          background: rgba(76, 175, 80, 0.18);
+          color: #81c784;
+        }
+        .resume-history-match.medium {
+          background: rgba(255, 152, 0, 0.18);
+          color: #ffb74d;
+        }
+        .resume-history-match.low {
+          background: rgba(244, 67, 54, 0.18);
+          color: #ef5350;
+        }
+        
+        /* Subscription Management Card Width */
+        .hrx-subManageCard {
+          width: 100%;
+          max-width: 100%;
+          margin: 0;
+        }
+        
+        /* Subscription Form Styles */
+        .subscription-form-row {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 20px;
+          margin-bottom: 20px;
+        }
+        .subscription-form-group {
+          display: flex;
+          flex-direction: column;
+        }
+        .subscription-form-label {
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--text);
+          margin-bottom: 8px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .subscription-form-select,
+        .subscription-form-input {
+          padding: 10px 14px;
+          background: rgba(20, 18, 30, 0.5);
+          border: 1px solid rgba(182, 156, 255, 0.2);
+          border-radius: 8px;
+          color: var(--text);
+          font-size: 14px;
+          transition: all 0.2s;
+        }
+        .subscription-form-select:focus,
+        .subscription-form-input:focus {
+          outline: none;
+          border-color: rgba(182, 156, 255, 0.5);
+          box-shadow: 0 0 0 3px rgba(182, 156, 255, 0.1);
+        }
+        .subscription-form-input[readonly] {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        .subscription-status-control {
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+        .subscription-status-option {
+          position: relative;
+        }
+        .subscription-status-option input {
+          position: absolute;
+          opacity: 0;
+          pointer-events: none;
+        }
+        .subscription-status-text {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          padding: 8px 12px;
+          border-radius: 10px;
+          font-size: 12px;
+          font-weight: 600;
+          color: var(--text);
+          background: rgba(255, 255, 255, 0.04);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .subscription-status-option input:checked + .subscription-status-text {
+          background: rgba(182, 156, 255, 0.18);
+          border-color: rgba(182, 156, 255, 0.35);
+          box-shadow: 0 4px 12px rgba(182, 156, 255, 0.12);
+        }
+        .subscription-status-pill {
+          display: inline-block;
+          padding: 6px 16px;
+          border-radius: 20px;
+          font-size: 13px;
+          font-weight: 700;
+          text-transform: uppercase;
+        }
+        .subscription-status-pill.is-active {
+          background: rgba(34, 197, 94, 0.18);
+          border: 1px solid rgba(34, 197, 94, 0.35);
+          color: #86efac;
+        }
+        .subscription-status-pill.is-inactive {
+          background: rgba(239, 68, 68, 0.16);
+          border: 1px solid rgba(239, 68, 68, 0.35);
+          color: #fecaca;
+        }
+        .btn-subscription-save,
+        .btn-subscription-reset {
+          padding: 12px 24px;
+          border-radius: 10px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s;
+          border: none;
+        }
+        .btn-subscription-save {
+          background: linear-gradient(135deg, rgba(182, 156, 255, 0.3) 0%, rgba(182, 156, 255, 0.2) 100%);
+          color: rgba(210, 190, 255, 0.95);
+          border: 1px solid rgba(182, 156, 255, 0.4);
+        }
+        .btn-subscription-save:hover {
+          background: linear-gradient(135deg, rgba(182, 156, 255, 0.4) 0%, rgba(182, 156, 255, 0.3) 100%);
+          box-shadow: 0 4px 16px rgba(182, 156, 255, 0.2);
+        }
+        .btn-subscription-reset {
+          background: rgba(255, 255, 255, 0.05);
+          color: var(--muted);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .btn-subscription-reset:hover {
+          background: rgba(255, 255, 255, 0.08);
+          color: var(--text);
+        }
+
+        /* Part B: Center align candidate info card */
+        #candidateInfoBlock .title {
+          text-align: center;
+        }
+        #candidateInfoBlock .candidate-info-name,
+        #candidateInfoBlock .candidate-info-id {
+          text-align: center;
+        }
+
+        /* Center align subscription card */
+        #subscriptionCard .title {
+          text-align: center;
+        }
+        #subscriptionCard .subscription-pill-wrapper {
+          display: flex;
+          justify-content: center;
+          margin-top: 16px;
+          margin-bottom: 16px;
+        }
+
+        /* Part C: Green ACTIVE pill */
+        #subscriptionCard .sub-pill-active {
+          background: rgba(34, 197, 94, 0.18);
+          border-color: rgba(34, 197, 94, 0.35);
+          color: #86efac;
+        }
+
+        /* Red INACTIVE pill */
+        #subscriptionCard .sub-pill-inactive {
+          background: rgba(239, 68, 68, 0.18);
+          border-color: rgba(239, 68, 68, 0.35);
+          color: #fca5a5;
+        }
+
+        /* Yellow ON HOLD pill */
+        #subscriptionCard .sub-pill-on-hold {
+          background: rgba(234, 179, 8, 0.18);
+          border-color: rgba(234, 179, 8, 0.35);
+          color: #fcd34d;
+        }
+
+        /* Candidate Profile Button & Dropdown */
+        .candidate-profile-btn {
+          height: 40px;
+          padding: 0 16px 0 12px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          border-radius: 20px;
+          background: rgba(182, 156, 255, 0.12);
+          border: 1px solid rgba(182, 156, 255, 0.2);
+          color: rgba(210, 190, 255, 0.9);
+          cursor: pointer;
+          transition: all 0.2s ease;
+          flex-shrink: 0;
+          white-space: nowrap;
+        }
+
+        .candidate-profile-btn:hover {
+          background: rgba(182, 156, 255, 0.18);
+          border-color: rgba(182, 156, 255, 0.3);
+        }
+
+        .candidate-profile-btn svg {
+          width: 20px;
+          height: 20px;
+          flex-shrink: 0;
+        }
+
+        .candidate-profile-btn__text {
+          font-size: 14px;
+          font-weight: 500;
+          color: rgba(255, 255, 255, 0.9);
+        }
+
+        @media (max-width: 768px) {
+          .candidate-profile-btn__text {
+            display: none;
+          }
+          .candidate-profile-btn {
+            width: 40px;
+            padding: 0;
+            border-radius: 50%;
+          }
+        }
+
+        .candidate-profile-dropdown {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          margin-top: 8px;
+          width: 280px;
+          background: rgba(20, 18, 28, 0.8);
+          border: 1px solid rgba(182, 156, 255, 0.15);
+          border-radius: 12px;
+          box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(182, 156, 255, 0.08);
+          backdrop-filter: blur(12px);
+          padding: 16px;
+          z-index: 1000;
+          animation: fadeInScale 0.2s ease;
+        }
+
+        @keyframes fadeInScale {
+          from {
+            opacity: 0;
+            transform: scale(0.95) translateY(-8px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+
+        .candidate-profile-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 12px;
+        }
+
+        .candidate-profile-icon {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background: rgba(182, 156, 255, 0.12);
+          border: 1px solid rgba(182, 156, 255, 0.2);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: rgba(210, 190, 255, 0.9);
+          flex-shrink: 0;
+        }
+
+        .candidate-profile-icon svg {
+          width: 18px;
+          height: 18px;
+        }
+
+        .candidate-profile-name {
+          font-size: 14px;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.95);
+        }
+
+        .candidate-profile-id {
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.6);
+          margin-bottom: 10px;
+        }
+
+        .candidate-profile-status {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-bottom: 12px;
+          font-size: 12px;
+        }
+
+        .candidate-profile-status-label {
+          color: rgba(255, 255, 255, 0.6);
+        }
+
+        .candidate-status-pill {
+          padding: 3px 10px;
+          border-radius: 6px;
+          font-size: 11px;
+          font-weight: 600;
+        }
+
+        .candidate-status-pill.sub-pill-active {
+          background: rgba(34, 197, 94, 0.18);
+          border: 1px solid rgba(34, 197, 94, 0.35);
+          color: #86efac;
+        }
+
+        .candidate-status-pill.sub-pill-inactive {
+          background: rgba(239, 68, 68, 0.18);
+          border: 1px solid rgba(239, 68, 68, 0.35);
+          color: #fca5a5;
+        }
+
+        .candidate-status-pill.sub-pill-on-hold {
+          background: rgba(234, 179, 8, 0.18);
+          border: 1px solid rgba(234, 179, 8, 0.35);
+          color: #fcd34d;
+        }
+
+        .candidate-profile-divider {
+          height: 1px;
+          background: rgba(182, 156, 255, 0.1);
+          margin: 12px 0;
+        }
+
+        .candidate-profile-info-list {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .candidate-profile-info-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 12px;
+          line-height: 1.4;
+        }
+
+        .candidate-profile-info-label {
+          color: rgba(255, 255, 255, 0.6);
+          flex-shrink: 0;
+        }
+
+        .candidate-profile-info-value {
+          color: rgba(255, 255, 255, 0.85);
+          text-align: right;
+          margin-left: 8px;
+        }
+
+        /* Part D: Premium gold heading with static glow and royal separator */
+        .hr-services-heading-wrap {
+          position: relative;
+          text-align: center;
+          margin-bottom: 32px;
+          padding-bottom: 16px;
+        }
+
+        .hr-services-heading-wrap::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 200px;
+          height: 2px;
+          background: linear-gradient(90deg, transparent, #d4af37, #f4d03f, #d4af37, transparent);
+          box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+        }
+
+        .hr-services-heading {
+          font-size: 28px;
+          font-weight: 700;
+          color: #d4af37;
+          letter-spacing: -0.02em;
+          position: relative;
+          text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+        }
+      </style>
+
+      <!-- Subscription Expired Overlay -->
+      <div id="subscriptionExpiredOverlay" style="display: none; position: absolute; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); z-index: 50; border-radius: 18px; overflow: hidden;">
+        <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px;">
+          <div style="background: rgba(31, 27, 46, 0.8); border: 1px solid rgba(182, 156, 255, 0.15); border-radius: 18px; padding: 32px; max-width: 360px; text-align: center; backdrop-filter: blur(20px);">
+            <div style="font-size: 36px; margin-bottom: 16px; opacity: 0.6;">⏱</div>
+            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 12px; color: var(--text);">Subscription Expired</h3>
+            <p style="font-size: 14px; color: var(--muted); margin-bottom: 20px;">Your subscription has expired. Services are temporarily unavailable.</p>
+            <button onclick="location.href='user.html'" style="padding: 10px 20px; background: rgba(182, 156, 255, 0.2); border: 1px solid rgba(182, 156, 255, 0.3); color: rgba(210, 190, 255, 0.95); border-radius: 12px; font-size: 13px; cursor: pointer; font-weight: 600;">Contact Admin</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="launchpadContainer" style="display: none;">
+        <!-- HireReady Services Heading (outside the card with yellow rotating glow) -->
+        <div class="hr-services-heading-wrap">
+          <div class="hr-services-heading">HireReady Services</div>
+        </div>
+        <!-- Service Cards -->
+        <div class="card">
+          <div class="subscription-expired-banner" id="subscriptionExpiredBanner" style="display: none;">
+            <span>Subscription Expired – Services Locked</span>
+            <button type="button" onclick="showToast('Please contact your administrator to renew', 'info')">Contact Admin</button>
+          </div>
+          <section class="service-selector" id="serviceSelector">
+            <!-- Service cards will be populated by JavaScript -->
+          </section>
+        </div>
+      </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add Service Modal (Admin Only) -->
+  <div id="addServiceModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Add New Service</h2>
+        <button class="modal-close" onclick="closeAddServiceModal()" aria-label="Close">&times;</button>
+      </div>
+      <form onsubmit="saveNewService(event)" class="modal-form">
+        <div class="form-group">
+          <label class="form-label" for="newServiceKey">Service Key (ID)*</label>
+          <input type="text" class="form-input" id="newServiceKey" placeholder="e.g., myService" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="newServiceName">Display Name*</label>
+          <input type="text" class="form-input" id="newServiceName" placeholder="e.g., My Service" required>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="newServicePage">Page Link</label>
+          <input type="text" class="form-input" id="newServicePage" placeholder="e.g., myservice.html">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="newServiceIcon">Icon</label>
+          <select class="form-input" id="newServiceIcon">
+            <option value="document">Document</option>
+            <option value="phone">Phone</option>
+            <option value="chat">Chat</option>
+            <option value="spark">Spark</option>
+            <option value="arrow-up-right">Arrow</option>
+          </select>
+        </div>
+        
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeAddServiceModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Service</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JD Match Resume Generation Modal -->
+  <div id="jdMatchModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
+      <div class="modal-header">
+        <h2 class="modal-title">JD Match Resume Generator</h2>
+        <button type="button" id="jdMatchCloseBtn" class="modal-close" aria-label="Close">&times;</button>
+      </div>
+      
+      <div style="padding: 20px;">
+        <!-- Form Section -->
+        <div style="margin-bottom: 24px;">
+          <div class="form-group">
+            <label class="form-label">Company Name *</label>
+            <input type="text" class="form-input" id="jdmCompanyName" placeholder="e.g., Acme Corp" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Job Description *</label>
+            <textarea class="form-input" id="jdmJobDescription" placeholder="Paste the job description here..." style="min-height: 150px; resize: vertical;" required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Target Match %</label>
+            <div style="display: flex; gap: 10px; margin-bottom: 8px;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="radio" name="targetMode" value="auto" checked onchange="updateTargetMatchUI()">
+                <span>Auto (90-95%)</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="radio" name="targetMode" value="manual" onchange="updateTargetMatchUI()">
+                <span>Manual</span>
+              </label>
+            </div>
+            <input type="number" class="form-input" id="jdmTargetMatch" min="70" max="100" value="85" placeholder="70-100" style="display: none;">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Must Include Skills (optional)</label>
+            <input type="text" class="form-input" id="jdmMustincludeSkills" placeholder="e.g., React, Node.js, MongoDB (comma-separated)">
+          </div>
+
+          <button type="button" class="btn btn-primary" id="jdMatchGenerateBtn" style="width: 100%; margin-bottom: 16px;">Generate Resume</button>
+          
+          <div id="jdmLoading" style="display: none; text-align: center; color: var(--muted);">
+            <div style="display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accentA); border-radius: 50%; animation: spin 1s linear infinite; margin-right: 8px; vertical-align: middle;"></div>
+            Generating resume...
+          </div>
+        </div>
+
+        <!-- Preview Section -->
+        <div id="jdmPreviewSection" style="display: none; margin-bottom: 24px; padding: 16px; background: rgba(255, 255, 255, 0.04); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.08);">
+          <h3 style="margin-bottom: 12px; font-weight: 600;">Preview</h3>
+          <div id="jdmPreviewContainer" style="background: white; color: #333; padding: 16px; border-radius: 8px; font-size: 11px; line-height: 1.4; max-height: 400px; overflow-y: auto; margin-bottom: 16px; font-family: monospace; white-space: pre-wrap; word-wrap: break-word;"></div>
+          
+          <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+            <button onclick="downloadResumePDF()" class="btn btn-primary" style="flex: 1;">Download PDF</button>
+            <button onclick="downloadResumeWord()" class="btn btn-primary" style="flex: 1;">Download Word</button>
+          </div>
+          
+          <div style="padding: 12px; background: rgba(182, 156, 255, 0.08); border-radius: 8px;">
+            <h4 style="font-size: 12px; font-weight: 600; margin-bottom: 8px;">Metrics</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
+              <div><strong>JD Match:</strong> <span id="jdmMetricJDMatch">-</span>%</div>
+              <div><strong>ATS:</strong> <span id="jdmMetricATS">-</span>%</div>
+              <div><strong>HR Catchiness:</strong> <span id="jdmMetricHR">-</span>%</div>
+              <div><strong>Shortlist Chance:</strong> <span id="jdmMetricShortlist">-</span>%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- History Section -->
+        <div id="jdmHistorySection" style="display: none; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+          <h3 style="margin-bottom: 16px; font-weight: 600;">Generated Resumes (Last 15 Days)</h3>
+          <div id="jdmHistoryList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+
+  <script>
+
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCMf4oteHAswn-IGvVbbkYnCciNueKGyjY",
+      authDomain: "hirereadyservices-9a8de.firebaseapp.com",
+      projectId: "hirereadyservices-9a8de",
+      storageBucket: "hirereadyservices-9a8de.firebasestorage.app",
+      messagingSenderId: "677972277573",
+      appId: "1:677972277573:web:fab51d25a84ef03d0ea62c"
+    };
+
+    // Admin allowlist (temporary until custom claims are set)
+    // IMPORTANT: UPDATE THIS WITH YOUR ACTUAL ADMIN EMAIL(S)
+    const ADMIN_EMAILS = [
+      "ducktales048@gmail.com"
+    ].map(e => (e || "").toLowerCase()); // Normalize to lowercase for comparison
+
+    let db, auth;
+    let currentCandidateId = null;
+    let candidateData = null;
+    let servicesData = null;
+    let currentService = 'resume';
+    let currentUser = null;
+    let servicesCatalog = []; // Global services catalog from Firestore
+    let subscriptionExpired = false;
+    
+    const qp = new URLSearchParams(location.search);
+    const cidFromUrl = qp.get('cid');
+    const modeFromUrl = qp.get('mode');
+    const role = localStorage.getItem('role') || 'user';
+    const adminAuthFlag = localStorage.getItem('adminAuth') === 'true';
+    const hrMode = sessionStorage.getItem('hr_mode');
+    const isAdminContext = (modeFromUrl === 'admin') || (role === 'admin') || (hrMode === 'admin') || adminAuthFlag;
+    if (isAdminContext) {
+      sessionStorage.setItem('hr_mode', 'admin');
+    }
+
+    // ROBUST ROLE DETECTION
+    let currentUserRole = (localStorage.getItem("role") || sessionStorage.getItem("role") || "user").toLowerCase();
+    let currentUserIsAdmin = currentUserRole === "admin";
+    let isAdmin = currentUserIsAdmin;
+    let isUser = !isAdmin;
+    
+    console.log('ROLE_DETECTION', { role: currentUserRole, isAdmin, isUser });
+
+    const defaultServiceAccess = {
+      jdMatchResume: true,
+      callScript: true,
+      mockInterview: true,
+      liveAssistant: true,
+      smartApply: true
+    };
+    let serviceAccess = { ...defaultServiceAccess };
+
+    async function sha256(text) {
+      const data = new TextEncoder().encode(text);
+      const hash = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function computeEndDate(planType, startDate) {
+      const base = new Date(startDate);
+      const end = new Date(base);
+      switch ((planType || '').toLowerCase()) {
+        case 'demo':
+          end.setDate(end.getDate() + 7);
+          break;
+        case 'monthly':
+          end.setMonth(end.getMonth() + 1);
+          break;
+        case '2months':
+          end.setMonth(end.getMonth() + 2);
+          break;
+        case '3months':
+          end.setMonth(end.getMonth() + 3);
+          break;
+        case '6months':
+          end.setMonth(end.getMonth() + 6);
+          break;
+        case 'yearly':
+          end.setFullYear(end.getFullYear() + 1);
+          break;
+        default:
+          end.setDate(end.getDate() + 7);
+      }
+      return end;
+    }
+
+    function isSubscriptionExpired(subscription) {
+      if (!subscription) return false;
+      const endRaw = subscription.endDate || subscription.subscriptionEnd || subscription.end;
+      if (!endRaw) return false;
+      const endDate = toDate(endRaw, null);
+      if (!endDate) return false;
+      const endOfDay = new Date(endDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      return new Date() > endOfDay;
+    }
+
+    // Initialize Firebase
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      auth = firebase.auth();
+      db = firebase.firestore();
+      window.auth = auth;
+      window.db = db;
+      console.log('SERVICES_FIREBASE_INIT_OK');
+      console.log("FIREBASE_PROJECT_OK", firebase.app().options.projectId);
+    } catch (error) {
+      console.error('SERVICES_FIREBASE_INIT_FAIL', error);
+      showToast('Firebase initialization failed', 'error');
+    }
+
+    async function ensureAnonAuth() {
+      if (!auth) {
+        throw new Error('Firebase not initialized');
+      }
+      
+      try {
+        // If already signed in, refresh the token to ensure it's valid
+        if (auth.currentUser) {
+          await auth.currentUser.getIdToken(true);
+          return true;
+        }
+        
+        // Sign in anonymously
+        await auth.signInAnonymously();
+        
+        // Wait for auth state to be fully established before returning
+        await new Promise((resolve, reject) => {
+          let unsub = null;
+          const timeout = setTimeout(() => {
+            if (unsub) unsub();
+            reject(new Error('Auth initialization timeout'));
+          }, 3000);
+          
+          unsub = auth.onAuthStateChanged(user => {
+            if (user) {
+              clearTimeout(timeout);
+              if (unsub) unsub();
+              resolve(user);
+            }
+          });
+        });
+        
+        // Get fresh ID token to ensure Firestore can authenticate
+        await auth.currentUser.getIdToken(true);
+        return true;
+      } catch (error) {
+        console.error('SERVICES_ANON_AUTH_FAIL', error.code, error.message);
+        
+        // Check for operation-not-allowed or admin-restricted-operation (Anonymous auth disabled/restricted)
+        if (error.code === 'auth/operation-not-allowed' || error.code === 'auth/admin-restricted-operation') {
+          const msg = 'Login is temporarily unavailable because Firebase Anonymous Authentication is disabled or restricted. Enable Anonymous sign-in in Firebase Console → Authentication → Sign-in method. If it is already enabled, check Identity Platform / tenant restrictions and allow Anonymous sign-in for this project.';
+          throw new Error(msg);
+        }
+        
+        // Retry once for transient failures
+        if (error.code && (error.code === 'auth/network-request-failed' || error.code === 'auth/user-cancelled')) {
+          console.log('SERVICES_ANON_AUTH_RETRY', 'Transient error detected, retrying...');
+          await new Promise(resolve => setTimeout(resolve, 400));
+          try {
+            await auth.signInAnonymously();
+            return true;
+          } catch (retryError) {
+            console.error('SERVICES_ANON_AUTH_RETRY_FAIL', retryError.code);
+            throw error;
+          }
+        }
+        
+        throw error;
+      }
+    }
+
+    // Get candidate ID from URL or sessionStorage
+    function getCandidateId() {
+      const urlParams = new URLSearchParams(window.location.search);
+      let cid = urlParams.get('cid');
+      
+      // Fallback to sessionStorage if URL param is missing
+      if (!cid) {
+        cid = sessionStorage.getItem('hr_active_cid');
+      }
+      
+      return cid;
+    }
+
+    // Safe JSON parse helper to prevent crashes from invalid localStorage data
+    function safeJsonParse(value, fallback = null) {
+      if (!value) return fallback;
+      try {
+        return JSON.parse(value);
+      } catch (e) {
+        console.warn('JSON parse error for value:', value.substring(0, 100), e.message);
+        return fallback;
+      }
+    }
+
+    // Main initialization on page load
+    window.addEventListener('DOMContentLoaded', async () => {
+      // Show checking access screen initially
+      showScreen('checkingAccess');
+      
+      // START TIMEOUT WATCHDOG: If access check takes >8 seconds, show error
+      let accessCheckTimeoutId = null;
+      const clearAccessCheckTimeout = () => {
+        if (accessCheckTimeoutId !== null) {
+          clearTimeout(accessCheckTimeoutId);
+          accessCheckTimeoutId = null;
+        }
+      };
+      
+      accessCheckTimeoutId = setTimeout(() => {
+        console.error('SERVICES_ACCESS_CHECK_TIMEOUT', 'Timeout exceeded 8000ms');
+        clearAccessCheckTimeout();
+        const accessUi = document.getElementById('accessDeniedUI');
+        const titleEl = accessUi ? accessUi.querySelector('h2') : null;
+        const messageEl = accessUi ? accessUi.querySelector('p') : null;
+        if (titleEl) titleEl.textContent = 'Access Check Timeout';
+        if (messageEl) messageEl.innerHTML = 'The access check took too long. This usually means:<br>1) Firebase is unreachable<br>2) Anonymous Auth is not enabled<br>3) Network is slow<br><br><a href="javascript:location.reload()" style="color:#3b82f6;text-decoration:underline;">Try Again</a>';
+        document.getElementById('mainContent').style.display = 'none';
+        if (accessUi) accessUi.style.display = 'flex';
+      }, 8000);
+      
+      // Show file protocol warning only on file:// protocol
+      // Show protocol warning only when running from file://
+      const warningBanner = document.getElementById('fileProtocolWarning');
+      if (warningBanner) {
+        warningBanner.style.display = (window.location.protocol === 'file:') ? 'block' : 'none';
+      }
+
+      // Clean any stale hash from old links
+      if (window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+      
+      // Set Firebase auth persistence to LOCAL so login persists across tabs/sessions
+      try {
+        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        console.log('SERVICES_AUTH_PERSISTENCE_SET', 'LOCAL');
+      } catch (error) {
+        console.error('SERVICES_AUTH_PERSISTENCE_FAIL', error);
+      }
+
+      // Get candidate ID and log debug info
+      if (window.location.protocol === 'file:') {
+        const warningBanner = document.getElementById('fileProtocolWarning');
+        if (warningBanner) {
+          warningBanner.style.display = 'block';
+        }
+        clearAccessCheckTimeout();
+        showToast('Open via http://localhost or the Netlify URL for login/session to work.', 'error');
+        return;
+      }
+
+      const cidFromSession = sessionStorage.getItem('hr_active_cid');
+      const cidFromLocal = localStorage.getItem('candidateId');
+      currentCandidateId = cidFromUrl || cidFromSession || cidFromLocal || '';
+      if (cidFromUrl) {
+        sessionStorage.setItem('hr_active_cid', cidFromUrl);
+      }
+
+      const candAuth = safeJsonParse(localStorage.getItem(`candidateAuth_${currentCandidateId}`), null);
+      const isCandidateLoggedIn = !!(currentCandidateId && candAuth && (candAuth.candidateId === currentCandidateId || candAuth.cid === currentCandidateId));
+
+      if (!isAdminContext) {
+        if (!currentCandidateId || !isCandidateLoggedIn) {
+          clearAccessCheckTimeout();
+          const redirectUrl = 'user.html' + (currentCandidateId ? '?cid=' + encodeURIComponent(currentCandidateId) : '');
+          window.location.href = redirectUrl;
+          return;
+        }
+      }
+
+      console.log('SERVICES_CID', { cidFromUrl, cidFromSession, finalCid: currentCandidateId });
+
+      // Wait for auth state (this is the critical part - do NOT show access denied before this resolves)
+      auth.onAuthStateChanged(async (user) => {
+        try {
+          currentUser = user;
+          
+          // Log auth state
+          console.log('AUTH_STATE', user?.email || null);
+          console.log("SERVICES_AUTH_STATE", { uid: user?.uid || null, email: user?.email || null });
+          console.log("SERVICES_USER", { email: user?.email, uid: user?.uid });
+          
+          if (isAdminContext) {
+            if (!user) {
+              console.log('SERVICES_FLOW', 'No user -> showing login');
+              clearAccessCheckTimeout();
+              showScreen('login');
+              return;
+            }
+
+            const email = (user.email || '').toLowerCase();
+            isAdmin = ADMIN_EMAILS.includes(email);
+            isUser = !isAdmin;
+            currentUserIsAdmin = isAdmin;
+            currentUserRole = isAdmin ? 'admin' : 'user';
+            if (isAdmin) {
+              localStorage.setItem('role', 'admin');
+            }
+
+            console.log("SERVICES_IS_ADMIN", { isAdmin });
+            
+            if (!isAdmin) {
+              console.log('SERVICES_FLOW', 'User exists but not admin -> showing access denied');
+              clearAccessCheckTimeout();
+              showScreen('accessDenied');
+              return;
+            }
+
+            if (!currentCandidateId) {
+              console.log('SERVICES_FLOW', 'Admin but no candidate ID -> showing no candidate');
+              clearAccessCheckTimeout();
+              showScreen('noCandidate');
+              return;
+            }
+
+            console.log('SERVICES_FLOW', 'Admin + candidate ID -> showing editor');
+            clearAccessCheckTimeout();
+            showScreen('main');
+            await initializePage();
+            return;
+          }
+
+          if (!currentCandidateId) {
+            clearAccessCheckTimeout();
+            const redirectUrl = 'user.html' + (currentCandidateId ? '?cid=' + encodeURIComponent(currentCandidateId) : '');
+            window.location.href = redirectUrl;
+            return;
+          }
+
+          const candAuth = safeJsonParse(localStorage.getItem(`candidateAuth_${currentCandidateId}`), null);
+          const isCandidateLoggedIn = !!(currentCandidateId && candAuth && (candAuth.candidateId === currentCandidateId || candAuth.cid === currentCandidateId));
+          if (!isCandidateLoggedIn) {
+            clearAccessCheckTimeout();
+            const redirectUrl = 'user.html' + (currentCandidateId ? '?cid=' + encodeURIComponent(currentCandidateId) : '');
+            window.location.href = redirectUrl;
+            return;
+          }
+
+          if (!user) {
+            try {
+              await ensureAnonAuth();
+            } catch (authError) {
+              clearAccessCheckTimeout();
+              console.error('SERVICES_CANDIDATE_AUTH_FAIL', authError.message);
+              const accessUi = document.getElementById('accessDeniedUI');
+              const titleEl = accessUi ? accessUi.querySelector('h2') : null;
+              const messageEl = accessUi ? accessUi.querySelector('p') : null;
+              if (titleEl) titleEl.textContent = 'Authentication Error';
+              if (messageEl) messageEl.textContent = authError.message;
+              document.getElementById('mainContent').style.display = 'none';
+              if (accessUi) accessUi.style.display = 'flex';
+              return;
+            }
+          }
+
+          currentUser = auth.currentUser || user;
+          clearAccessCheckTimeout();
+          showScreen('main');
+          await initializePage();
+        } catch (error) {
+          clearAccessCheckTimeout();
+          console.error('SERVICES_AUTH_STATE_ERROR', error);
+          const accessUi = document.getElementById('accessDeniedUI');
+          const titleEl = accessUi ? accessUi.querySelector('h2') : null;
+          const messageEl = accessUi ? accessUi.querySelector('p') : null;
+          if (titleEl) titleEl.textContent = 'Error';
+          if (messageEl) messageEl.textContent = error.message || 'An unexpected error occurred.';
+          document.getElementById('mainContent').style.display = 'none';
+          if (accessUi) accessUi.style.display = 'flex';
+        }
+      });
+
+      // Wire candidate logout button
+      const candidateLogoutBtn = document.getElementById('candidateLogoutBtn');
+      if (candidateLogoutBtn) {
+        candidateLogoutBtn.addEventListener('click', handleCandidateLogout);
+      }
+
+      // Wire candidate profile dropdown
+      const candidateProfileBtn = document.getElementById('candidateProfileBtn');
+      const candidateProfileDropdown = document.getElementById('candidateProfileDropdown');
+      if (candidateProfileBtn && candidateProfileDropdown) {
+        candidateProfileBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const isOpen = candidateProfileDropdown.style.display !== 'none';
+          candidateProfileDropdown.style.display = isOpen ? 'none' : 'block';
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!candidateProfileBtn.contains(e.target) && !candidateProfileDropdown.contains(e.target)) {
+            candidateProfileDropdown.style.display = 'none';
+          }
+        });
+
+        // Close dropdown on Escape key
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && candidateProfileDropdown.style.display !== 'none') {
+            candidateProfileDropdown.style.display = 'none';
+          }
+        });
+      }
+
+      // Update back link destination based on role
+      const backLink = document.getElementById('backToAdminLink');
+      if (backLink) {
+        backLink.href = isAdminContext ? ('admin.html' + (currentCandidateId ? '?cid=' + encodeURIComponent(currentCandidateId) : '')) : 'user.html';
+      }
+    });
+
+    // Handle admin login form submission
+    async function handleAdminLogin(event) {
+      event.preventDefault();
+      
+      const email = document.getElementById('adminLoginEmail').value.trim();
+      const password = document.getElementById('adminLoginPassword').value;
+      const loginBtn = document.getElementById('adminLoginBtn');
+      const errorDiv = document.getElementById('loginError');
+
+      // Hide previous errors
+      errorDiv.style.display = 'none';
+
+      // Disable button and show loading
+      loginBtn.disabled = true;
+      loginBtn.innerHTML = '<span class="ico-tile sm" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.4 6.4"/><path d="M3 12a9 9 0 0 1 15.4-6.4"/><path d="M3 16v2h2"/><path d="M21 8V6h-2"/></svg></span>Signing in...';
+
+      console.log('SERVICES_LOGIN_ATTEMPT', { email });
+
+      try {
+        const userCredential = await auth.signInWithEmailAndPassword(email, password);
+        console.log('SERVICES_LOGIN_SUCCESS', { email, uid: userCredential.user?.uid });
+        localStorage.setItem('role', 'admin');
+        // Auth state listener will handle the rest
+      } catch (error) {
+        console.error('SERVICES_LOGIN_ERROR', { code: error.code, message: error.message });
+        let errorMessage = 'Login failed. Please check your credentials.';
+        
+        if (error.code === 'auth/user-not-found') {
+          errorMessage = 'No account found with this email address.';
+        } else if (error.code === 'auth/wrong-password') {
+          errorMessage = 'Incorrect password. Please try again.';
+        } else if (error.code === 'auth/invalid-email') {
+          errorMessage = 'Invalid email address format.';
+        } else if (error.code === 'auth/too-many-requests') {
+          errorMessage = 'Too many failed attempts. Please try again later.';
+        } else if (error.code === 'auth/invalid-credential') {
+          errorMessage = 'Invalid credentials. Please check your email and password.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+
+        errorDiv.textContent = errorMessage;
+        errorDiv.style.display = 'block';
+        
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Sign In as Admin';
+      }
+    }
+
+    // Show different screens
+    function showScreen(screenName) {
+      // Hide all screens
+      const screens = ['checkingAccess', 'login', 'accessDenied', 'noCandidate', 'main'];
+      screens.forEach(name => {
+        const el = document.getElementById(name + 'Screen');
+        if (el) el.style.display = 'none';
+      });
+      
+      // Hide main layout and topbar separately
+      const mainLayout = document.getElementById('mainLayout');
+      if (mainLayout) mainLayout.style.display = 'none';
+      
+      const topbar = document.getElementById('mainTopbar');
+      if (topbar) topbar.style.display = 'none';
+
+      // Show selected screen
+      if (screenName === 'main') {
+        if (mainLayout) mainLayout.style.display = 'block';
+        // Show premium topbar for both admin and candidate
+        if (topbar) topbar.style.display = 'block';
+      } else {
+        const screenEl = document.getElementById(screenName + 'Screen');
+        if (screenEl) screenEl.style.display = 'flex';
+      }
+    }
+
+    function handleCandidateLogout() {
+      const cid = currentCandidateId || localStorage.getItem('candidateId') || '';
+      if (cid) {
+        localStorage.removeItem('candidateAuth_' + cid);
+      }
+      localStorage.removeItem('candidateId');
+      localStorage.removeItem('role');
+      sessionStorage.removeItem('hr_active_cid');
+      sessionStorage.removeItem('hr_mode');
+      window.location.href = 'user.html';
+    }
+
+    async function initializePage() {
+      // services.html is a pure launchpad
+      renderLaunchpad();
+    }
+
+    // Render the launchpad (service selector)
+    async function renderLaunchpad() {
+      const infoRow = document.getElementById('infoRow');
+      const launchpadContainer = document.getElementById('launchpadContainer');
+      
+      if (infoRow) infoRow.style.display = 'grid';
+      if (launchpadContainer) launchpadContainer.style.display = 'block';
+
+      await loadAllData();
+    }
+
+    function normalizeServiceAccess(access) {
+      const normalized = { ...defaultServiceAccess };
+      if (access && typeof access === 'object') {
+        Object.keys(access).forEach((key) => {
+          normalized[key] = access[key] !== false;
+        });
+        Object.keys(normalized).forEach((key) => {
+          if (access[key] === false) {
+            normalized[key] = false;
+          }
+        });
+      }
+      return normalized;
+    }
+
+    // Helper: Convert Firestore Timestamp or ISO string to Date
+    function toDate(value, fallback) {
+      if (!value) return fallback;
+      if (typeof value === 'object' && value.toDate) return value.toDate();
+      if (typeof value === 'string') {
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? fallback : parsed;
+      }
+      return fallback;
+    }
+
+    // Helper: Compute subscription status based on end date
+    function computeSubscriptionStatus(subscriptionEnd) {
+      if (!subscriptionEnd) return 'active';
+      const endDate = toDate(subscriptionEnd, null);
+      if (!endDate) return 'active';
+      // Treat expiry as end-of-day (23:59:59) on the subscriptionEnd date
+      const endOfDay = new Date(endDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      const now = new Date();
+      return now > endOfDay ? 'expired' : 'active';
+    }
+
+    // Helper: Calculate subscription end date based on plan and strict day mappings
+    function calculateSubscriptionEnd(startDate, plan) {
+      const start = toDate(startDate, new Date());
+      const end = new Date(start);
+
+      // Strict day mappings
+      const planDurationMap = {
+        'demo3days': 3,
+        'demo7days': 7,
+        '1month': 30,
+        '2months': 60,
+        '3months': 90,
+        '6months': 180,
+        '12months': 365
+      };
+
+      const durationDays = planDurationMap[plan] || 30;
+      end.setDate(end.getDate() + durationDays);
+      return end;
+    }
+
+    function normalizeSubscriptionData(data) {
+      const now = new Date();
+      const defaultEnd = new Date(now.getTime());
+      defaultEnd.setDate(defaultEnd.getDate() + 7); // Default: 7-day demo
+
+      const subscriptionPlan = (data?.subscriptionPlan || 'demo7days').toString().trim().toLowerCase() || 'demo7days';
+      const startDate = toDate(data?.subscriptionStart, now);
+      const endDate = toDate(data?.subscriptionEnd, null) || calculateSubscriptionEnd(startDate, subscriptionPlan);
+
+      const isExpired = computeSubscriptionStatus(endDate) === 'expired';
+      const status = isExpired ? 'expired' : 'active';
+      
+      // Map plan value to display name
+      const planDisplayMap = {
+        'demo3days': 'Demo (3 Days)',
+        'demo7days': 'Demo (7 Days)',
+        '1month': '1 Month',
+        '2months': '2 Months',
+        '3months': '3 Months',
+        '6months': '6 Months',
+        '12months': '12 Months'
+      };
+      const plan = planDisplayMap[subscriptionPlan] || subscriptionPlan;
+
+      return { status, plan, startDate, endDate, isExpired, subscriptionPlan };
+    }
+
+    function formatDate(date) {
+      return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      });
+    }
+
+    // Enforce subscription gate: lock services if expired
+    function enforceSubscriptionGate(isExpired) {
+      subscriptionExpired = !isAdmin && !!isExpired;
+
+      const expiredOverlay = document.getElementById('subscriptionExpiredOverlay');
+      if (expiredOverlay) {
+        expiredOverlay.style.display = 'none';
+      }
+
+      renderServicesGrid(servicesCatalog.length > 0 ? servicesCatalog : getDefaultServices(), isAdmin, subscriptionExpired);
+    }
+
+    function renderSubscriptionSummary() {
+      const { status, plan, startDate, endDate, isExpired, subscriptionPlan } = normalizeSubscriptionData(candidateData || {});
+      const statusEl = document.getElementById('subStatus');
+      const statusTextEl = document.getElementById('subStatusText');
+      const statusValueEl = document.getElementById('subStatusValue');
+      const planEl = document.getElementById('subPlan');
+      const periodEl = document.getElementById('subPeriod');
+      const endsOnEl = document.getElementById('subEndsOn');
+
+      const savedStatusRaw = (candidateData?.subscriptionStatus || '').toString().toUpperCase();
+      let displayStatus = 'ACTIVE';
+      let statusClass = 'sub-pill-active';
+
+      if (savedStatusRaw === 'INACTIVE') {
+        displayStatus = 'INACTIVE';
+        statusClass = 'sub-pill-inactive';
+      } else if (savedStatusRaw === 'ON HOLD') {
+        displayStatus = 'ON HOLD';
+        statusClass = 'sub-pill-on-hold';
+      } else if (isExpired) {
+        displayStatus = 'EXPIRED';
+        statusClass = 'inactive-pill';
+      }
+
+      if (statusEl) {
+        statusEl.textContent = displayStatus;
+        statusEl.className = 'sub-pill ' + statusClass;
+      }
+      if (statusTextEl) statusTextEl.textContent = displayStatus;
+      if (statusValueEl) statusValueEl.textContent = displayStatus;
+      if (planEl) planEl.textContent = plan;
+      if (periodEl) periodEl.textContent = `${formatDate(startDate)} - ${formatDate(endDate)}`;
+      if (endsOnEl) endsOnEl.textContent = formatDate(endDate);
+
+      // Enforce subscription lock if expired
+      if (!isAdmin) {
+        enforceSubscriptionGate(status === 'expired');
+      }
+    }
+
+    // Update header UI based on admin vs candidate role
+    function updateHeaderForRole() {
+      const refreshBtn = document.getElementById('refreshBtn');
+      const saveAllBtn = document.getElementById('saveAllBtn');
+      const candidateTopbarArea = document.getElementById('candidateTopbarArea');
+      const candidateLogoutBtn = document.getElementById('candidateLogoutBtn');
+      
+      if (isAdminContext && isAdmin) {
+        // Admin: show refresh/save buttons, hide candidate area
+        if (refreshBtn) refreshBtn.style.display = 'inline-flex';
+        if (saveAllBtn) saveAllBtn.style.display = 'inline-flex';
+        if (candidateTopbarArea) candidateTopbarArea.style.display = 'none';
+      } else {
+        // Candidate: hide refresh/save buttons, show candidate area with logout
+        if (refreshBtn) refreshBtn.style.display = 'none';
+        if (saveAllBtn) saveAllBtn.style.display = 'none';
+        if (candidateTopbarArea) candidateTopbarArea.style.display = 'flex';
+        if (candidateLogoutBtn) candidateLogoutBtn.style.display = 'inline-flex';
+        
+        // Update candidate profile dropdown
+        updateCandidateProfileDropdown();
+      }
+    }
+
+    function updateCandidateProfileDropdown() {
+      // Get candidate name
+      let fullName = '';
+      if (candidateData?.fullName && candidateData.fullName.trim()) {
+        fullName = candidateData.fullName.trim();
+      } else if (candidateData?.firstName || candidateData?.lastName) {
+        const first = (candidateData?.firstName || '').trim();
+        const last = (candidateData?.lastName || '').trim();
+        fullName = (first + ' ' + last).trim();
+      } else if (candidateData?.name && candidateData.name.trim()) {
+        fullName = candidateData.name.trim();
+      } else if (candidateData?.candidateName && candidateData.candidateName.trim()) {
+        fullName = candidateData.candidateName.trim();
+      }
+      if (!fullName) fullName = 'Candidate';
+
+      // Update dropdown name
+      const dropdownNameEl = document.getElementById('dropdownCandidateName');
+      if (dropdownNameEl) dropdownNameEl.textContent = fullName;
+
+      // Update dropdown ID
+      const dropdownIdEl = document.getElementById('dropdownCandidateId');
+      if (dropdownIdEl) dropdownIdEl.textContent = 'ID: ' + (currentCandidateId || 'N/A');
+
+      // Update subscription info in dropdown
+      const { status, plan, startDate, endDate, isExpired } = normalizeSubscriptionData(candidateData || {});
+      
+      const savedStatusRaw = (candidateData?.subscriptionStatus || '').toString().toUpperCase();
+      let displayStatus = 'ACTIVE';
+      let statusClass = 'sub-pill-active';
+
+      if (savedStatusRaw === 'INACTIVE') {
+        displayStatus = 'INACTIVE';
+        statusClass = 'sub-pill-inactive';
+      } else if (savedStatusRaw === 'ON HOLD') {
+        displayStatus = 'ON HOLD';
+        statusClass = 'sub-pill-on-hold';
+      } else if (isExpired) {
+        displayStatus = 'EXPIRED';
+        statusClass = 'inactive-pill';
+      }
+
+      // Update status pill
+      const dropdownStatusPill = document.querySelector('.candidate-status-pill');
+      if (dropdownStatusPill) {
+        dropdownStatusPill.textContent = displayStatus;
+        dropdownStatusPill.className = 'candidate-status-pill ' + statusClass;
+      }
+
+      // Update plan
+      const dropdownPlanEl = document.getElementById('dropdownCandidatePlan');
+      if (dropdownPlanEl) dropdownPlanEl.textContent = plan || '-';
+
+      // Update ends on
+      const dropdownEndsOnEl = document.getElementById('dropdownCandidateEndsOn');
+      if (dropdownEndsOnEl) dropdownEndsOnEl.textContent = formatDate(endDate) || '-';
+
+      // Update period
+      const dropdownPeriodEl = document.getElementById('dropdownCandidatePeriod');
+      if (dropdownPeriodEl) dropdownPeriodEl.textContent = (formatDate(startDate) || '-') + ' – ' + (formatDate(endDate) || '-');
+    }
+
+    async function loadAllData() {
+      showLoading(true);
+
+      try {
+        const role = currentUserRole;
+        const isAdminCheck = isAdmin;
+
+        if (isAdmin) {
+          const u = firebase.auth().currentUser;
+          if (!u) {
+            console.warn('SKIP_FIRESTORE_NOT_LOGGED_IN');
+            showLoading(false);
+            return;
+          }
+        } else {
+          await ensureAnonAuth();
+        }
+
+        // Log auth state for diagnostics
+        const authEmail = (currentUser?.email || '').toLowerCase();
+        const authUid = currentUser?.uid || '';
+        console.log('SERVICES_AUTH_STATE', { email: authEmail, uid: authUid });
+
+        // Load services catalog from Firestore
+        await loadServicesCatalog();
+
+        const candidateKey = 'candidate_' + currentCandidateId;
+        const localCandidate = safeJsonParse(localStorage.getItem(candidateKey), null);
+        const localAccess = safeJsonParse(localStorage.getItem('servicesAccess_' + currentCandidateId), null);
+
+        let candidateDocData = null;
+        if (currentCandidateId) {
+          const candidateDoc = await db.collection('candidates').doc(currentCandidateId).get();
+          if (candidateDoc.exists) {
+            candidateDocData = candidateDoc.data() || {};
+          }
+        }
+
+        // Load subscription from new path candidate/{cid}/subscription/current
+        let subscriptionData = null;
+        if (currentCandidateId) {
+          try {
+            const subscriptionRef = db.collection('candidate').doc(currentCandidateId).collection('subscription').doc('current');
+            const subDoc = await subscriptionRef.get();
+            if (subDoc.exists) {
+              subscriptionData = subDoc.data();
+            }
+          } catch (e) {
+            console.log('Subscription path not found, using fallback');
+          }
+        }
+
+        if (candidateDocData) {
+          const payload = candidateDocData.payload || candidateDocData;
+          candidateData = payload && Object.keys(payload).length ? payload : (localCandidate || {});
+          serviceAccess = normalizeServiceAccess(candidateDocData.servicesAccess || localAccess);
+          
+          // Merge subscription data from new path if available
+          if (subscriptionData) {
+            candidateData.subscriptionPlan = subscriptionData.planType || candidateData.subscriptionPlan;
+            candidateData.subscriptionStart = subscriptionData.startDate || candidateData.subscriptionStart;
+            candidateData.subscriptionEnd = subscriptionData.endDate || candidateData.subscriptionEnd;
+            candidateData.subscriptionStatus = subscriptionData.status || candidateData.subscriptionStatus;
+          }
+          
+          const subscriptionEnd = subscriptionData?.endDate || candidateDocData.subscription?.endDate || candidateDocData.subscriptionEnd;
+          subscriptionExpired = !isAdmin && isSubscriptionExpired({ endDate: subscriptionEnd });
+        } else {
+          candidateData = localCandidate || { fullName: '', candidateId: currentCandidateId };
+          serviceAccess = normalizeServiceAccess(localAccess);
+          subscriptionExpired = false;
+        }
+
+        localStorage.setItem('servicesAccess_' + currentCandidateId, JSON.stringify(serviceAccess));
+        displayCandidateInfo();
+        updateHeaderForRole();
+        renderSubscriptionSummary();
+        updateCandidateProfileDropdown();
+        loadResumeHistory();
+        const servicesList = servicesCatalog.length > 0 ? servicesCatalog : getDefaultServices();
+        renderServicesGrid(servicesList, isAdmin, subscriptionExpired);
+        renderSidebarServices(servicesList);
+        showSubscriptionPanel();
+        const expiredBanner = document.getElementById('subscriptionExpiredBanner');
+        if (expiredBanner) {
+          expiredBanner.style.display = (!isAdmin && subscriptionExpired) ? 'flex' : 'none';
+        }
+        showLoading(false);
+        showToast('Data loaded successfully', 'success');
+      } catch (error) {
+        const authEmail = (currentUser?.email || '').toLowerCase();
+        const authUid = currentUser?.uid || '';
+        console.log('SERVICES_AUTH_STATE', { email: authEmail, uid: authUid });
+        console.error('SERVICES_FIRESTORE_ERROR', {
+          code: error.code,
+          message: error.message,
+          cid: currentCandidateId
+        });
+        showToast('Error loading data: ' + error.message, 'error');
+        showLoading(false);
+      }
+    }
+
+    // Load and display resume history (last 15 days only)
+    async function loadResumeHistory() {
+      try {
+        if (isAdmin || !currentCandidateId) {
+          document.getElementById('resumeHistoryCard').style.display = 'none';
+          return;
+        }
+
+        const fifteenDaysAgo = new Date();
+        fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
+
+        const historyRef = db.collection('candidates').doc(currentCandidateId).collection('resume_history');
+        const snapshot = await historyRef
+          .where('generatedAt', '>=', fifteenDaysAgo)
+          .orderBy('generatedAt', 'desc')
+          .limit(50)
+          .get();
+
+        const historyRecords = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+
+        renderResumeHistory(historyRecords);
+      } catch (error) {
+        console.error('RESUME_HISTORY_LOAD_ERROR', error);
+        // Silently fail - resume history is optional
+      }
+    }
+
+    // Render resume history table
+    function renderResumeHistory(records) {
+      const card = document.getElementById('resumeHistoryCard');
+      const listContainer = document.getElementById('resumeHistoryList');
+      const emptyContainer = document.getElementById('resumeHistoryEmpty');
+      const tableBody = document.getElementById('resumeHistoryTableBody');
+
+      if (!records || records.length === 0) {
+        card.style.display = 'block';
+        listContainer.style.display = 'none';
+        emptyContainer.style.display = 'block';
+        return;
+      }
+
+      card.style.display = 'block';
+      listContainer.style.display = 'block';
+      emptyContainer.style.display = 'none';
+      tableBody.innerHTML = '';
+
+      records.forEach(record => {
+        const generatedDate = record.generatedAt 
+          ? new Date(record.generatedAt.toDate ? record.generatedAt.toDate() : record.generatedAt)
+          : new Date();
+        
+        const dateStr = generatedDate.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: generatedDate.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined
+        });
+        const timeStr = generatedDate.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+
+        const jdMatch = record.metrics?.jdMatch || 0;
+        const matchClass = jdMatch >= 75 ? 'high' : jdMatch >= 50 ? 'medium' : 'low';
+        
+        const skillsCount = (record.addedSkills || []).length;
+        const companyName = record.companyName || '-';
+        const roleTitle = record.roleTitle || '-';
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${dateStr} <span style="color: var(--muted); font-size: 12px;">${timeStr}</span></td>
+          <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${companyName}">${companyName}</td>
+          <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${roleTitle}">${roleTitle}</td>
+          <td style="text-align: center;"><span class="resume-history-match ${matchClass}">${jdMatch}%</span></td>
+          <td style="text-align: center; color: var(--muted);">${skillsCount}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    // Save resume history record
+    async function saveResumeHistory(data) {
+      try {
+        if (isAdmin || !currentCandidateId) return;
+
+        const historyRef = db.collection('candidates').doc(currentCandidateId).collection('resume_history');
+        const historyId = 'resume_' + Date.now();
+        
+        await historyRef.doc(historyId).set({
+          companyName: data.companyName || '',
+          roleTitle: data.roleTitle || '',
+          jdText: data.jdText || '',
+          generatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          fileType: data.fileType || 'PDF',
+          filename: data.filename || '',
+          metrics: {
+            jdMatch: data.metrics?.jdMatch || 0,
+            ats: data.metrics?.ats || 0,
+            hrCatchiness: data.metrics?.hrCatchiness || 0,
+            shortlistChance: data.metrics?.shortlistChance || 0
+          },
+          baseSkills: data.baseSkills || [],
+          addedSkills: data.addedSkills || [],
+          mustIncludeSkills: data.mustIncludeSkills || [],
+          resumeHtml: data.resumeHtml || '',
+          targetMatch: data.targetMatch || 0,
+          status: data.status || 'SUCCESS',
+          errorMessage: data.errorMessage || '',
+          candidateId: currentCandidateId
+        });
+
+        // Reload history display
+        await loadResumeHistory();
+      } catch (error) {
+        showToast('Could not save resume history', 'error');
+      }
+    }
+
+    // Load services catalog from Firestore
+    async function loadServicesCatalog() {
+      try {
+        const catalogDoc = await db.collection('services_catalog').doc('global').get();
+        if (catalogDoc.exists) {
+          const data = catalogDoc.data();
+          servicesCatalog = data.services || [];
+          console.log('Loaded services catalog:', servicesCatalog.length, 'services');
+        } else {
+          // Use default services if catalog doesn't exist
+          servicesCatalog = getDefaultServices();
+          console.log('Using default services catalog');
+        }
+      } catch (error) {
+        console.error('Error loading services catalog:', error);
+        // Fallback to default services
+        servicesCatalog = getDefaultServices();
+      }
+    }
+
+    // Get default services list
+    function getDefaultServices() {
+      return [
+        { key: 'jdMatchResume', name: 'JD Match Resume', icon: 'document', page: 'resume.html' },
+        { key: 'callScript', name: 'Call Script', icon: 'phone', page: 'call-script.html' },
+        { key: 'mockInterview', name: 'Mock Interview', icon: 'chat', page: 'mock-interview.html' },
+        { key: 'liveAssistant', name: 'Live Assistant', icon: 'spark', page: 'live-assistant.html' },
+        { key: 'smartApply', name: 'SmartApply', icon: 'arrow-up-right', page: 'smartapply.html' }
+      ];
+    }
+
+    function renderSidebarServices(services) {
+      const sidebar = document.getElementById('sidebarServiceList');
+      if (!sidebar) return;
+
+      const iconSvgs = {
+        document: '<svg viewBox="0 0 24 24"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h6"/></svg>',
+        phone: '<svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.3 19.3 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .3 2 .6 3a2 2 0 0 1-.5 2.1l-1.3 1.3a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c1 .3 2 .5 3 .6a2 2 0 0 1 1.7 2z"/></svg>',
+        chat: '<svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/><path d="M8 9h8"/><path d="M8 13h5"/></svg>',
+        spark: '<svg viewBox="0 0 24 24"><path d="M12 2l1.2 4.1L17 7.3l-3.8 1.2L12 12l-1.2-3.5L7 7.3l3.8-1.2z"/><path d="M19 11l.8 2.7L22 14.5l-2.2.8L19 18l-.8-2.7-2.2-.8 2.2-.8z"/><path d="M6 13l.7 2.3L9 16l-2.3.7L6 19l-.7-2.3L3 16l2.3-.7z"/></svg>',
+        'arrow-up-right': '<svg viewBox="0 0 24 24"><path d="M14 3h7v7"/><path d="M10 14L21 3"/><path d="M21 14v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6"/></svg>'
+      };
+
+      sidebar.innerHTML = '';
+      services.forEach((service, index) => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = 'javascript:void(0)';
+        a.id = 'nav-' + service.key;
+
+        const page = (service.page || '').trim();
+        const hasPage = page && page.toLowerCase() !== 'na';
+        const isActive = page && window.location.pathname.endsWith('/' + page);
+        if (isActive) {
+          a.classList.add('active');
+        }
+
+        const iconHtml = iconSvgs[service.icon] || iconSvgs.document;
+        a.innerHTML = `<span class="nav-ico" aria-hidden="true">${iconHtml}</span> ${service.name}`;
+
+        a.addEventListener('click', () => {
+          if (!hasPage) {
+            showToast('No page linked', 'info');
+            return;
+          }
+          navigateToService(page);
+        });
+
+        li.appendChild(a);
+        sidebar.appendChild(li);
+      });
+    }
+
+    function initializeEmptyServicesData() {
+      return {
+        meta: {
+          updatedAt: null,
+          updatedByUid: null,
+          statusByService: {
+            resume: 'not-started',
+            callscript: 'not-started',
+            mock: 'not-started',
+            live: 'not-started',
+            smartapply: 'not-started'
+          }
+        },
+        resumeBuilder: {
+          jdText: '',
+          targetRole: '',
+          matchScore: null,
+          missingKeywords: '',
+          resumeHtmlOrText: ''
+        },
+        callScript: {
+          confidenceLevel: '80',
+          scripts: {
+            aboutMe: '',
+            experience: '',
+            changeReason: '',
+            salary: '',
+            notice: '',
+            strengthsWeaknesses: ''
+          }
+        },
+        mockInterview: {
+          track: 'hr',
+          questions: '',
+          guidance: '',
+          readinessScore: null
+        },
+        liveAssistant: {
+          talkingPoints: '',
+          answerStructures: '',
+          riskFlags: ''
+        },
+        smartApply: {
+          copyReadyAnswers: '',
+          templates: '',
+          mappings: ''
+        }
+      };
+    }
+
+    function populateFormFields() {
+      if (!servicesData) return;
+
+      // Resume Builder
+      document.getElementById('resume-jd').value = servicesData.resumeBuilder?.jdText || '';
+      document.getElementById('resume-role').value = servicesData.resumeBuilder?.targetRole || '';
+      document.getElementById('resume-score').value = servicesData.resumeBuilder?.matchScore || '';
+      document.getElementById('resume-keywords').value = servicesData.resumeBuilder?.missingKeywords || '';
+      document.getElementById('resume-output').value = servicesData.resumeBuilder?.resumeHtmlOrText || '';
+
+      // Call Script
+      document.getElementById('callscript-confidence').value = servicesData.callScript?.confidenceLevel || '80';
+      document.getElementById('callscript-aboutme').value = servicesData.callScript?.scripts?.aboutMe || '';
+      document.getElementById('callscript-experience').value = servicesData.callScript?.scripts?.experience || '';
+      document.getElementById('callscript-change').value = servicesData.callScript?.scripts?.changeReason || '';
+      document.getElementById('callscript-salary').value = servicesData.callScript?.scripts?.salary || '';
+      document.getElementById('callscript-notice').value = servicesData.callScript?.scripts?.notice || '';
+      document.getElementById('callscript-strengths').value = servicesData.callScript?.scripts?.strengthsWeaknesses || '';
+
+      // Mock Interview
+      document.getElementById('mock-track').value = servicesData.mockInterview?.track || 'hr';
+      document.getElementById('mock-questions').value = servicesData.mockInterview?.questions || '';
+      document.getElementById('mock-guidance').value = servicesData.mockInterview?.guidance || '';
+      document.getElementById('mock-readiness').value = servicesData.mockInterview?.readinessScore || '';
+
+      // Live Assistant
+      document.getElementById('live-talking').value = servicesData.liveAssistant?.talkingPoints || '';
+      document.getElementById('live-structures').value = servicesData.liveAssistant?.answerStructures || '';
+      document.getElementById('live-risks').value = servicesData.liveAssistant?.riskFlags || '';
+
+      // SmartApply
+      document.getElementById('smartapply-answers').value = servicesData.smartApply?.copyReadyAnswers || '';
+      document.getElementById('smartapply-templates').value = servicesData.smartApply?.templates || '';
+      document.getElementById('smartapply-mappings').value = servicesData.smartApply?.mappings || '';
+    }
+
+    function collectFormData() {
+      const data = {
+        meta: {
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          updatedByUid: auth.currentUser?.uid || null,
+          statusByService: servicesData?.meta?.statusByService || {}
+        },
+        resumeBuilder: {
+          jdText: document.getElementById('resume-jd').value,
+          targetRole: document.getElementById('resume-role').value,
+          matchScore: document.getElementById('resume-score').value ? parseInt(document.getElementById('resume-score').value) : null,
+          missingKeywords: document.getElementById('resume-keywords').value,
+          resumeHtmlOrText: document.getElementById('resume-output').value
+        },
+        callScript: {
+          confidenceLevel: document.getElementById('callscript-confidence').value,
+          scripts: {
+            aboutMe: document.getElementById('callscript-aboutme').value,
+            experience: document.getElementById('callscript-experience').value,
+            changeReason: document.getElementById('callscript-change').value,
+            salary: document.getElementById('callscript-salary').value,
+            notice: document.getElementById('callscript-notice').value,
+            strengthsWeaknesses: document.getElementById('callscript-strengths').value
+          }
+        },
+        mockInterview: {
+          track: document.getElementById('mock-track').value,
+          questions: document.getElementById('mock-questions').value,
+          guidance: document.getElementById('mock-guidance').value,
+          readinessScore: document.getElementById('mock-readiness').value ? parseInt(document.getElementById('mock-readiness').value) : null
+        },
+        liveAssistant: {
+          talkingPoints: document.getElementById('live-talking').value,
+          answerStructures: document.getElementById('live-structures').value,
+          riskFlags: document.getElementById('live-risks').value
+        },
+        smartApply: {
+          copyReadyAnswers: document.getElementById('smartapply-answers').value,
+          templates: document.getElementById('smartapply-templates').value,
+          mappings: document.getElementById('smartapply-mappings').value
+        }
+      };
+
+      // Update status for each service
+      data.meta.statusByService.resume = determineServiceStatus('resume', data.resumeBuilder);
+      data.meta.statusByService.callscript = determineServiceStatus('callscript', data.callScript);
+      data.meta.statusByService.mock = determineServiceStatus('mock', data.mockInterview);
+      data.meta.statusByService.live = determineServiceStatus('live', data.liveAssistant);
+      data.meta.statusByService.smartapply = determineServiceStatus('smartapply', data.smartApply);
+
+      return data;
+    }
+
+    function determineServiceStatus(serviceKey, serviceData) {
+      // Determine status based on field completion
+      switch (serviceKey) {
+        case 'resume':
+          if (serviceData.jdText && serviceData.resumeHtmlOrText) return 'completed';
+          if (serviceData.jdText || serviceData.resumeHtmlOrText) return 'draft';
+          return 'not-started';
+        
+        case 'callscript':
+          const scriptCount = Object.values(serviceData.scripts).filter(s => s.trim()).length;
+          if (scriptCount >= 4) return 'completed';
+          if (scriptCount > 0) return 'draft';
+          return 'not-started';
+        
+        case 'mock':
+          if (serviceData.questions && serviceData.guidance) return 'completed';
+          if (serviceData.questions || serviceData.guidance) return 'draft';
+          return 'not-started';
+        
+        case 'live':
+          const liveCount = [serviceData.talkingPoints, serviceData.answerStructures].filter(s => s?.trim()).length;
+          if (liveCount >= 2) return 'completed';
+          if (liveCount > 0) return 'draft';
+          return 'not-started';
+        
+        case 'smartapply':
+          if (serviceData.copyReadyAnswers && serviceData.templates) return 'completed';
+          if (serviceData.copyReadyAnswers || serviceData.templates) return 'draft';
+          return 'not-started';
+        
+        default:
+          return 'not-started';
+      }
+    }
+
+    async function saveService(serviceKey) {
+      const btn = event?.target;
+      if (btn) btn.disabled = true;
+
+      try {
+        const data = collectFormData();
+        
+        const authEmail = (currentUser?.email || '').toLowerCase();
+        const authUid = currentUser?.uid || '';
+        console.log('SERVICES_AUTH_STATE', { email: authEmail, uid: authUid });
+        console.log('SERVICES_SAVE_SERVICE', { serviceKey, cid: currentCandidateId });
+        
+        await db.collection('candidate_services').doc(currentCandidateId).set(data, { merge: true });
+        
+        servicesData = data;
+        updateStatusPill(serviceKey);
+        updateLastSavedTime();
+        showToast('Service saved successfully', 'success');
+        
+      } catch (error) {
+        const authEmail = (currentUser?.email || '').toLowerCase();
+        const authUid = currentUser?.uid || '';
+        console.log('SERVICES_AUTH_STATE', { email: authEmail, uid: authUid });
+        console.error('SERVICES_FIRESTORE_ERROR', { 
+          code: error.code, 
+          message: error.message,
+          operation: 'saveService',
+          serviceKey,
+          cid: currentCandidateId
+        });
+        showToast('Error saving: ' + error.message, 'error');
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    async function saveAll() {
+      const btn = document.getElementById('saveAllBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="ico-tile sm" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.4 6.4"/><path d="M3 12a9 9 0 0 1 15.4-6.4"/><path d="M3 16v2h2"/><path d="M21 8V6h-2"/></svg></span>Saving...';
+
+      try {
+        // On the launchpad, Save All persists service access
+        await updateServiceFlags(true);
+        
+        const authEmail = (currentUser?.email || '').toLowerCase();
+        const authUid = currentUser?.uid || '';
+        console.log('SERVICES_AUTH_STATE', { email: authEmail, uid: authUid });
+        console.log('SERVICES_SAVE_ALL', { cid: currentCandidateId });
+        
+        showToast('Service access settings saved', 'success');
+        
+      } catch (error) {
+        const authEmail = (currentUser?.email || '').toLowerCase();
+        const authUid = currentUser?.uid || '';
+        console.log('SERVICES_AUTH_STATE', { email: authEmail, uid: authUid });
+        console.error('SERVICES_FIRESTORE_ERROR', { 
+          code: error.code, 
+          message: error.message,
+          operation: 'saveAll',
+          cid: currentCandidateId
+        });
+        showToast('Error saving: ' + error.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="ico-tile sm" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg></span>Save All';
+      }
+    }
+
+    function updateCandidateBadge() {
+      if (!candidateData) return;
+      const nameEl = document.getElementById('candidateName');
+      const idEl = document.getElementById('candidateIdDisplay');
+      if (nameEl) nameEl.textContent = candidateData.fullName || 'Candidate';
+      if (idEl) idEl.textContent = currentCandidateId || '-';
+    }
+
+    function updateLastSavedTime() {
+      const timeEl = document.getElementById('lastSavedTime');
+      if (!timeEl) return; // Element doesn't exist, silently skip
+      
+      if (servicesData?.meta?.updatedAt) {
+        // Handle Firestore timestamp
+        const timestamp = servicesData.meta.updatedAt;
+        if (timestamp?.toDate) {
+          const date = timestamp.toDate();
+          timeEl.textContent = 'Saved ' + formatRelativeTime(date);
+        } else {
+          timeEl.textContent = 'Saved recently';
+        }
+      }
+    }
+
+    function formatRelativeTime(date) {
+      const seconds = Math.floor((new Date() - date) / 1000);
+      if (seconds < 60) return 'just now';
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return minutes + 'm ago';
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return hours + 'h ago';
+      const days = Math.floor(hours / 24);
+      return days + 'd ago';
+    }
+
+    function updateStatusPill(serviceKey) {
+      const data = collectFormData();
+      const status = data.meta.statusByService[serviceKey];
+      const pill = document.getElementById('status-' + serviceKey);
+      if (!pill) return;
+
+      pill.className = 'status-pill ' + status;
+      pill.textContent = status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ');
+    }
+
+    function updateAllStatusPills() {
+      const data = collectFormData();
+      for (const [key, status] of Object.entries(data.meta.statusByService)) {
+        const pill = document.getElementById('status-' + key);
+        if (pill) {
+          pill.className = 'status-pill ' + status;
+          pill.textContent = status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ');
+        }
+      }
+    }
+
+    // ===== SUBSCRIPTION MANAGEMENT FUNCTIONS =====
+
+    let subscriptionMgmtStatus = 'ACTIVE';
+
+    function setSubscriptionMgmtStatus(nextStatus) {
+      const normalized = (nextStatus || 'ACTIVE').toString().toUpperCase();
+      // Ensure only valid statuses are set
+      subscriptionMgmtStatus = ['ACTIVE', 'INACTIVE', 'ON HOLD'].includes(normalized) ? normalized : 'ACTIVE';
+
+      const statusPill = document.getElementById('subscriptionStatusPill');
+      if (statusPill) {
+        statusPill.textContent = subscriptionMgmtStatus;
+        statusPill.classList.remove('is-active', 'is-inactive', 'is-on-hold');
+        if (subscriptionMgmtStatus === 'ACTIVE') {
+          statusPill.classList.add('is-active');
+        } else if (subscriptionMgmtStatus === 'INACTIVE') {
+          statusPill.classList.add('is-inactive');
+        } else if (subscriptionMgmtStatus === 'ON HOLD') {
+          statusPill.classList.add('is-on-hold');
+        }
+      }
+
+      const statusActive = document.getElementById('subscriptionStatusActive');
+      const statusInactive = document.getElementById('subscriptionStatusInactive');
+      const statusOnHold = document.getElementById('subscriptionStatusOnHold');
+      if (statusActive) statusActive.checked = subscriptionMgmtStatus === 'ACTIVE';
+      if (statusInactive) statusInactive.checked = subscriptionMgmtStatus === 'INACTIVE';
+      if (statusOnHold) statusOnHold.checked = subscriptionMgmtStatus === 'ON HOLD';
+    }
+
+    function showSubscriptionPanel() {
+      const panel = document.getElementById('subscriptionMgmtPanel');
+      
+      // Check admin status
+      if (!isAdmin) {
+        if (panel) panel.style.display = 'none';
+        return;
+      }
+      
+      // Admin role confirmed - show panel
+      if (panel) {
+        panel.style.display = 'block';
+        loadSubscriptionForm();
+      }
+    }
+
+    function loadSubscriptionForm() {
+      const { subscriptionPlan, startDate, endDate } = normalizeSubscriptionData(candidateData || {});
+      
+      document.getElementById('subscriptionPlanSelect').value = subscriptionPlan;
+      document.getElementById('subscriptionStartDate').value = startDate.toISOString().split('T')[0];
+      document.getElementById('subscriptionEndDate').value = endDate.toISOString().split('T')[0];
+
+      const savedStatus = (candidateData?.subscriptionStatus || 'ACTIVE').toString().toUpperCase();
+      setSubscriptionMgmtStatus(savedStatus);
+
+      const statusActive = document.getElementById('subscriptionStatusActive');
+      const statusInactive = document.getElementById('subscriptionStatusInactive');
+      const statusOnHold = document.getElementById('subscriptionStatusOnHold');
+      
+      if (statusActive && !statusActive.dataset.listenerAdded) {
+        statusActive.addEventListener('change', () => setSubscriptionMgmtStatus('ACTIVE'));
+        statusActive.dataset.listenerAdded = 'true';
+      }
+      if (statusInactive && !statusInactive.dataset.listenerAdded) {
+        statusInactive.addEventListener('change', () => setSubscriptionMgmtStatus('INACTIVE'));
+        statusInactive.dataset.listenerAdded = 'true';
+      }
+      if (statusOnHold && !statusOnHold.dataset.listenerAdded) {
+        statusOnHold.addEventListener('change', () => setSubscriptionMgmtStatus('ON HOLD'));
+        statusOnHold.dataset.listenerAdded = 'true';
+      }
+      
+      // Add event listeners for auto-updating end date
+      const planSelect = document.getElementById('subscriptionPlanSelect');
+      const startInput = document.getElementById('subscriptionStartDate');
+      
+      if (planSelect && !planSelect.dataset.listenerAdded) {
+        planSelect.addEventListener('change', updateEndDate);
+        planSelect.dataset.listenerAdded = 'true';
+      }
+      if (startInput && !startInput.dataset.listenerAdded) {
+        startInput.addEventListener('change', updateEndDate);
+        startInput.dataset.listenerAdded = 'true';
+      }
+    }
+
+    function updateEndDate() {
+      const planSelect = document.getElementById('subscriptionPlanSelect');
+      const startInput = document.getElementById('subscriptionStartDate');
+      const endInput = document.getElementById('subscriptionEndDate');
+
+      const plan = planSelect.value;
+      const startDate = new Date(startInput.value || new Date().toISOString().split('T')[0]);
+
+      // Calculate end date
+      const endDate = calculateSubscriptionEnd(startDate, plan);
+      endInput.value = endDate.toISOString().split('T')[0];
+    }
+
+    async function saveSubscription() {
+      if (!currentCandidateId) {
+        showToast('No candidate selected', 'error');
+        return;
+      }
+
+      const plan = document.getElementById('subscriptionPlanSelect').value;
+      const startDateInput = document.getElementById('subscriptionStartDate').value;
+      const endDateInput = document.getElementById('subscriptionEndDate').value;
+
+      // Validate required fields
+      if (!plan) {
+        showToast('Please select a plan type', 'error');
+        return;
+      }
+      if (!startDateInput) {
+        showToast('Please select a start date', 'error');
+        return;
+      }
+      if (!subscriptionMgmtStatus) {
+        showToast('Please select a status', 'error');
+        return;
+      }
+
+      const saveBtn = document.querySelector('.btn-subscription-save');
+      if (saveBtn) saveBtn.disabled = true;
+
+      try {
+        const startDate = new Date(startDateInput);
+        const endDate = new Date(endDateInput);
+
+        // Update candidateData locally
+        candidateData.subscriptionPlan = plan;
+        candidateData.subscriptionStart = startDateInput;
+        candidateData.subscriptionEnd = endDateInput;
+        candidateData.subscriptionStatus = subscriptionMgmtStatus;
+        
+        // Save to Firestore at candidate/{cid}/subscription/current
+        const subscriptionRef = db.collection('candidate').doc(currentCandidateId).collection('subscription').doc('current');
+        await subscriptionRef.set(
+          {
+            planType: plan,
+            startDate: startDateInput,
+            endDate: endDateInput,
+            status: subscriptionMgmtStatus,
+            durationDays: calculateDurationDays(plan),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+          },
+          { merge: true }
+        );
+
+        // Update localStorage
+        localStorage.setItem('candidate_' + currentCandidateId, JSON.stringify(candidateData));
+
+        // Refresh UI
+        renderSubscriptionSummary();
+        updateCandidateProfileDropdown();
+        showToast('Plan applied successfully', 'success');
+      } catch (error) {
+        showToast('Error applying plan: ' + error.message, 'error');
+      } finally {
+        if (saveBtn) saveBtn.disabled = false;
+      }
+    }
+
+    function calculateDurationDays(plan) {
+      const planDurationMap = {
+        'demo3days': 3,
+        'demo7days': 7,
+        '1month': 30,
+        '2months': 60,
+        '3months': 90,
+        '6months': 180,
+        '12months': 365
+      };
+      return planDurationMap[plan] || 30;
+    }
+
+    async function refreshSubscriptionStatus() {
+      if (!currentCandidateId) {
+        showToast('No candidate selected', 'error');
+        return;
+      }
+
+      try {
+        // Reload subscription from Firebase at candidate/{cid}/subscription/current
+        const subscriptionRef = db.collection('candidate').doc(currentCandidateId).collection('subscription').doc('current');
+        const docSnap = await subscriptionRef.get();
+        if (docSnap.exists) {
+          const data = docSnap.data();
+          candidateData.subscriptionPlan = data.planType || candidateData.subscriptionPlan;
+          candidateData.subscriptionStart = data.startDate;
+          candidateData.subscriptionEnd = data.endDate;
+          candidateData.subscriptionStatus = data.status || 'ACTIVE';
+        }
+
+        // Reset draft state
+        loadSubscriptionForm();
+        renderSubscriptionSummary();
+        showToast('Status refreshed', 'success');
+      } catch (error) {
+        showToast('Error refreshing status: ' + error.message, 'error');
+      }
+    }
+
+    // Display candidate info below header
+    function displayCandidateInfo() {
+      // Candidate name resolution logic
+      let fullName = '';
+      
+      // Try fullName first
+      if (candidateData?.fullName && candidateData.fullName.trim()) {
+        fullName = candidateData.fullName.trim();
+      }
+      // Else try firstName + lastName combination
+      else if (candidateData?.firstName || candidateData?.lastName) {
+        const first = (candidateData?.firstName || '').trim();
+        const last = (candidateData?.lastName || '').trim();
+        fullName = (first + ' ' + last).trim();
+      }
+      // Else try name
+      else if (candidateData?.name && candidateData.name.trim()) {
+        fullName = candidateData.name.trim();
+      }
+      // Else try candidateName
+      else if (candidateData?.candidateName && candidateData.candidateName.trim()) {
+        fullName = candidateData.candidateName.trim();
+      }
+      // Final fallback
+      if (!fullName) {
+        fullName = 'Candidate';
+      }
+      
+      const candidateId = currentCandidateId || '-';
+      
+      const nameEl = document.getElementById('candName');
+      const idEl = document.getElementById('candId');
+      
+      if (nameEl) nameEl.textContent = fullName;
+      if (idEl) idEl.textContent = 'Candidate ID: ' + candidateId;
+
+      const headerName = document.getElementById('candidateHeaderName');
+      if (headerName) headerName.textContent = fullName + ' (' + candidateId + ')';
+      
+      const block = document.getElementById('candidateInfoBlock');
+      if (block) block.style.display = 'block';
+    }
+
+    // Update service access (local update and optional Firestore save)
+    async function updateServiceFlags(persist = false) {
+      const services = servicesCatalog.length > 0 ? servicesCatalog : getDefaultServices();
+      services.forEach(service => {
+        const floatingToggle = document.querySelector('.svc-toggle[data-service-id="' + service.key + '"]');
+        if (floatingToggle) {
+          serviceAccess[service.key] = !!floatingToggle.checked;
+        }
+      });
+
+      localStorage.setItem('servicesAccess_' + currentCandidateId, JSON.stringify(serviceAccess));
+      const role = (localStorage.getItem('role') || 'user').toLowerCase();
+      renderServicesGrid(services, role === 'admin', subscriptionExpired);
+
+      if (!persist) return;
+
+      try {
+        await db.collection('candidates').doc(currentCandidateId).set(
+          { servicesAccess: serviceAccess },
+          { merge: true }
+        );
+        console.log('Service access updated:', serviceAccess);
+      } catch (error) {
+        console.error('Error updating service access:', error);
+        showToast('Error updating service access', 'error');
+      }
+    }
+
+    // Render service cards for the overview grid
+    function renderServicesGrid(services, isAdmin, isExpired) {
+      const selector = document.getElementById('serviceSelector');
+      if (!selector) return;
+      
+      selector.innerHTML = '';
+
+      // SVG icons for pills
+      const iconSvgs = {
+        document: '<svg viewBox="0 0 24 24"><path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h6"/></svg>',
+        phone: '<svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.3 19.3 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .3 2 .6 3a2 2 0 0 1-.5 2.1l-1.3 1.3a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c1 .3 2 .5 3 .6a2 2 0 0 1 1.7 2z"/></svg>',
+        chat: '<svg viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/><path d="M8 9h8"/><path d="M8 13h5"/></svg>',
+        spark: '<svg viewBox="0 0 24 24"><path d="M12 2l1.2 4.1L17 7.3l-3.8 1.2L12 12l-1.2-3.5L7 7.3l3.8-1.2z"/><path d="M19 11l.8 2.7L22 14.5l-2.2.8L19 18l-.8-2.7-2.2-.8 2.2-.8z"/><path d="M6 13l.7 2.3L9 16l-2.3.7L6 19l-.7-2.3L3 16l2.3-.7z"/></svg>',
+        'arrow-up-right': '<svg viewBox="0 0 24 24"><path d="M14 3h7v7"/><path d="M10 14L21 3"/><path d="M21 14v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h6"/></svg>'
+      };
+
+      services.forEach(service => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'svc-wrapper';
+        wrapper.style.position = 'relative';
+        
+        const pill = document.createElement('div');
+        pill.className = 'svc-card';
+        pill.id = 'pill-' + service.key;
+        pill.dataset.serviceId = service.key;
+        
+        // Check if service is disabled
+        const enabled = serviceAccess[service.key] !== false;
+        const isDisabled = !isAdmin && !enabled && !isExpired;
+        const isExpiredService = !isAdmin && isExpired;
+        
+        // Add disabled/expired classes for user mode only
+        if (isDisabled) {
+          pill.classList.add('is-disabled');
+        }
+        if (isExpiredService) {
+          pill.classList.add('is-expired');
+        }
+
+        // Build pill HTML
+        const iconHtml = iconSvgs[service.icon] || '';
+        pill.innerHTML = `
+          <div class="svc-card-left">
+            <div class="svc-icon" aria-hidden="true">${iconHtml}</div>
+            <div class="svc-text">
+              <div class="svc-title">${service.name}</div>
+            </div>
+          </div>
+          ${!isAdmin && (isExpired || !enabled) ? `
+          <div class="svc-lock-overlay">
+            <div class="svc-lock-badge">
+              <span class="svc-lock-icn">🔒</span>
+              <span>${isExpired ? 'Subscription Expired' : 'Not Activated'}</span>
+            </div>
+          </div>
+          ` : ''}
+        `;
+
+        // Admin: floating badge outside card for enable toggle
+        if (isAdmin) {
+          const badge = document.createElement('div');
+          badge.className = 'svc-enable-badge';
+          badge.innerHTML = `
+            <label class="svc-badge-toggle">
+              <input type="checkbox" class="svc-toggle-input" data-service-id="${service.key}" ${enabled ? 'checked' : ''} />
+              <span class="svc-toggle-checkmark">${enabled ? '✓' : ''}</span>
+            </label>
+          `;
+          
+          const toggle = badge.querySelector('.svc-toggle-input');
+          if (toggle) {
+            toggle.addEventListener('change', async (e) => {
+              e.stopPropagation();
+              const serviceId = toggle.dataset.serviceId;
+              const enabled = toggle.checked;
+              await setServiceEnabled(currentCandidateId, serviceId, enabled);
+              // Update checkmark
+              const checkmark = badge.querySelector('.svc-toggle-checkmark');
+              if (checkmark) {
+                checkmark.textContent = enabled ? '✓' : '';
+              }
+            });
+          }
+          
+          wrapper.appendChild(badge);
+        }
+
+        // Make card clickable to navigate (if enabled)
+        if (service.page) {
+          pill.style.cursor = 'pointer';
+          pill.addEventListener('click', (e) => {
+            // Admin always can navigate
+            if (isAdmin) {
+              navigateToService(service.page);
+              return;
+            }
+            
+            // User: check if enabled and not expired
+            if (isExpired) {
+              showToast('Subscription expired. Please contact administrator.', 'error');
+              return;
+            }
+            
+            if (!enabled) {
+              showToast('This service is not activated for your account.', 'error');
+              return;
+            }
+            
+            // Special handling for JD Match Resume - open modal instead of navigating
+            if (service.key === 'jdMatchResume') {
+              openJDMatchModal();
+              return;
+            }
+            
+            // Navigate to other services
+            navigateToService(service.page);
+          });
+        }
+
+        wrapper.appendChild(pill);
+        selector.appendChild(wrapper);
+      });
+
+      // Add "+ Add Service" tile for admin only
+      if (isAdmin) {
+        const addCard = document.createElement('div');
+        addCard.className = 'svc-card svc-add-card';
+        addCard.id = 'addServiceCard';
+        addCard.innerHTML = `
+          <div class="svc-add-plus">+</div>
+          <div class="svc-title">Add Service</div>
+          <div class="svc-sub">Create a new service</div>
+        `;
+        
+        addCard.addEventListener('click', () => {
+          showAddServiceModal();
+        });
+        
+        selector.appendChild(addCard);
+      }
+    }
+
+    // Set service enabled/disabled for a candidate (Admin only)
+    async function setServiceEnabled(candidateId, serviceId, enabled) {
+      if (!candidateId || !serviceId) return;
+      
+      try {
+        // Update local serviceAccess
+        serviceAccess[serviceId] = enabled;
+        localStorage.setItem('servicesAccess_' + candidateId, JSON.stringify(serviceAccess));
+        
+        // Try Firestore first
+        await db.collection('candidates').doc(candidateId).set(
+          { servicesAccess: { [serviceId]: enabled } },
+          { merge: true }
+        );
+        
+        console.log('Service enabled status updated:', serviceId, enabled);
+        showToast(`Service ${enabled ? 'enabled' : 'disabled'} successfully`, 'success');
+        
+      } catch (error) {
+        console.error('Error updating service status:', error);
+        // Firestore failed, but localStorage is already updated as fallback
+        showToast('Status updated locally (offline mode)', 'info');
+      }
+    }
+
+    // Show modal to add new service (Admin only)
+    function showAddServiceModal() {
+      const modal = document.getElementById('addServiceModal');
+      if (!isAdmin) {
+        showToast('Admin access required to add services.', 'error');
+        return;
+      }
+      if (modal) {
+        modal.style.display = 'flex';
+        // Clear form
+        document.getElementById('newServiceKey').value = '';
+        document.getElementById('newServiceName').value = '';
+        document.getElementById('newServicePage').value = '';
+        document.getElementById('newServiceIcon').value = 'document';
+
+        const submitBtn = modal.querySelector('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.disabled = !isAdmin;
+        }
+      }
+    }
+
+    function closeAddServiceModal() {
+      const modal = document.getElementById('addServiceModal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    }
+
+    async function saveNewService(event) {
+      event.preventDefault();
+      
+      const serviceKey = document.getElementById('newServiceKey').value.trim();
+      const serviceName = document.getElementById('newServiceName').value.trim();
+      const servicePage = document.getElementById('newServicePage').value.trim() || (serviceKey + '.html');
+      const serviceIcon = document.getElementById('newServiceIcon').value;
+      
+      if (!serviceKey || !serviceName) {
+        showToast('Please fill in all required fields', 'error');
+        return;
+      }
+      
+      // Check for duplicate service key
+      if (servicesCatalog.some(s => s.key === serviceKey)) {
+        showToast('Service with this key already exists', 'error');
+        return;
+      }
+
+      console.log("ADD_SERVICE_AUTH", { uid: firebase.auth().currentUser?.uid, email: firebase.auth().currentUser?.email });
+      console.log("ADD_SERVICE_TARGET", { collection: "services_catalog", doc: "global" });
+      console.log("ADD_SERVICE_IS_ADMIN", { isAdmin });
+      // Admin bootstrap: use ADD_SERVICE_AUTH.uid to create admins/<uid> in Firebase Console.
+
+      if (!isAdmin) {
+        showToast('Admin access required to add services.', 'error');
+        return;
+      }
+      
+      try {
+        const newService = {
+          key: serviceKey,
+          name: serviceName,
+          page: servicePage,
+          icon: serviceIcon,
+          createdAt: firebase.firestore.Timestamp.now(),
+          createdBy: currentUser?.uid || 'unknown'
+        };
+
+        console.log("ADD_SERVICE_PAYLOAD_KEYS", Object.keys(newService || {}));
+        
+        // Add to global services catalog in Firestore
+        const updatedCatalog = [...servicesCatalog, newService];
+        await db.collection('services_catalog').doc('global').set(
+          {
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            services: updatedCatalog
+          },
+          { merge: true }
+        );
+        
+        // Update local catalog
+        servicesCatalog = updatedCatalog;
+        
+        // Enable this service for the current candidate
+        serviceAccess[serviceKey] = true;
+        await db.collection('candidates').doc(currentCandidateId).set(
+          { servicesAccess: { [serviceKey]: true } },
+          { merge: true }
+        );
+        
+        localStorage.setItem('servicesAccess_' + currentCandidateId, JSON.stringify(serviceAccess));
+        
+        showToast('Service added successfully', 'success');
+        closeAddServiceModal();
+        
+        // Refresh the service grid and sidebar to show the new service
+        const servicesList = servicesCatalog.length > 0 ? servicesCatalog : getDefaultServices();
+        renderServicesGrid(servicesList, isAdmin, subscriptionExpired);
+        renderSidebarServices(servicesList);
+        
+      } catch (error) {
+        console.error('Error adding service:', error);
+        showToast('Error adding service: ' + error.message, 'error');
+      }
+    }
+
+    // Navigate to dedicated service page (sidebar navigation only)
+    function buildServiceUrl(page, cid) {
+      const params = new URLSearchParams();
+      if (cid) params.set('cid', cid);
+      if (isAdminContext) params.set('mode', 'admin');
+      const qs = params.toString();
+      return qs ? page + '?' + qs : page;
+    }
+
+    function navigateToService(page) {
+      const cid = currentCandidateId;
+      if (cid) {
+        sessionStorage.setItem('hr_active_cid', cid);
+      }
+      
+      // Admin always bypasses all checks
+      if (isAdmin) {
+        // Admin can always navigate
+        window.location.href = buildServiceUrl(page, cid);
+        return;
+      }
+      
+      // For user mode, check if service is enabled before navigation
+      if (!isAdmin) {
+        if (subscriptionExpired) {
+          showToast('Subscription expired. Access is locked.', 'info');
+          return;
+        }
+        // Extract service key from page name
+        const serviceMap = {
+          'resume.html': 'jdMatchResume',
+          'call-script.html': 'callScript',
+          'mock-interview.html': 'mockInterview',
+          'live-assistant.html': 'liveAssistant',
+          'smartapply.html': 'smartApply'
+        };
+        
+        const serviceKey = serviceMap[page];
+        if (serviceKey && serviceAccess[serviceKey] === false) {
+          showToast('Service not activated', 'info');
+          return;
+        }
+      }
+      
+      // Navigate to page
+      window.location.href = buildServiceUrl(page, cid);
+    }
+
+    // Legacy function - redirect to launchpad if somehow called
+    function showService(serviceKey) {
+      console.warn('showService() called on services.html - this should not happen');
+      window.location.href = buildServiceUrl('services.html', currentCandidateId);
+    }
+
+    function showLoading(show) {
+      const loading = document.getElementById('loadingState');
+      
+      if (show) {
+        if (loading) loading.style.display = 'block';
+      } else {
+        if (loading) loading.style.display = 'none';
+        // On services.html, no service sections to show (launchpad only)
+      }
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = 'toast ' + type;
+      
+      const icons = {
+        success: '✓',
+        error: '✕',
+        info: 'ℹ'
+      };
+      
+      toast.innerHTML = `
+        <div class="toast-icon">${icons[type] || 'ℹ'}</div>
+        <div class="toast-message">${message}</div>
+      `;
+      
+      container.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    function toggleAccordion(header) {
+      const item = header.parentElement;
+      const wasOpen = item.classList.contains('open');
+      
+      // Close all items in this accordion
+      const accordion = item.closest('.accordion');
+      accordion.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('open'));
+      
+      // Open this item if it wasn't open
+      if (!wasOpen) {
+        item.classList.add('open');
+      }
+    }
+
+    async function copyToClipboard(elementId) {
+      const text = document.getElementById(elementId).value;
+      if (!text) {
+        showToast('Nothing to copy', 'error');
+        return;
+      }
+      
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast('Copied to clipboard', 'success');
+      } catch (error) {
+        console.error('Copy failed:', error);
+        showToast('Failed to copy', 'error');
+      }
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      // Ctrl+S or Cmd+S to save
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        saveAll();
+      }
+    });
+
+    // Initialize floating particles for premium background effect
+    function initializeParticles() {
+      const container = document.body;
+      const particleCount = 30;
+      const sizes = ['sm', 'md', 'lg'];
+      
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle size-' + sizes[Math.floor(Math.random() * sizes.length)];
+        
+        const duration = 12 + Math.random() * 8; // 12-20 seconds
+        const delay = Math.random() * 5; // Random delay 0-5s
+        const xOffset = (Math.random() - 0.5) * 100 - 50; // Random horizontal drift -50 to 50px
+        const xStart = Math.random() * window.innerWidth;
+        
+        particle.style.setProperty('--duration', duration + 's');
+        particle.style.setProperty('--offset-x', xOffset + 'px');
+        particle.style.left = xStart + 'px';
+        particle.style.animationDelay = delay + 's';
+        particle.style.animationDuration = duration + 's';
+        
+        container.appendChild(particle);
+        
+        // Remove particle when animation completes to prevent DOM bloat
+        setTimeout(() => {
+          particle.remove();
+          // Recreate new particle to maintain continuous flow
+          if (Math.random() > 0.3) { // 70% chance to respawn
+            initSingleParticle();
+          }
+        }, (duration + delay) * 1000);
+      }
+    }
+
+    // Single particle creation for continuous background flow
+    function initSingleParticle() {
+      const particle = document.createElement('div');
+      const sizes = ['sm', 'md', 'lg'];
+      particle.className = 'particle size-' + sizes[Math.floor(Math.random() * sizes.length)];
+      
+      const duration = 12 + Math.random() * 8;
+      const delay = 0;
+      const xOffset = (Math.random() - 0.5) * 100 - 50;
+      const xStart = Math.random() * window.innerWidth;
+      
+      particle.style.setProperty('--duration', duration + 's');
+      particle.style.setProperty('--offset-x', xOffset + 'px');
+      particle.style.left = xStart + 'px';
+      particle.style.animationDelay = delay + 's';
+      particle.style.animationDuration = duration + 's';
+      
+      document.body.appendChild(particle);
+      
+      setTimeout(() => {
+        particle.remove();
+        // Continue particle flow
+        if (Math.random() > 0.2) {
+          initSingleParticle();
+        }
+      }, duration * 1000);
+    }
+
+    // Start particle animation when page loads
+    window.addEventListener('load', () => {
+      // Set up subscription form event listeners
+      const planSelect = document.getElementById('subscriptionPlanSelect');
+      const startInput = document.getElementById('subscriptionStartDate');
+      
+      if (planSelect) planSelect.addEventListener('change', updateEndDate);
+      if (startInput) startInput.addEventListener('change', updateEndDate);
+
+      // Set default start date to today if empty
+      if (startInput && !startInput.value) {
+        const today = new Date().toISOString().split('T')[0];
+        startInput.value = today;
+        updateEndDate();
+      }
+
+      setTimeout(initializeParticles, 100);
+      // Spawn new particles periodically
+      setInterval(() => {
+        if (Math.random() > 0.6) {
+          initSingleParticle();
+        }
+      }, 1000);
+
+      // ========== JD MATCH RESUME FUNCTIONS ==========
+      
+      let currentGeneration = null;
+      
+      // Delegated event listeners for JD Match modal buttons (works even if modal is added dynamically)
+      document.addEventListener('click', (e) => {
+        // Close button handler
+        if (e.target.closest('#jdMatchCloseBtn')) {
+          e.preventDefault();
+          e.stopPropagation();
+          closeJDMatchModal();
+          return;
+        }
+        
+        // Generate Resume button handler
+        if (e.target.closest('#jdMatchGenerateBtn')) {
+          e.preventDefault();
+          e.stopPropagation();
+          generateResume();
+          return;
+        }
+        
+        // Service card click to open JD Match modal
+        const pill = e.target.closest('.svc-card');
+        if (pill && pill.dataset.serviceId === 'jdMatchResume' && !isAdmin) {
+          openJDMatchModal();
+        }
+      });
+      
+      function openJDMatchModal() {
+        const modal = document.getElementById('jdMatchModal');
+        if (modal) {
+          modal.style.display = 'flex';
+          loadJDMatchHistory();
+        }
+      }
+      
+      function closeJDMatchModal() {
+        const modal = document.getElementById('jdMatchModal');
+        if (modal) modal.style.display = 'none';
+      }
+      
+      function updateTargetMatchUI() {
+        const mode = document.querySelector('input[name="targetMode"]:checked')?.value || 'auto';
+        const input = document.getElementById('jdmTargetMatch');
+        input.style.display = mode === 'manual' ? 'block' : 'none';
+      }
+      
+      async function generateResume() {
+        const companyName = document.getElementById('jdmCompanyName').value.trim();
+        const jobDescription = document.getElementById('jdmJobDescription').value.trim();
+        const mustincludeSkillsStr = document.getElementById('jdmMustincludeSkills').value.trim();
+        const targetMode = document.querySelector('input[name="targetMode"]:checked')?.value || 'AUTO';
+        const targetMatchValue = parseInt(document.getElementById('jdmTargetMatch').value) || 85;
+        
+        if (!companyName || !jobDescription) {
+          showToast('Please fill in Company Name and Job Description', 'error');
+          return;
+        }
+        
+        const mustIncludeSkills = mustincludeSkillsStr
+          .split(',')
+          .map(s => s.trim())
+          .filter(s => s.length > 0);
+        
+        const genBtn = document.getElementById('jdMatchGenerateBtn');
+        const loading = document.getElementById('jdmLoading');
+        const preview = document.getElementById('jdmPreviewSection');
+        
+        if (genBtn) genBtn.disabled = true;
+        if (loading) loading.style.display = 'block';
+        
+        try {
+          const response = await fetch('/.netlify/functions/generateResume', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              candidateId: currentCandidateId,
+              companyName,
+              jobDescription,
+              targetMatchMode: targetMode,
+              targetMatchValue: targetMatchValue,
+              mustIncludeSkills
+            })
+          });
+          
+          if (!response.ok) {
+            let errorMsg = response.statusText;
+            try {
+              const error = await response.json();
+              errorMsg = error.error || error.message || errorMsg;
+            } catch (e) {
+              const text = await response.text();
+              if (text) errorMsg = text;
+            }
+            showToast('Error: ' + errorMsg, 'error');
+            return;
+          }
+          
+          const data = await response.json();
+          currentGeneration = data;
+          
+          // Sanitize HTML - remove scripts and on* attributes
+          const sanitized = data.resumeHtml
+            .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+            .replace(/\son\w+\s*=/gi, ' ');
+          
+          // Show preview
+          const previewContainer = document.getElementById('jdmPreviewContainer');
+          if (previewContainer) {
+            previewContainer.innerHTML = sanitized;
+          }
+          
+          // Update metrics
+          document.getElementById('jdmMetricJDMatch').textContent = data.metrics?.jdMatch || '-';
+          document.getElementById('jdmMetricATS').textContent = data.metrics?.ats || '-';
+          document.getElementById('jdmMetricHR').textContent = data.metrics?.hrCatchiness || '-';
+          document.getElementById('jdmMetricShortlist').textContent = data.metrics?.shortlistChance || '-';
+          
+          // Show preview section
+          if (preview) preview.style.display = 'block';
+          
+          // Save to Firestore history
+          await saveResumeHistory({
+            companyName: data.companyName || companyName,
+            roleTitle: data.roleTitle || '',
+            jdText: jobDescription.substring(0, 500),
+            metrics: data.metrics,
+            addedSkills: data.addedSkills || [],
+            mustIncludeSkills,
+            filename: data.filename,
+            resumeHtml: data.resumeHtml,
+            targetMatch: data.targetMatch,
+            status: 'SUCCESS'
+          });
+          
+          showToast('Resume generated successfully!', 'success');
+          // Reload history in both locations
+          await loadResumeHistory();
+          await loadJDMatchHistory();
+          
+        } catch (error) {
+          showToast('Error generating resume: ' + error.message, 'error');
+        } finally {
+          if (genBtn) genBtn.disabled = false;
+          if (loading) loading.style.display = 'none';
+        }
+      }
+      
+      function downloadResumePDF() {
+        if (!currentGeneration || !currentGeneration.resumeHtml) {
+          showToast('No resume to download', 'error');
+          return;
+        }
+        
+        // Simple approach: create blob and download
+        const filename = currentGeneration.filename || 'resume.pdf';
+        const htmlContent = currentGeneration.resumeHtml;
+        
+        // For simplicity without html2pdf library, create a data URL and trigger download
+        // In production, you'd use html2pdf.js library
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+        iframe.contentDocument.write(htmlContent);
+        iframe.contentDocument.close();
+        iframe.contentWindow.print();
+        setTimeout(() => document.body.removeChild(iframe), 1000);
+        
+        showToast('PDF download initiated', 'info');
+      }
+      
+      function downloadResumeWord() {
+        if (!currentGeneration || !currentGeneration.resumeHtml) {
+          showToast('No resume to download', 'error');
+          return;
+        }
+        
+        const filename = currentGeneration.filename?.replace('.pdf', '.doc') || 'resume.doc';
+        const htmlContent = currentGeneration.resumeHtml;
+        
+        // Word-compatible HTML
+        const wordDoc = `
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head><meta charset='UTF-8'></head>
+<body>
+${htmlContent}
+</body>
+</html>
+        `;
+        
+        const blob = new Blob([wordDoc], { type: 'application/msword' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showToast('Word document downloaded', 'info');
+      }
+      
+      async function loadJDMatchHistory() {
+        try {
+          const fifteenDaysAgo = new Date();
+          fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
+          
+          const snapshot = await db
+            .collection('candidates')
+            .doc(currentCandidateId)
+            .collection('resume_history')
+            .where('generatedAt', '>=', fifteenDaysAgo)
+            .orderBy('generatedAt', 'desc')
+            .limit(50)
+            .get();
+          
+          const historySection = document.getElementById('jdmHistorySection');
+          const historyList = document.getElementById('jdmHistoryList');
+          
+          if (snapshot.empty) {
+            if (historySection) historySection.style.display = 'none';
+            return;
+          }
+          
+          if (historySection) historySection.style.display = 'block';
+          if (historyList) {
+            historyList.innerHTML = '';
+            
+            const table = document.createElement('table');
+            table.style.width = '100%';
+            table.style.borderCollapse = 'collapse';
+            table.style.fontSize = '12px';
+            
+            const thead = document.createElement('thead');
+            thead.innerHTML = `
+              <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: var(--muted);">
+                <th style="padding: 8px; text-align: left; font-weight: 600;">Date/Time</th>
+                <th style="padding: 8px; text-align: left; font-weight: 600;">Company</th>
+                <th style="padding: 8px; text-align: left; font-weight: 600;">Role</th>
+                <th style="padding: 8px; text-align: center; font-weight: 600;">JD Match</th>
+                <th style="padding: 8px; text-align: center; font-weight: 600;">Skills</th>
+                <th style="padding: 8px; text-align: center; font-weight: 600;">Actions</th>
+              </tr>
+            `;
+            table.appendChild(thead);
+            
+            const tbody = document.createElement('tbody');
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              const genDate = data.generatedAt?.toDate ? data.generatedAt.toDate() : new Date(data.generatedAt);
+              const dateStr = genDate.toLocaleDateString() + ' ' + genDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+              const jdMatch = data.metrics?.jdMatch || '-';
+              const skillsCount = (data.addedSkills || []).length;
+              
+              const tr = document.createElement('tr');
+              tr.style.borderBottom = '1px solid rgba(255, 255, 255, 0.06)';
+              tr.style.color = 'var(--text)';
+              
+              tr.innerHTML = `
+                <td style="padding: 8px;">${dateStr}</td>
+                <td style="padding: 8px;">${data.companyName || '-'}</td>
+                <td style="padding: 8px;">${data.roleTitle || '-'}</td>
+                <td style="padding: 8px; text-align: center;"><span style="background: rgba(76, 175, 80, 0.18); color: #81c784; padding: 2px 6px; border-radius: 4px; font-weight: 600;">${jdMatch}%</span></td>
+                <td style="padding: 8px; text-align: center;">${skillsCount}</td>
+                <td style="padding: 8px; text-align: center;">
+                  <button onclick="loadHistoryResume('${doc.id}', \`${data.resumeHtml.replace(/`/g, '&#96;')}\`)" style="background: none; border: none; color: var(--accentA); cursor: pointer; font-size: 11px; padding: 2px 6px;">View</button>
+                </td>
+              `;
+              tbody.appendChild(tr);
+            });
+            table.appendChild(tbody);
+            historyList.appendChild(table);
+          }
+        } catch (error) {
+          console.error('Error loading history:', error);
+        }
+      }
+      
+      function loadHistoryResume(docId, resumeHtml) {
+        // Sanitize HTML - remove scripts and on* attributes
+        const sanitized = resumeHtml
+          .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+          .replace(/\son\w+\s*=/gi, ' ');
+        
+        // Fetch filename from Firestore for proper downloads
+        currentGeneration = { resumeHtml: sanitized, filename: 'resume.pdf' };
+        if (currentCandidateId && docId) {
+          db.collection('candidates').doc(currentCandidateId).collection('resume_history').doc(docId).get()
+            .then(doc => {
+              if (doc.exists && doc.data().filename) {
+                currentGeneration.filename = doc.data().filename;
+              }
+            })
+            .catch(err => {});
+        }
+        
+        const previewContainer = document.getElementById('jdmPreviewContainer');
+        if (previewContainer) {
+          previewContainer.innerHTML = sanitized;
+        }
+        const preview = document.getElementById('jdmPreviewSection');
+        if (preview) preview.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

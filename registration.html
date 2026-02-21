@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HireReady - Candidate Registration</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #07060A 0%, #0B0A12 50%, #1a1420 100%);
+      color: #F3F1FF;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .container {
+      background: rgba(31, 27, 46, 0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(182, 156, 255, 0.15);
+      border-radius: 20px;
+      padding: 48px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, rgba(182, 156, 255, 0.95) 0%, rgba(210, 190, 255, 0.8) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .subtitle {
+      text-align: center;
+      color: rgba(243, 241, 255, 0.72);
+      font-size: 15px;
+      margin-bottom: 32px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #F3F1FF;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(20, 18, 30, 0.5);
+      border: 1px solid rgba(182, 156, 255, 0.2);
+      border-radius: 10px;
+      color: #F3F1FF;
+      font-size: 14px;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: rgba(182, 156, 255, 0.5);
+      box-shadow: 0 0 0 3px rgba(182, 156, 255, 0.1);
+    }
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    .btn {
+      width: 100%;
+      padding: 14px 24px;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: linear-gradient(135deg, #B69CFF 0%, #6DA9FF 100%);
+      color: white;
+      box-shadow: 0 4px 20px rgba(182, 156, 255, 0.3);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(182, 156, 255, 0.4);
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .message {
+      padding: 14px 18px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .message.success {
+      background: rgba(182, 156, 255, 0.15);
+      border: 1px solid rgba(182, 156, 255, 0.3);
+      color: rgba(210, 190, 255, 0.95);
+    }
+    .message.error {
+      background: rgba(244, 67, 54, 0.15);
+      border: 1px solid rgba(244, 67, 54, 0.3);
+      color: #EF5350;
+    }
+    .note {
+      font-size: 13px;
+      color: rgba(243, 241, 255, 0.6);
+      text-align: center;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Candidate Registration</h1>
+    <p class="subtitle">Join HireReady to access career development services</p>
+    
+    <div id="message" class="message"></div>
+    
+    <form id="registrationForm">
+      <div class="form-group">
+        <label for="candidateId">Candidate ID*</label>
+        <input type="text" id="candidateId" name="candidateId" required placeholder="Enter your Candidate ID">
+      </div>
+      
+      <div class="form-group">
+        <label for="fullName">Full Name*</label>
+        <input type="text" id="fullName" name="fullName" required placeholder="John Doe">
+      </div>
+      
+      <div class="form-group">
+        <label for="email">Email*</label>
+        <input type="email" id="email" name="email" required placeholder="john@example.com">
+      </div>
+      
+      <div class="form-group">
+        <label for="phone">Phone Number*</label>
+        <input type="tel" id="phone" name="phone" required placeholder="+1 234 567 8900">
+      </div>
+      
+      <div class="form-group">
+        <label for="notes">Additional Notes (Optional)</label>
+        <textarea id="notes" name="notes" placeholder="Any additional information..."></textarea>
+      </div>
+      
+      <button type="submit" class="btn" id="submitBtn">Submit Registration</button>
+    </form>
+    
+    <p class="note">Your registration will be reviewed by our admin team. You'll receive login credentials via email once approved.</p>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCMf4oteHAswn-IGvVbbkYnCciNueKGyjY",
+      authDomain: "hirereadyservices-9a8de.firebaseapp.com",
+      projectId: "hirereadyservices-9a8de",
+      storageBucket: "hirereadyservices-9a8de.firebasestorage.app",
+      messagingSenderId: "677972277573",
+      appId: "1:677972277573:web:fab51d25a84ef03d0ea62c"
+    };
+    
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.firestore();
+    
+    // Check for candidateId in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const cidFromUrl = urlParams.get('cid');
+    if (cidFromUrl) {
+      document.getElementById('candidateId').value = cidFromUrl;
+      document.getElementById('candidateId').readOnly = true;
+    }
+    
+    function showMessage(text, type) {
+      const messageEl = document.getElementById('message');
+      messageEl.textContent = text;
+      messageEl.className = 'message ' + type;
+      messageEl.style.display = 'block';
+      
+      if (type === 'success') {
+        setTimeout(() => {
+          messageEl.style.display = 'none';
+        }, 5000);
+      }
+    }
+    
+    document.getElementById('registrationForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+      
+      try {
+        const formData = {
+          candidateId: document.getElementById('candidateId').value.trim(),
+          fullName: document.getElementById('fullName').value.trim(),
+          email: document.getElementById('email').value.trim(),
+          phone: document.getElementById('phone').value.trim(),
+          notes: document.getElementById('notes').value.trim(),
+          submittedAt: firebase.firestore.Timestamp.now(),
+          status: 'pending'
+        };
+        
+        // Save to registration_submissions collection (safer than direct candidates collection)
+        await db.collection('registration_submissions').doc(formData.candidateId).set(formData);
+        
+        showMessage('Registration submitted successfully! Our admin team will review your application.', 'success');
+        
+        // Reset form
+        document.getElementById('registrationForm').reset();
+        if (cidFromUrl) {
+          document.getElementById('candidateId').value = cidFromUrl;
+        }
+        
+      } catch (error) {
+        console.error('Registration error:', error);
+        showMessage('Error submitting registration: ' + error.message, 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit Registration';
+      }
+    });
+  </script>
+</body>
+</html>

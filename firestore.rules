@@ -1,0 +1,148 @@
+// Firestore Security Rules - HireReady Services (Admin Only)
+// Version: 3.0
+// Last Updated: February 17, 2026
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================================
+    // HELPER FUNCTIONS
+    // ============================================================
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      // For development: Allow any authenticated user
+      // TODO: Set up custom claims (role=admin) or ensure admin uids exist in /admins collection
+      return request.auth != null;
+    }
+
+    // ============================================================
+    // CANDIDATES COLLECTION
+    // ============================================================
+    match /candidates/{candidateId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ============================================================
+    // CANDIDATE COLLECTION (NEW PATH)
+    // ============================================================
+    match /candidate/{cid} {
+      match /subscription/{subDoc} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
+      }
+    }
+
+    // ============================================================
+    // RESUME HISTORY
+    // ============================================================
+    match /candidates/{candidateId}/resume_history/{historyId} {
+      allow get, list, create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    // ============================================================
+    // CANDIDATE_SERVICES COLLECTION
+    // ============================================================
+    match /candidate_services/{candidateId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // SERVICES CATALOG (READABLE BY SIGNED-IN USERS)
+    match /services_catalog/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /admins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // ============================================================
+    // USERPROFILES COLLECTION
+    // ============================================================
+    match /userProfiles/{uid} {
+      allow read: if isSignedIn() && request.auth.uid == uid;
+      allow read, write: if isAdmin();
+    }
+
+    // ============================================================
+    // DEFAULT DENY
+    // ============================================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+// ============================================================
+// DEPLOY RULES TO FIREBASE
+// ============================================================
+//
+// METHOD 1: Firebase Console (Web UI) - Easiest
+// ─────────────────────────────────────────────
+// 1. Go to https://console.firebase.google.com
+// 2. Select project: hirereadyservices-9a8de
+// 3. Firestore Database → Rules tab (top)
+// 4. Copy content above this comment
+// 5. Paste into the editor
+// 6. Click "Publish" button
+// 7. Confirm in modal dialog
+//
+// METHOD 2: Firebase CLI (Command Line)
+// ─────────────────────────────────────────────
+// 1. Install Firebase CLI (one time):
+//    npm install -g firebase-tools
+//
+// 2. Login:
+//    firebase login
+//
+// 3. Set project:
+//    firebase use hirereadyservices-9a8de
+//
+// 4. Deploy rules:
+//    firebase deploy --only firestore:rules
+//
+// 5. Wait for success message: "✔ Deployed firestore.rules"
+//
+// ============================================================
+// IMPORTANT: Netlify does NOT deploy Firestore rules
+// ============================================================
+// When you push code to Netlify (git push), only HTML/CSS/JS files
+// are deployed. Firestore security rules are separate and must be
+// deployed using the Firebase Console or Firebase CLI above.
+//
+// ADMIN EMAILS
+// ─────────────────────────────────────────────
+// The allowlist in the isAdminByEmail() function (line 14-18)
+// controls who can:
+//  • Read/write all candidate records
+//  • Create and manage candidate portal user profiles
+//  • Edit HireReady services for any candidate
+//
+// To add more admins, edit lines 16-17 (uncomment examples)
+//
+// TROUBLESHOOTING
+// ─────────────────────────────────────────────
+// If you see permission errors:
+// 1. Verify your email is in the allowlist above (line 14)
+// 2. Log out of admin.html and back in to refresh auth token
+// 3. Check browser console for SERVICES_FIRESTORE_ERROR logs
+// 4. Ensure services.html URL has ?cid=CANDIDATE_ID
+// 5. If errors persist, deploy the rules again (click Publish)
+//
+// COLLECTIONS PROTECTED BY THESE RULES
+// ─────────────────────────────────────────────
+// • candidates           - Admin only
+// • candidate_services   - Admin read/write, Candidate read-only
+// • userProfiles         - Admin create/update/delete
+// • customFields         - Readable by all, writable by admin
+//
+

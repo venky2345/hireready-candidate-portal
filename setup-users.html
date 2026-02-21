@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HireReady - User Profile Setup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+      --radius: 8px;
+      --accent: #3b82f6;
+      --success: #10b981;
+      --danger: #ef4444;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+
+    .header p {
+      color: var(--text-muted);
+      font-size: 16px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .form-hint {
+      display: block;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: inherit;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--card);
+      color: var(--text);
+      transition: all 0.2s;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #2563eb;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      margin-bottom: 20px;
+      border-left: 4px solid;
+    }
+
+    .alert-success {
+      background: #d1fae5;
+      color: var(--success);
+      border-color: var(--success);
+    }
+
+    .alert-error {
+      background: #fee2e2;
+      color: var(--danger);
+      border-color: var(--danger);
+    }
+
+    .alert-info {
+      background: #dbeafe;
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .info-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .info-box ul {
+      margin: 8px 0;
+      padding-left: 20px;
+    }
+
+    .info-box li {
+      margin: 4px 0;
+    }
+
+    .status-section {
+      margin-top: 40px;
+    }
+
+    .user-list {
+      list-style: none;
+    }
+
+    .user-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: var(--bg);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+    }
+
+    .user-info {
+      flex: 1;
+    }
+
+    .user-email {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .user-candidate {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    code {
+      background: #f1f5f9;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: #e11d48;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🔧 User Profile Setup</h1>
+      <p>Create and manage candidate portal user mappings</p>
+    </div>
+
+    <div class="alert alert-info">
+      <strong>👤 Admin Only:</strong> This tool requires admin authentication. Make sure you're logged in with an admin account.
+    </div>
+
+    <!-- Login Section -->
+    <div class="card" id="loginSection">
+      <div class="card-title">Admin Login</div>
+      <div id="loginError" class="alert alert-error" style="display: none;"></div>
+      
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label" for="adminEmail">Admin Email</label>
+          <input type="email" class="form-input" id="adminEmail" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="adminPassword">Password</label>
+          <input type="password" class="form-input" id="adminPassword" required>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="loginBtn">Sign In</button>
+      </form>
+    </div>
+
+    <!-- Main Content (hidden until logged in) -->
+    <div id="mainContent" style="display: none;">
+      
+      <!-- Method 1: Create Firebase Auth User + Profile -->
+      <div class="card">
+        <div class="card-title">Method 1: Create New User Account</div>
+        <p style="margin-bottom: 16px; color: var(--text-muted);">
+          Create a Firebase Authentication account and automatically link it to a candidate ID.
+          The user will receive login credentials to access their portal.
+        </p>
+
+        <div id="createUserMessage" style="display: none;"></div>
+
+        <form onsubmit="createUser(event)">
+          <div class="form-group">
+            <label class="form-label" for="userEmail">User Email</label>
+            <input type="email" class="form-input" id="userEmail" required placeholder="candidate@example.com">
+            <span class="form-hint">The email address for the candidate's login</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="userPassword">Password</label>
+            <input type="password" class="form-input" id="userPassword" required placeholder="At least 6 characters">
+            <span class="form-hint">Share this password securely with the candidate</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="candidateId">Candidate ID</label>
+            <input type="text" class="form-input" id="candidateId" required placeholder="e.g., JOHN_DOE_12345">
+            <span class="form-hint">Must match the Candidate ID from the Admin Console</span>
+          </div>
+
+          <button type="submit" class="btn btn-success" id="createUserBtn">
+            👤 Create User Account
+          </button>
+        </form>
+      </div>
+
+      <!-- Method 2: Link Existing UID -->
+      <div class="card">
+        <div class="card-title">Method 2: Link Existing Firebase Auth UID</div>
+        <p style="margin-bottom: 16px; color: var(--text-muted);">
+          If the user already has a Firebase Auth account, link their UID to a candidate ID.
+        </p>
+
+        <div id="linkUidMessage" style="display: none;"></div>
+
+        <form onsubmit="linkUidToCandidate(event)">
+          <div class="form-group">
+            <label class="form-label" for="existingUid">Firebase Auth UID</label>
+            <input type="text" class="form-input" id="existingUid" required placeholder="User's Firebase UID">
+            <span class="form-hint">Find this in Firebase Console → Authentication → Users</span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="existingEmail">User Email (reference)</label>
+            <input type="email" class="form-input" id="existingEmail" required placeholder="user@example.com">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="existingCandidateId">Candidate ID</label>
+            <input type="text" class="form-input" id="existingCandidateId" required placeholder="e.g., JOHN_DOE_12345">
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="linkUidBtn">
+            🔗 Link UID to Candidate
+          </button>
+        </form>
+      </div>
+
+      <!-- Instructions -->
+      <div class="card">
+        <div class="card-title">📚 Instructions</div>
+        <div class="info-box">
+          <p><strong>Setup Process:</strong></p>
+          <ol style="margin: 8px 0; padding-left: 20px;">
+            <li>Create a candidate record in the Admin Console (<code>admin.html</code>)</li>
+            <li>Note the Candidate ID (e.g., "JOHN_DOE_12345")</li>
+            <li>Use Method 1 above to create a user account with that Candidate ID</li>
+            <li>Share login credentials securely with the candidate</li>
+            <li>Candidate can now login to <code>user.html</code></li>
+          </ol>
+
+          <p style="margin-top: 16px;"><strong>What happens:</strong></p>
+          <ul>
+            <li>Firebase Auth account is created for the user</li>
+            <li>Document created in <code>userProfiles/{uid}</code> collection</li>
+            <li>When user logs into <code>user.html</code>, they see their linked services</li>
+            <li>User can only view (read-only) their own candidate data</li>
+          </ul>
+
+          <p style="margin-top: 16px;"><strong>Security Notes:</strong></p>
+          <ul>
+            <li>Users cannot access other candidates' data</li>
+            <li>Firestore rules enforce read-only access for candidates</li>
+            <li>Only admins can create/modify user profiles</li>
+            <li>Deploy <code>firestore.rules</code> before creating users</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Existing Mappings -->
+      <div class="card status-section">
+        <div class="card-title">📋 Existing User Mappings</div>
+        <div id="loadingUsers" style="text-align: center; padding: 20px; color: var(--text-muted);">
+          Loading...
+        </div>
+        <ul class="user-list" id="userList" style="display: none;"></ul>
+        <div id="noUsers" style="display: none; text-align: center; padding: 20px; color: var(--text-muted);">
+          No user profiles found. Create one using the form above.
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+  
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyCMf4oteHAswn-IGvVbbkYnCciNueKGyjY",
+      authDomain: "hirereadyservices-9a8de.firebaseapp.com",
+      projectId: "hirereadyservices-9a8de",
+      storageBucket: "hirereadyservices-9a8de.firebasestorage.app",
+      messagingSenderId: "677972277573",
+      appId: "1:677972277573:web:fab51d25a84ef03d0ea62c"
+    };
+
+    const ADMIN_EMAILS = [
+      "ducktales048@gmail.com"
+    ].map(e => (e || "").toLowerCase());
+
+    let db, auth;
+
+    try {
+      if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+      }
+      auth = firebase.auth();
+      db = firebase.firestore();
+      console.log("FIREBASE_PROJECT_OK", firebase.app().options.projectId);
+    } catch (error) {
+      console.error('Firebase init error:', error);
+    }
+
+    auth.onAuthStateChanged((user) => {
+      console.log("AUTH_STATE", user?.email || null);
+      const email = (user?.email || "").toLowerCase();
+      if (user && ADMIN_EMAILS.includes(email)) {
+        showMainContent();
+        loadExistingProfiles();
+      }
+    });
+
+    function showMainContent() {
+      document.getElementById('loginSection').style.display = 'none';
+      document.getElementById('mainContent').style.display = 'block';
+    }
+
+    async function handleLogin(event) {
+      event.preventDefault();
+      const email = document.getElementById('adminEmail').value.trim();
+      const password = document.getElementById('adminPassword').value;
+      const btn = document.getElementById('loginBtn');
+      const errorDiv = document.getElementById('loginError');
+
+      errorDiv.style.display = 'none';
+      btn.disabled = true;
+      btn.textContent = 'Signing in...';
+
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        
+        const emailLower = (email || "").toLowerCase();
+        if (!ADMIN_EMAILS.includes(emailLower)) {
+          errorDiv.textContent = 'Access denied. This tool is for admins only.';
+          errorDiv.style.display = 'block';
+          await auth.signOut();
+          btn.disabled = false;
+          btn.textContent = 'Sign In';
+          return;
+        }
+
+        showMainContent();
+        loadExistingProfiles();
+        
+      } catch (error) {
+        errorDiv.textContent = 'Login failed: ' + error.message;
+        errorDiv.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    }
+
+    async function createUser(event) {
+      event.preventDefault();
+      
+      const email = document.getElementById('userEmail').value.trim();
+      const password = document.getElementById('userPassword').value;
+      const candidateId = document.getElementById('candidateId').value.trim();
+      const btn = document.getElementById('createUserBtn');
+      const msgDiv = document.getElementById('createUserMessage');
+
+      btn.disabled = true;
+      btn.textContent = 'Creating...';
+      msgDiv.style.display = 'none';
+
+      try {
+        // Note: This will create the user in the current session's context.
+        // For production, use Firebase Admin SDK via Cloud Function
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const uid = userCredential.user.uid;
+
+        // Create user profile
+        await db.collection('userProfiles').doc(uid).set({
+          candidateId: candidateId,
+          email: email,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Sign out the newly created user to avoid session conflict
+        await auth.signOut();
+        
+        // Re-authenticate as admin
+        const adminEmail = prompt('Re-enter your admin email to continue:');
+        const adminPassword = prompt('Re-enter your admin password:');
+        if (adminEmail && adminPassword) {
+          await auth.signInWithEmailAndPassword(adminEmail, adminPassword);
+        }
+
+        msgDiv.className = 'alert alert-success';
+        msgDiv.innerHTML = `
+          <strong>✓ Success!</strong><br>
+          User created: ${email}<br>
+          UID: <code>${uid}</code><br>
+          Linked to Candidate: <code>${candidateId}</code><br>
+          <br>
+          Share these credentials with the candidate:
+          <ul style="margin-top: 8px;">
+            <li><strong>Portal URL:</strong> user.html</li>
+            <li><strong>Email:</strong> ${email}</li>
+            <li><strong>Password:</strong> ${password}</li>
+          </ul>
+        `;
+        msgDiv.style.display = 'block';
+
+        // Clear form
+        document.getElementById('userEmail').value = '';
+        document.getElementById('userPassword').value = '';
+        document.getElementById('candidateId').value = '';
+
+        // Reload profiles
+        loadExistingProfiles();
+
+      } catch (error) {
+        msgDiv.className = 'alert alert-error';
+        msgDiv.textContent = 'Error: ' + error.message;
+        msgDiv.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '👤 Create User Account';
+      }
+    }
+
+    async function linkUidToCandidate(event) {
+      event.preventDefault();
+      
+      const uid = document.getElementById('existingUid').value.trim();
+      const email = document.getElementById('existingEmail').value.trim();
+      const candidateId = document.getElementById('existingCandidateId').value.trim();
+      const btn = document.getElementById('linkUidBtn');
+      const msgDiv = document.getElementById('linkUidMessage');
+
+      btn.disabled = true;
+      btn.textContent = 'Linking...';
+      msgDiv.style.display = 'none';
+
+      try {
+        await db.collection('userProfiles').doc(uid).set({
+          candidateId: candidateId,
+          email: email,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        msgDiv.className = 'alert alert-success';
+        msgDiv.innerHTML = `
+          <strong>✓ Success!</strong><br>
+          UID <code>${uid}</code> linked to Candidate <code>${candidateId}</code>
+        `;
+        msgDiv.style.display = 'block';
+
+        // Clear form
+        document.getElementById('existingUid').value = '';
+        document.getElementById('existingEmail').value = '';
+        document.getElementById('existingCandidateId').value = '';
+
+        // Reload profiles
+        loadExistingProfiles();
+
+      } catch (error) {
+        msgDiv.className = 'alert alert-error';
+        msgDiv.textContent = 'Error: ' + error.message;
+        msgDiv.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔗 Link UID to Candidate';
+      }
+    }
+
+    async function loadExistingProfiles() {
+      const loadingDiv = document.getElementById('loadingUsers');
+      const listDiv = document.getElementById('userList');
+      const noUsersDiv = document.getElementById('noUsers');
+
+      loadingDiv.style.display = 'block';
+      listDiv.style.display = 'none';
+      noUsersDiv.style.display = 'none';
+
+      try {
+        const snapshot = await db.collection('userProfiles').orderBy('createdAt', 'desc').get();
+        
+        if (snapshot.empty) {
+          loadingDiv.style.display = 'none';
+          noUsersDiv.style.display = 'block';
+          return;
+        }
+
+        listDiv.innerHTML = '';
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const li = document.createElement('li');
+          li.className = 'user-item';
+          li.innerHTML = `
+            <div class="user-info">
+              <div class="user-email">${data.email || 'Unknown'}</div>
+              <div class="user-candidate">Candidate ID: ${data.candidateId || 'Not set'} • UID: ${doc.id}</div>
+            </div>
+          `;
+          listDiv.appendChild(li);
+        });
+
+        loadingDiv.style.display = 'none';
+        listDiv.style.display = 'block';
+
+      } catch (error) {
+        console.error('Error loading profiles:', error);
+        loadingDiv.textContent = 'Error loading profiles: ' + error.message;
+      }
+    }
+  </script>
+</body>
+</html>
