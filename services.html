@@ -3390,9 +3390,9 @@
           
           // Update metrics
           document.getElementById('jdmMetricJDMatch').textContent = data.metrics?.jdMatch || '-';
-          document.getElementById('jdmMetricATS').textContent = data.metrics?.ats || '-';
+          document.getElementById('jdmMetricATS').textContent = data.metrics?.atsFriendliness || '-';
           document.getElementById('jdmMetricHR').textContent = data.metrics?.hrCatchiness || '-';
-          document.getElementById('jdmMetricShortlist').textContent = data.metrics?.shortlistChance || '-';
+          document.getElementById('jdmMetricShortlist').textContent = data.metrics?.chancesOfShortlisting || '-';
           
           // Show preview section
           if (preview) preview.style.display = 'block';
