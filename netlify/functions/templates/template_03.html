@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Trebuchet MS', sans-serif; margin: 0; padding: 50px; background: #f5f7fa; }
+    .wrapper { max-width: 850px; margin: 0 auto; background: white; padding: 40px; }
+    .header { text-align: center; margin-bottom: 35px; }
+    .name { font-size: 30px; font-weight: bold; letter-spacing: 2px; color: #1a1a1a; margin: 0; }
+    .title { font-size: 14px; color: #7f8c8d; margin-top: 8px; text-transform: uppercase; letter-spacing: 1px; }
+    .contact { font-size: 11px; color: #95a5a6; margin-top: 10px; }
+    .section { margin-bottom: 30px; }
+    .section-title { font-size: 11px; font-weight: bold; text-transform: uppercase; color: #1a1a1a; border-bottom: 1px solid #ecf0f1; padding-bottom: 8px; margin-bottom: 15px; letter-spacing: 1px; }
+    .summary { font-size: 12px; color: #444; line-height: 1.6; margin-bottom: 15px; }
+    .item { margin-bottom: 12px; font-size: 12px; }
+    .item-title { font-weight: bold; color: #1a1a1a; }
+    .item-meta { color: #7f8c8d; font-size: 11px; }
+    ul { margin: 8px 0; padding-left: 18px; font-size: 12px; }
+    li { margin: 3px 0; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <p class="name">{{CANDIDATE_NAME}}</p>
+      <p class="title">{{PROFESSIONAL_TITLE}}</p>
+      <p class="contact">{{CONTACT_INFO}}</p>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Professional Summary</div>
+      <p class="summary">{{PROFESSIONAL_SUMMARY}}</p>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Skills</div>
+      {{SKILLS_LIST}}
+    </div>
+
+    <div class="section">
+      <div class="section-title">Experience</div>
+      {{EXPERIENCE_SECTION}}
+    </div>
+
+    <div class="section">
+      <div class="section-title">Education</div>
+      {{EDUCATION_SECTION}}
+    </div>
+
+    <div class="section">
+      <div class="section-title">Certifications</div>
+      {{CERTIFICATIONS_SECTION}}
+    </div>
+  </div>
+</body>
+</html>

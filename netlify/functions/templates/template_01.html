@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Arial', sans-serif; margin: 40px; color: #333; line-height: 1.6; }
+    .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #0066cc; padding-bottom: 20px; }
+    .name { font-size: 28px; font-weight: bold; color: #0066cc; margin: 0; }
+    .title { font-size: 16px; color: #666; margin: 5px 0; }
+    .contact { font-size: 12px; color: #999; }
+    .section { margin-bottom: 25px; }
+    .section-title { font-size: 14px; font-weight: bold; color: white; background: #0066cc; padding: 8px 12px; margin-bottom: 12px; }
+    .subsection { margin-bottom: 15px; }
+    .subsection-title { font-weight: bold; color: #0066cc; margin-bottom: 5px; }
+    .info { color: #999; font-size: 12px; margin-bottom: 3px; }
+    ul { margin: 8px 0; padding-left: 20px; }
+    li { margin: 3px 0; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <p class="name">{{CANDIDATE_NAME}}</p>
+    <p class="title">{{PROFESSIONAL_TITLE}}</p>
+    <p class="contact">{{CONTACT_INFO}}</p>
+  </div>
+
+  <div class="section">
+    <div class="section-title">PROFESSIONAL SUMMARY</div>
+    <p>{{PROFESSIONAL_SUMMARY}}</p>
+  </div>
+
+  <div class="section">
+    <div class="section-title">TECHNICAL SKILLS</div>
+    {{SKILLS_LIST}}
+  </div>
+
+  <div class="section">
+    <div class="section-title">PROFESSIONAL EXPERIENCE</div>
+    {{EXPERIENCE_SECTION}}
+  </div>
+
+  <div class="section">
+    <div class="section-title">EDUCATION</div>
+    {{EDUCATION_SECTION}}
+  </div>
+
+  <div class="section">
+    <div class="section-title">CERTIFICATIONS</div>
+    {{CERTIFICATIONS_SECTION}}
+  </div>
+</body>
+</html>

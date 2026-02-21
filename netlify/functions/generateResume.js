@@ -44,7 +44,9 @@ exports.handler = async (event, context) => {
     jobDescription,
     targetMatchMode = 'auto',
     targetMatchValue = 85,
-    mustIncludeSkills = ''
+    mustIncludeSkills = '',
+    templateId = 'template_01',
+    baseResumeText = ''
   } = payload;
 
   if (!jobDescription || !jobDescription.trim()) {
@@ -78,14 +80,17 @@ exports.handler = async (event, context) => {
       .filter((skill) => skill.length > 0);
   }
 
+  const allowedTemplates = Array.from({length: 12}, (_, i) => `template_${String(i + 1).padStart(2, '0')}`);
+  const selectedTemplate = allowedTemplates.includes(templateId) ? templateId : 'template_01';
+
   // Read resume template
   let templateHtml;
   try {
-    const templatePath = path.join(__dirname, 'templates', 'resume_template_locked.html');
+    const templatePath = path.join(__dirname, 'templates', `${selectedTemplate}.html`);
     templateHtml = fs.readFileSync(templatePath, 'utf-8');
   } catch (readError) {
     console.error('Template read error', readError);
-    return respond(500, { ok: false, error: 'Locked template file not found or unreadable' });
+    return respond(500, { ok: false, error: 'Template file not found or unreadable' });
   }
 
   console.log('generateResume request', { hasJD: Boolean(jobDescription && jobDescription.trim()), targetMatch, hasMustSkills: Boolean(mustIncludeSkills && (Array.isArray(mustIncludeSkills) ? mustIncludeSkills.length > 0 : mustIncludeSkills.trim())) });
@@ -114,12 +119,13 @@ Company: ${companyName}
 Job Description: ${jobDescription}
 Target Match Score: ${targetMatch}%
 Must Include Skills: ${mustIncludeSkillsList.length > 0 ? mustIncludeSkillsList.join(', ') : 'None'}
+${baseResumeText ? `\nReference Resume:\n${baseResumeText}` : ''}
 
 Template to fill:
 ${templateHtml}
 
 Requirements:
-- Fill in the placeholders ({{CANDIDATE_NAME}}, {{CURRENT_ROLE}}, etc.)
+- Fill in the placeholders ({{CANDIDATE_NAME}}, {{PROFESSIONAL_TITLE}}, etc.)
 - Ensure all mustIncludeSkills are present in the SKILLS section
 - Make metrics realistic based on job fit (jdMatch should be around ${targetMatch})
 - Return ONLY the JSON object, nothing else`;
@@ -188,7 +194,8 @@ Requirements:
       roleTitle: resumeData.roleTitle || '',
       targetMatch,
       metrics,
-      addedSkills: Array.isArray(resumeData.addedSkills) ? resumeData.addedSkills : []
+      addedSkills: Array.isArray(resumeData.addedSkills) ? resumeData.addedSkills : [],
+      templateId: selectedTemplate
     };
 
     return respond(200, responseBody);

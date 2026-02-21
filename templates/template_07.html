@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Georgia', serif; margin: 0; padding: 50px; background: #fafaf8; }
+    .container { max-width: 850px; margin: 0 auto; background: white; padding: 40px; border: 1px solid #ddd; }
+    .header { text-align: center; margin-bottom: 35px; border-bottom: 3px solid #8b7355; padding-bottom: 25px; }
+    .name { font-size: 30px; font-weight: bold; color: #8b7355; margin: 0; }
+    .title { font-size: 15px; color: #666; margin: 10px 0 0; }
+    .contact { font-size: 11px; color: #999; margin-top: 10px; }
+    .section { margin-bottom: 28px; }
+    .section-title { font-size: 13px; font-weight: bold; color: #8b7355; border-bottom: 1px solid #ddd; padding-bottom: 8px; margin-bottom: 14px; text-transform: uppercase; }
+    .summary { font-size: 12px; color: #444; line-height: 1.6; margin-bottom: 12px; }
+    .item { margin-bottom: 13px; font-size: 11px; }
+    .item-header { margin-bottom: 4px; }
+    .item-title { font-weight: bold; color: #333; }
+    .item-meta { color: #888; font-size: 10px; font-style: italic; }
+    ul { margin: 6px 0; padding-left: 18px; }
+    li { margin: 3px 0; color: #555; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <p class="name">{{CANDIDATE_NAME}}</p>
+      <p class="title">{{PROFESSIONAL_TITLE}}</p>
+      <p class="contact">{{CONTACT_INFO}}</p>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Professional Summary</div>
+      <p class="summary">{{PROFESSIONAL_SUMMARY}}</p>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Technical Skills</div>
+      {{SKILLS_LIST}}
+    </div>
+
+    <div class="section">
+      <div class="section-title">Professional Experience</div>
+      {{EXPERIENCE_SECTION}}
+    </div>
+
+    <div class="section">
+      <div class="section-title">Education</div>
+      {{EDUCATION_SECTION}}
+    </div>
+
+    <div class="section">
+      <div class="section-title">Certifications</div>
+      {{CERTIFICATIONS_SECTION}}
+    </div>
+  </div>
+</body>
+</html>

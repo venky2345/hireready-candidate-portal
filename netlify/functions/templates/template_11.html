@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Garamond', serif; margin: 0; padding: 50px 40px; background: linear-gradient(to bottom, #f9f9f9 0%, white 100%); }
+    .container { max-width: 900px; margin: 0 auto; }
+    .header { background: #f0f0f0; padding: 25px; margin: -50px -40px 35px -40px; border-bottom: 3px solid #1a1a1a; }
+    .name { font-size: 30px; font-weight: bold; color: #1a1a1a; margin: 0; }
+    .title { font-size: 14px; color: #555; margin: 8px 0 0; }
+    .contact { font-size: 11px; color: #777; margin-top: 10px; }
+    .section { margin-bottom: 30px; }
+    .section-title { font-size: 12px; font-weight: bold; text-transform: uppercase; color: #1a1a1a; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #ddd; letter-spacing: 1px; }
+    .summary { font-size: 12px; color: #444; line-height: 1.6; }
+    .item { margin-bottom: 13px; font-size: 11px; }
+    .item-title { font-weight: bold; color: #1a1a1a; }
+    .item-meta { color: #777; font-size: 10px; margin-top: 2px; }
+    ul { margin: 6px 0; padding-left: 18px; }
+    li { margin: 3px 0; color: #555; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <p class="name">{{CANDIDATE_NAME}}</p>
+      <p class="title">{{PROFESSIONAL_TITLE}}</p>
+      <p class="contact">{{CONTACT_INFO}}</p>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Summary</div>
+      <p class="summary">{{PROFESSIONAL_SUMMARY}}</p>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Skills</div>
+      {{SKILLS_LIST}}
+    </div>
+
+    <div class="section">
+      <div class="section-title">Professional Experience</div>
+      {{EXPERIENCE_SECTION}}
+    </div>
+
+    <div class="section">
+      <div class="section-title">Education</div>
+      {{EDUCATION_SECTION}}
+    </div>
+
+    <div class="section">
+      <div class="section-title">Certifications</div>
+      {{CERTIFICATIONS_SECTION}}
+    </div>
+  </div>
+</body>
+</html>

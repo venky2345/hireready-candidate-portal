@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Calibri', serif; margin: 0; padding: 35px; }
+    .header { border-bottom: 3px double #1f4788; margin-bottom: 25px; padding-bottom: 20px; }
+    .name { font-size: 26px; font-weight: bold; color: #1f4788; margin: 0; }
+    .title { font-size: 13px; color: #333; margin: 8px 0 0; }
+    .contact { font-size: 10px; color: #666; margin-top: 8px; }
+    .section-title { font-size: 12px; font-weight: bold; color: white; background: #1f4788; padding: 8px 10px; margin: 20px 0 12px; }
+    .section { margin-bottom: 20px; }
+    .item { margin-bottom: 13px; font-size: 11px; }
+    .item-header { display: flex; justify-content: space-between; margin-bottom: 3px; }
+    .item-title { font-weight: bold; color: #1f4788; }
+    .item-company { font-style: italic; color: #444; font-size: 10px; }
+    .item-date { color: #666; font-size: 10px; }
+    .description { color: #333; margin-top: 4px; font-size: 10px; line-height: 1.4; }
+    ul { margin: 6px 0; padding-left: 16px; font-size: 10px; }
+    li { margin: 2px 0; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <p class="name">{{CANDIDATE_NAME}}</p>
+    <p class="title">{{PROFESSIONAL_TITLE}}</p>
+    <p class="contact">{{CONTACT_INFO}}</p>
+  </div>
+
+  <div class="section">
+    <div class="section-title">PROFILE</div>
+    <p style="font-size: 11px; color: #333; line-height: 1.5;">{{PROFESSIONAL_SUMMARY}}</p>
+  </div>
+
+  <div class="section">
+    <div class="section-title">CORE COMPETENCIES</div>
+    {{SKILLS_LIST}}
+  </div>
+
+  <div class="section">
+    <div class="section-title">EMPLOYMENT HISTORY</div>
+    {{EXPERIENCE_SECTION}}
+  </div>
+
+  <div class="section">
+    <div class="section-title">EDUCATION</div>
+    {{EDUCATION_SECTION}}
+  </div>
+
+  <div class="section">
+    <div class="section-title">PROFESSIONAL CERTIFICATIONS</div>
+    {{CERTIFICATIONS_SECTION}}
+  </div>
+</body>
+</html>

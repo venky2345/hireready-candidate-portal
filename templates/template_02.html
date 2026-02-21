@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 40px; color: #222; line-height: 1.7; }
+    .container { max-width: 900px; margin: 0 auto; }
+    .header { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; border-bottom: 3px solid #2c3e50; padding-bottom: 30px; }
+    .left-col { border-right: 1px solid #ecf0f1; padding-right: 30px; }
+    .name { font-size: 32px; font-weight: bold; color: #2c3e50; margin: 0; line-height: 1.2; }
+    .title { font-size: 18px; color: #34495e; margin: 10px 0 0 0; }
+    .right-col { }
+    .contact-item { font-size: 11px; color: #555; margin: 5px 0; }
+    .section-title { font-size: 13px; font-weight: bold; text-transform: uppercase; color: white; background: #2c3e50; padding: 10px 15px; margin: 25px 0 15px 0; }
+    .item { margin-bottom: 15px; }
+    .item-header { display: flex; justify-content: space-between; }
+    .item-title { font-weight: bold; color: #2c3e50; }
+    .item-date { color: #7f8c8d; font-size: 12px; }
+    .item-subtitle { color: #555; font-size: 12px; margin-top: 3px; }
+    .description { color: #333; margin-top: 5px; font-size: 12px; }
+    .skills-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .skill-group { }
+    .skill-label { font-weight: bold; color: #2c3e50; font-size: 12px; margin-bottom: 3px; }
+    .skill-content { font-size: 11px; color: #555; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="left-col">
+        <p class="name">{{CANDIDATE_NAME}}</p>
+        <p class="title">{{PROFESSIONAL_TITLE}}</p>
+        <p style="color: #95a5a6; font-size: 13px; margin-top: 15px;">{{PROFESSIONAL_SUMMARY}}</p>
+      </div>
+      <div class="right-col">
+        <div class="contact-item">{{CONTACT_INFO}}</div>
+      </div>
+    </div>
+
+    <div class="section-title">TECHNICAL SKILLS</div>
+    <div class="skills-grid">
+      {{SKILLS_LIST}}
+    </div>
+
+    <div class="section-title">PROFESSIONAL EXPERIENCE</div>
+    {{EXPERIENCE_SECTION}}
+
+    <div class="section-title">EDUCATION</div>
+    {{EDUCATION_SECTION}}
+
+    <div class="section-title">CERTIFICATIONS</div>
+    {{CERTIFICATIONS_SECTION}}
+  </div>
+</body>
+</html>

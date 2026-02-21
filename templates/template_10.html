@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Palatino', serif; margin: 0; padding: 45px; color: #333; background: white; }
+    .wrapper { max-width: 850px; margin: 0 auto; }
+    .header { margin-bottom: 40px; }
+    .name { font-size: 32px; font-weight: bold; color: #2c3e50; margin: 0; letter-spacing: -1px; }
+    .title { font-size: 15px; color: #34495e; margin: 10px 0 0; font-style: italic; }
+    .contact { font-size: 11px; color: #7f8c8d; margin-top: 10px; }
+    .headerline { height: 1px; background: #bdc3c7; margin: 20px 0; }
+    .section { margin-bottom: 32px; }
+    .section-title { font-size: 13px; font-weight: bold; color: #2c3e50; text-transform: uppercase; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 2px solid #34495e; }
+    .summary { font-size: 12px; color: #555; line-height: 1.7; }
+    .item { margin-bottom: 14px; font-size: 11px; }
+    .item-header { margin-bottom: 4px; }
+    .item-title { font-weight: bold; color: #2c3e50; }
+    .item-company { color: #7f8c8d; font-size: 10px; margin-top: 2px; }
+    .item-date { color: #95a5a6; font-size: 10px; }
+    ul { margin: 6px 0; padding-left: 18px; }
+    li { margin: 3px 0; color: #555; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <p class="name">{{CANDIDATE_NAME}}</p>
+      <p class="title">{{PROFESSIONAL_TITLE}}</p>
+      <p class="contact">{{CONTACT_INFO}}</p>
+    </div>
+
+    <div class="headerline"></div>
+
+    <div class="section">
+      <div class="section-title">Executive Summary</div>
+      <p class="summary">{{PROFESSIONAL_SUMMARY}}</p>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Professional Skills</div>
+      {{SKILLS_LIST}}
+    </div>
+
+    <div class="section">
+      <div class="section-title">Career History</div>
+      {{EXPERIENCE_SECTION}}
+    </div>
+
+    <div class="section">
+      <div class="section-title">Academic Background</div>
+      {{EDUCATION_SECTION}}
+    </div>
+
+    <div class="section">
+      <div class="section-title">Professional Qualification</div>
+      {{CERTIFICATIONS_SECTION}}
+    </div>
+  </div>
+</body>
+</html>
