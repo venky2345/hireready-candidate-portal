@@ -3348,9 +3348,14 @@
         if (loading) loading.style.display = 'block';
         
         try {
-          console.log('Calling generateResume', { endpoint: '/.netlify/functions/generateResume', hasJD: Boolean(jobDescription && jobDescription.trim()) });
+          const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+          const functionUrl = isLocal
+            ? 'https://clever-belekoy-af81fa.netlify.app/.netlify/functions/generateResume'
+            : '/.netlify/functions/generateResume';
           
-          const response = await fetch('/.netlify/functions/generateResume', {
+          console.log('Calling generateResume', { endpoint: functionUrl, hasJD: Boolean(jobDescription && jobDescription.trim()) });
+          
+          const response = await fetch(functionUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -3364,21 +3369,19 @@
           });
           
           const responseText = await response.text();
-          let parsed;
+          let parsed = null;
           
           try {
             parsed = JSON.parse(responseText);
           } catch (parseErr) {
             console.error('Failed to parse response', { status: response.status, responseText });
-            showToast('Error: Invalid server response', 'error');
-            return;
+            throw new Error('Invalid server response');
           }
           
-          if (!response.ok || parsed.ok === false) {
-            const errorMsg = parsed.error || responseText || 'Unknown error';
+          if (!response.ok || (parsed && parsed.ok === false)) {
+            const errorMsg = (parsed && parsed.error) ? parsed.error : responseText || ('HTTP ' + response.status);
             console.error('generateResume failed', { status: response.status, responseText });
-            showToast('Error: ' + errorMsg, 'error');
-            return;
+            throw new Error(errorMsg);
           }
           
           const data = parsed;
@@ -3424,8 +3427,8 @@
           await loadJDMatchHistory();
           
         } catch (error) {
-          console.error('generateResume exception', error);
-          showToast('Error: ' + error.message, 'error');
+          console.error('generateResume failed', error);
+          showToast('Error generating resume: ' + error.message, 'error');
         } finally {
           if (genBtn) genBtn.disabled = false;
           if (loading) loading.style.display = 'none';

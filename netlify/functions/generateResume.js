@@ -24,7 +24,7 @@ const respond = (statusCode, body) => ({
 exports.handler = async (event, context) => {
   try {
     if (event.httpMethod === 'OPTIONS') {
-      return respond(200, '');
+      return respond(200, { ok: true });
     }
 
     if (event.httpMethod !== 'POST') {
