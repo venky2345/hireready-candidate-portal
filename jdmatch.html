@@ -104,9 +104,13 @@
     /* MAIN LAYOUT - 3 Column Workspace */
     .jdm-main {
       flex: 1;
+      width: 100%;
+    }
+
+    .jdm-main-container {
       max-width: 1320px;
       margin: 0 auto;
-      padding: 24px;
+      padding: 24px 24px;
       width: 100%;
     }
 
@@ -170,8 +174,8 @@
       .jdm-workspace {
         grid-template-columns: 1fr;
       }
-      .jdm-main {
-        padding: 16px;
+      .jdm-main-container {
+        padding: 16px 16px;
       }
       .jdm-hero {
         padding: 24px;
@@ -1973,7 +1977,8 @@
 
     <!-- MAIN WORKSPACE -->
     <div class="jdm-main">
-      <div class="jdm-workspace">
+      <div class="jdm-main-container">
+        <div class="jdm-workspace">
         <!-- LEFT COLUMN: INPUT FORMS -->
         <div class="jdm-workspace-column">
           <!-- Base Resume Upload -->
@@ -2167,6 +2172,7 @@
             <div id="settingsQuickPanel" style="display: none;"></div>
           </div>
         </div>
+      </div>
       </div>
     </div>
 
