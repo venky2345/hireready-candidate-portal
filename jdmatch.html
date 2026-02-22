@@ -100,63 +100,199 @@
       margin: 0;
     }
 
-    /* MAIN LAYOUT - 2 Column on Desktop, uses HireReady spacing */
+    /* MAIN LAYOUT - 3 Column Workspace */
     .jdm-main {
       flex: 1;
-      display: grid;
-      grid-template-columns: 1fr 420px;
-      gap: 22px;
-      padding: 28px;
-      max-width: 1400px;
+      max-width: 1320px;
       margin: 0 auto;
+      padding: 24px;
       width: 100%;
     }
 
-    @media (max-width: 1024px) {
-      .jdm-main {
-        grid-template-columns: 1fr;
-        padding: 20px;
-        gap: 16px;
+    .jdm-workspace {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .jdm-workspace-column {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .jdm-workspace-section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .jdm-workspace-section:hover {
+      border-color: rgba(182, 156, 255, 0.3);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .jdm-section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .jdm-section-title::before {
+      content: '';
+      width: 3px;
+      height: 16px;
+      background: linear-gradient(135deg, var(--accentA), var(--accentB));
+      border-radius: 2px;
+    }
+
+    @media (max-width: 1200px) {
+      .jdm-workspace {
+        grid-template-columns: 1fr 1fr;
       }
-      .jdm-sidebar {
-        display: none;
+      .jdm-workspace-column:nth-child(3) {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .jdm-workspace {
+        grid-template-columns: 1fr;
+      }
+      .jdm-main {
+        padding: 16px;
       }
       .jdm-hero {
         padding: 24px;
       }
     }
 
-    /* NAV TABS - Match HireReady tab style */
-    .jdm-nav {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 24px;
+    /* STEP WIZARD - Premium guided workflow */
+    .jdm-wizard {
+      background: var(--panel);
+      backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--border);
-      padding-bottom: 0;
+      padding: 20px 0;
+      position: sticky;
+      top: 61px;
+      z-index: 90;
     }
 
-    .jdm-nav-btn {
-      padding: 12px 16px;
-      background: transparent;
-      border: none;
-      border-bottom: 2px solid transparent;
-      color: var(--muted2);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s ease;
+    .jdm-wizard-container {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .jdm-wizard-steps {
+      display: flex;
+      justify-content: space-between;
       position: relative;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
     }
 
-    .jdm-nav-btn:hover {
-      color: var(--text);
+    .jdm-wizard-steps::before {
+      content: '';
+      position: absolute;
+      top: 20px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--border);
+      z-index: 0;
     }
 
-    .jdm-nav-btn.active {
+    .jdm-wizard-step {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      position: relative;
+      z-index: 1;
+      padding: 0 12px;
+    }
+
+    .jdm-wizard-step-circle {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.03);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--muted2);
+      transition: all 0.3s ease;
+      margin-bottom: 8px;
+    }
+
+    .jdm-wizard-step-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted2);
+      text-align: center;
+      margin-bottom: 4px;
+      transition: all 0.3s ease;
+    }
+
+    .jdm-wizard-step-sublabel {
+      font-size: 10px;
+      color: var(--muted2);
+      text-align: center;
+      opacity: 0.6;
+      transition: all 0.3s ease;
+    }
+
+    .jdm-wizard-step.active .jdm-wizard-step-circle {
+      background: linear-gradient(135deg, var(--accentA), var(--accentB));
+      border-color: var(--accentA);
+      color: white;
+      box-shadow: 0 0 20px rgba(182, 156, 255, 0.5), 0 4px 12px rgba(182, 156, 255, 0.3);
+      animation: pulseGlow 2s ease-in-out infinite;
+    }
+
+    .jdm-wizard-step.active .jdm-wizard-step-label {
       color: var(--accentA);
-      border-bottom-color: var(--accentA);
+      font-weight: 700;
+    }
+
+    .jdm-wizard-step.active .jdm-wizard-step-sublabel {
+      color: var(--accentA);
+      opacity: 0.8;
+    }
+
+    .jdm-wizard-step.completed .jdm-wizard-step-circle {
+      background: rgba(34, 197, 94, 0.15);
+      border-color: #22c55e;
+      color: #22c55e;
+    }
+
+    .jdm-wizard-step:hover:not(.active) .jdm-wizard-step-circle {
+      border-color: rgba(182, 156, 255, 0.4);
+      background: rgba(182, 156, 255, 0.08);
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 20px rgba(182, 156, 255, 0.5), 0 4px 12px rgba(182, 156, 255, 0.3); }
+      50% { box-shadow: 0 0 30px rgba(182, 156, 255, 0.7), 0 6px 16px rgba(182, 156, 255, 0.4); }
+    }
+
+    @media (max-width: 768px) {
+      .jdm-wizard-step-sublabel { display: none; }
+      .jdm-wizard-step-label { font-size: 11px; }
+      .jdm-wizard-step-circle { width: 36px; height: 36px; font-size: 12px; }
     }
 
     /* PANEL CONTAINER */
@@ -293,6 +429,7 @@
       background: rgba(255, 255, 255, 0.08);
       outline: none;
       -webkit-appearance: none;
+      appearance: none;
     }
 
     .jdm-slider::-webkit-slider-thumb {
@@ -522,6 +659,583 @@
     .jdm-summary-value {
       color: var(--accentA);
       font-weight: 600;
+    }
+
+    /* ========================================
+       RADIANT GLOW SYSTEM - Premium Interactive Effects
+       ======================================== */
+    
+    /* Glow on Primary Buttons */
+    .jdm-btn-primary:hover:not(:disabled),
+    .jdm-btn-primary:focus:not(:disabled) {
+      box-shadow: 0 0 24px rgba(182, 156, 255, 0.6), 0 12px 24px rgba(182, 156, 255, 0.3);
+      filter: brightness(1.1);
+    }
+
+    .jdm-btn-primary:focus {
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(182, 156, 255, 0.2), 0 0 24px rgba(182, 156, 255, 0.6);
+    }
+
+    /* Glow on Inputs */
+    .jdm-input:focus,
+    .jdm-textarea:focus {
+      box-shadow: 0 0 0 3px rgba(182, 156, 255, 0.15), 0 0 16px rgba(182, 156, 255, 0.3);
+    }
+
+    /* Glow on Template Cards */
+    .jdm-template-card.selected {
+      border-color: var(--accentA) !important;
+      box-shadow: 0 0 20px rgba(182, 156, 255, 0.5), 0 4px 16px rgba(182, 156, 255, 0.3);
+      animation: cardSelectPulse 0.6s ease-out;
+    }
+
+    @keyframes cardSelectPulse {
+      0% { transform: scale(1); box-shadow: 0 0 0 rgba(182, 156, 255, 0); }
+      50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(182, 156, 255, 0.7); }
+      100% { transform: scale(1); box-shadow: 0 0 20px rgba(182, 156, 255, 0.5); }
+    }
+
+    /* Glow on Workspace Sections */
+    .jdm-workspace-section:focus-within {
+      border-color: rgba(182, 156, 255, 0.5);
+      box-shadow: 0 0 20px rgba(182, 156, 255, 0.2), 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    /* ========================================
+       DRAG & DROP UPLOAD
+       ======================================== */
+    
+    .jdm-upload-zone {
+      border: 2px dashed rgba(182, 156, 255, 0.3);
+      border-radius: 12px;
+      padding: 32px 20px;
+      text-align: center;
+      background: rgba(182, 156, 255, 0.05);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .jdm-upload-zone:hover {
+      border-color: rgba(182, 156, 255, 0.5);
+      background: rgba(182, 156, 255, 0.1);
+      box-shadow: 0 0 20px rgba(182, 156, 255, 0.2);
+    }
+
+    .jdm-upload-zone.dragover {
+      border-color: var(--accentA);
+      background: rgba(182, 156, 255, 0.15);
+      box-shadow: 0 0 30px rgba(182, 156, 255, 0.4);
+    }
+
+    .jdm-upload-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.6;
+    }
+
+    .jdm-upload-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .jdm-upload-hint {
+      font-size: 12px;
+      color: var(--muted2);
+    }
+
+    /* File Preview Card */
+    .jdm-file-card {
+      background: rgba(182, 156, 255, 0.1);
+      border: 1px solid rgba(182, 156, 255, 0.3);
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .jdm-file-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--accentA), var(--accentB));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: white;
+    }
+
+    .jdm-file-info {
+      flex: 1;
+    }
+
+    .jdm-file-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .jdm-file-size {
+      font-size: 11px;
+      color: var(--muted2);
+    }
+
+    .jdm-file-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .jdm-icon-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .jdm-icon-btn:hover {
+      background: rgba(182, 156, 255, 0.15);
+      border-color: var(--accentA);
+      color: var(--accentA);
+    }
+
+    .jdm-icon-btn.danger:hover {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+
+    /* ========================================
+       MATCH INTELLIGENCE CONTROLS
+       ======================================== */
+    
+    /* ATS Strictness Slider */
+    .jdm-strictness-control {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+    }
+
+    .jdm-strictness-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .jdm-strictness-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .jdm-strictness-value {
+      padding: 4px 12px;
+      background: linear-gradient(135deg, var(--accentA), var(--accentB));
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      color: white;
+      box-shadow: 0 2px 8px rgba(182, 156, 255, 0.3);
+    }
+
+    .jdm-slider-container {
+      position: relative;
+      padding: 8px 0;
+    }
+
+    .jdm-slider-enhanced {
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, 
+        rgba(239, 68, 68, 0.2) 0%,
+        rgba(251, 191, 36, 0.2) 50%,
+        rgba(34, 197, 94, 0.2) 100%);
+      outline: none;
+      -webkit-appearance: none;
+      appearance: none;
+      cursor: pointer;
+    }
+
+    .jdm-slider-enhanced::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accentA), var(--accentB));
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(182, 156, 255, 0.4), 0 0 0 4px rgba(182, 156, 255, 0.1);
+      transition: all 0.2s ease;
+    }
+
+    .jdm-slider-enhanced::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 20px rgba(182, 156, 255, 0.6), 0 4px 12px rgba(182, 156, 255, 0.4);
+    }
+
+    .jdm-slider-enhanced::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accentA), var(--accentB));
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 8px rgba(182, 156, 255, 0.4), 0 0 0 4px rgba(182, 156, 255, 0.1);
+      transition: all 0.2s ease;
+    }
+
+    .jdm-slider-enhanced::-moz-range-thumb:hover {
+      transform: scale(1.2);
+      box-shadow: 0 0 20px rgba(182, 156, 255, 0.6), 0 4px 12px rgba(182, 156, 255, 0.4);
+    }
+
+    .jdm-slider-marks {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 10px;
+      color: var(--muted2);
+    }
+
+    /* Skill Frequency Stepper */
+    .jdm-skills-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .jdm-skill-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .jdm-skill-row:hover {
+      background: rgba(182, 156, 255, 0.08);
+      border-color: rgba(182, 156, 255, 0.3);
+    }
+
+    .jdm-skill-name {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .jdm-skill-stepper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .jdm-stepper-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      transition: all 0.2s ease;
+    }
+
+    .jdm-stepper-btn:hover {
+      background: rgba(182, 156, 255, 0.15);
+      border-color: var(--accentA);
+      color: var(--accentA);
+      box-shadow: 0 0 12px rgba(182, 156, 255, 0.3);
+    }
+
+    .jdm-stepper-value {
+      min-width: 32px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accentA);
+    }
+
+    .jdm-skill-remove {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      background: rgba(239, 68, 68, 0.1);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #ef4444;
+      transition: all 0.2s ease;
+    }
+
+    .jdm-skill-remove:hover {
+      background: rgba(239, 68, 68, 0.2);
+      box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+    }
+
+    /* ========================================
+       PHASED GENERATION PROGRESS
+       ======================================== */
+    
+    .jdm-progress-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(7, 6, 10, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .jdm-progress-overlay.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .jdm-progress-container {
+      max-width: 500px;
+      width: 90%;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .jdm-progress-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 24px;
+    }
+
+    .jdm-progress-phases {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .jdm-progress-phase {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      opacity: 0.3;
+      transition: all 0.4s ease;
+    }
+
+    .jdm-progress-phase.active {
+      opacity: 1;
+      border-color: var(--accentA);
+      background: rgba(182, 156, 255, 0.1);
+      box-shadow: 0 0 20px rgba(182, 156, 255, 0.3);
+    }
+
+    .jdm-progress-phase.completed {
+      opacity: 1;
+      border-color: #22c55e;
+      background: rgba(34, 197, 94, 0.1);
+    }
+
+    .jdm-progress-phase-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .jdm-progress-phase.active .jdm-progress-phase-icon {
+      background: linear-gradient(135deg, var(--accentA), var(--accentB));
+      color: white;
+      animation: spin 1s linear infinite;
+    }
+
+    .jdm-progress-phase.completed .jdm-progress-phase-icon {
+      background: #22c55e;
+      color: white;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .jdm-progress-phase-text {
+      flex: 1;
+      text-align: left;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .jdm-progress-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .jdm-progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accentA), var(--accentB));
+      border-radius: 4px;
+      transition: width 0.4s ease;
+      box-shadow: 0 0 12px rgba(182, 156, 255, 0.5);
+    }
+
+    .jdm-progress-percentage {
+      margin-top: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accentA);
+    }
+
+    /* ========================================
+       TEMPLATE DRAWER
+       ======================================== */
+    
+    .jdm-drawer-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 900;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .jdm-drawer-overlay.active {
+      display: block;
+    }
+
+    .jdm-drawer {
+      position: fixed;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 500px;
+      max-width: 90vw;
+      background: var(--bg1);
+      border-left: 1px solid var(--border);
+      box-shadow: -10px 0 40px rgba(0, 0, 0, 0.5);
+      z-index: 950;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    }
+
+    .jdm-drawer.active {
+      transform: translateX(0);
+    }
+
+    .jdm-drawer-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .jdm-drawer-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .jdm-drawer-close {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      color: var(--muted2);
+      transition: all 0.2s ease;
+    }
+
+    .jdm-drawer-close:hover {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+
+    .jdm-drawer-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .jdm-drawer-preview {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: white;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .jdm-drawer-actions {
+      padding: 24px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 12px;
     }
 
     /* TEMPLATES SECTION */
@@ -1070,71 +1784,246 @@
     <!-- HERO SECTION -->
     <div class="jdm-hero">
       <h2 class="jdm-hero-title">Transform Your Resume to Match Any Job</h2>
-      <p class="jdm-hero-subtitle">Paste a job description and generate an ATS-optimized resume tailored to the role with data-driven metrics</p>
+      <p class="jdm-hero-subtitle">Intelligent workspace for creating ATS-optimized, job-matched resumes with data-driven insights</p>
     </div>
 
-    <!-- MAIN 2-COLUMN LAYOUT -->
-    <div class="jdm-main">
-      <!-- LEFT COLUMN: FORM & CONTENT -->
-      <div>
-        <!-- NAV TABS -->
-        <div class="jdm-nav">
-          <button class="jdm-nav-btn active" onclick="switchPanel('generate')">Generate</button>
-          <button class="jdm-nav-btn" onclick="switchPanel('templates')">Templates</button>
-          <button class="jdm-nav-btn" onclick="switchPanel('history')">History</button>
-          <button class="jdm-nav-btn" onclick="switchPanel('settings')">Settings</button>
+    <!-- STEP WIZARD -->
+    <div class="jdm-wizard">
+      <div class="jdm-wizard-container">
+        <div class="jdm-wizard-steps">
+          <div class="jdm-wizard-step active" data-step="1" onclick="goToStep(1)">
+            <div class="jdm-wizard-step-circle">1</div>
+            <div class="jdm-wizard-step-label">Base Resume</div>
+            <div class="jdm-wizard-step-sublabel">Upload your resume</div>
+          </div>
+          <div class="jdm-wizard-step" data-step="2" onclick="goToStep(2)">
+            <div class="jdm-wizard-step-circle">2</div>
+            <div class="jdm-wizard-step-label">Job Description</div>
+            <div class="jdm-wizard-step-sublabel">Paste target JD</div>
+          </div>
+          <div class="jdm-wizard-step" data-step="3" onclick="goToStep(3)">
+            <div class="jdm-wizard-step-circle">3</div>
+            <div class="jdm-wizard-step-label">Match Controls</div>
+            <div class="jdm-wizard-step-sublabel">Configure settings</div>
+          </div>
+          <div class="jdm-wizard-step" data-step="4" onclick="goToStep(4)">
+            <div class="jdm-wizard-step-circle">4</div>
+            <div class="jdm-wizard-step-label">Template</div>
+            <div class="jdm-wizard-step-sublabel">Select design</div>
+          </div>
+          <div class="jdm-wizard-step" data-step="5" onclick="goToStep(5)">
+            <div class="jdm-wizard-step-circle">5</div>
+            <div class="jdm-wizard-step-label">Generate</div>
+            <div class="jdm-wizard-step-sublabel">Create resume</div>
+          </div>
         </div>
+      </div>
+    </div>
 
-        <!-- GENERATE PANEL -->
-        <div id="generate" class="jdm-panel active">
-          <form id="generateForm" onsubmit="handleGenerateSubmit(event)" style="margin-bottom: 24px;">
-            <!-- Company Name -->
+    <!-- MAIN WORKSPACE -->
+    <div class="jdm-main">
+      <div class="jdm-workspace">
+        <!-- LEFT COLUMN: INPUT FORMS -->
+        <div class="jdm-workspace-column">
+          <!-- Base Resume Upload -->
+          <div class="jdm-workspace-section" id="baseResumeSection">
+            <h3 class="jdm-section-title">Base Resume</h3>
+            <div class="jdm-upload-zone" id="uploadZone">
+              <input type="file" id="baseResumeFile" accept=".txt,.docx,.doc,.pdf" style="display: none;" onchange="handleFileUpload(event)">
+              <div class="jdm-upload-icon">📄</div>
+              <div class="jdm-upload-text">Drag & drop your resume here</div>
+              <div class="jdm-upload-hint">or click to browse (TXT, DOCX, PDF)</div>
+            </div>
+            <div id="fileCardContainer"></div>
+            <div style="margin-top: 12px;">
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                <div style="flex: 1; height: 1px; background: var(--border);"></div>
+                <span style="color: var(--muted2); font-size: 12px; font-weight: 600;">OR PASTE TEXT</span>
+                <div style="flex: 1; height: 1px; background: var(--border);"></div>
+              </div>
+              <textarea id="baseResumePaste" class="jdm-textarea" placeholder="Paste your resume text here…" style="min-height: 150px;"></textarea>
+              <div style="display: flex; gap: 8px; margin-top: 12px;">
+                <button type="button" class="jdm-btn-secondary" onclick="saveBaseResume()" style="flex: 1;">Save Resume</button>
+                <button type="button" class="jdm-btn-secondary" onclick="clearBaseResume()" style="flex: 1;">Clear</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Company & Job Description -->
+          <div class="jdm-workspace-section">
+            <h3 class="jdm-section-title">Job Details</h3>
             <div class="jdm-form-group">
               <label class="jdm-label">Company Name</label>
               <input type="text" id="companyName" class="jdm-input" placeholder="E.g., Stripe, Linear, Vercel" required>
             </div>
-
-            <!-- Job Description -->
-            <div class="jdm-form-group">
+            <div class="jdm-form-group" style="margin-bottom: 0;">
               <label class="jdm-label">Job Description</label>
-              <span class="jdm-hint">Paste the full JD to get precise matching</span>
-              <textarea id="jobDescription" class="jdm-textarea" placeholder="Paste job description here…" required></textarea>
+              <span class="jdm-hint">Paste the complete job posting for precise matching</span>
+              <textarea id="jobDescription" class="jdm-textarea" placeholder="Paste full job description here…" style="min-height: 200px;" required></textarea>
             </div>
+          </div>
+        </div>
 
-            <!-- Base Resume Panel -->
-            <div class="jdm-resume-panel">
-              <div class="jdm-resume-tabs">
-                <button type="button" class="jdm-resume-tab-btn active" onclick="switchResumeTab('paste')">Paste Text</button>
-                <button type="button" class="jdm-resume-tab-btn" onclick="switchResumeTab('upload')">Upload File</button>
+        <!-- CENTER COLUMN: MATCH INTELLIGENCE -->
+        <div class="jdm-workspace-column">
+          <!-- ATS Strictness Control -->
+          <div class="jdm-workspace-section">
+            <h3 class="jdm-section-title">ATS Strictness Level</h3>
+            <div class="jdm-strictness-control">
+              <div class="jdm-strictness-header">
+                <span class="jdm-strictness-label">Match Target</span>
+                <span class="jdm-strictness-value" id="strictnessDisplay">92%</span>
               </div>
-
-              <div id="pasteTab" class="jdm-resume-content active">
-                <textarea id="baseResumePaste" class="jdm-textarea" style="margin-bottom: 12px;" placeholder="Paste your existing resume…"></textarea>
-              </div>
-
-              <div id="uploadTab" class="jdm-resume-content">
-                <div class="jdm-upload-area" onclick="document.getElementById('baseResumeFile').click()">
-                  <input type="file" id="baseResumeFile" accept=".txt,.docx,.doc" onchange="handleFileUpload(event)">
-                  <div class="jdm-upload-text">📁 Click to upload .txt or .docx</div>
+              <div class="jdm-slider-container">
+                <input type="range" id="strictnessSlider" class="jdm-slider-enhanced" min="70" max="100" value="92" oninput="updateStrictnessValue(this.value)">
+                <div class="jdm-slider-marks">
+                  <span>70% Relaxed</span>
+                  <span>85% Balanced</span>
+                  <span>100% Strict</span>
                 </div>
-                <div id="uploadStatus" style="font-size: 12px; color: #94a3b8; margin-top: 8px;"></div>
               </div>
-
-              <div class="jdm-resume-actions" style="margin-top: 12px;">
-                <button type="button" class="jdm-btn-secondary" onclick="saveBaseResume()">Save Resume</button>
-                <button type="button" class="jdm-btn-secondary" onclick="clearBaseResume()">Clear</button>
+              <div style="margin-top: 12px; padding: 12px; background: rgba(182, 156, 255, 0.05); border-radius: 8px; font-size: 11px; color: var(--muted2);">
+                💡 Higher percentage = stricter ATS keyword matching
               </div>
             </div>
+          </div>
 
-            <!-- Target Match -->
-            <div class="jdm-target-section">
-              <label style="display: block; margin-bottom: 12px; font-weight: 600; font-size: 13px; color: #cbd5e1;">Target Match %</label>
-              <div class="jdm-radio-group">
-                <div class="jdm-radio-option">
-                  <input type="radio" id="autoMode" name="targetMode" value="auto" checked onchange="toggleSlider()">
-                  <label for="autoMode">Auto (90–95%)</label>
-                </div>
-                <div class="jdm-radio-option">
+          <!-- Skill Frequency Controller -->
+          <div class="jdm-workspace-section">
+            <h3 class="jdm-section-title">Skill Frequency</h3>
+            <div class="jdm-form-group">
+              <input type="text" id="skillInput" class="jdm-input" placeholder="Add skill (press Enter)" onkeypress="handleSkillKeypress(event)">
+            </div>
+            <div class="jdm-skills-list" id="skillsList">
+              <!-- Skills will be dynamically added here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: TEMPLATES & OUTPUT -->
+        <div class="jdm-workspace-column">
+          <!-- Template Selector -->
+          <div class="jdm-workspace-section">
+            <h3 class="jdm-section-title">Resume Template</h3>
+            <div id="templateQuickView" style="cursor: pointer;" onclick="openTemplateDrawer()">
+              <div style="aspect-ratio: 8.5/11; border: 2px solid var(--border); border-radius: 12px; overflow: hidden; background: white; margin-bottom: 12px;">
+                <img id="selectedTemplatePreview" src="https://via.placeholder.com/300x400/6B46C1/FFFFFF?text=Template+01" alt="Selected Template" style="width: 100%; height: 100%; object-fit: cover;">
+              </div>
+              <div style="text-align: center; padding: 12px; background: rgba(182, 156, 255, 0.1); border-radius: 8px;">
+                <div style="font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px;" id="selectedTemplateName">Template 01</div>
+                <div style="font-size: 11px; color: var(--muted2);">Click to change template</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Generate Button & Output -->
+          <div class="jdm-workspace-section">
+            <button type="button" class="jdm-btn-primary" id="generateBtn" onclick="handleGenerate()">
+              <span>🚀 Generate Matched Resume</span>
+            </button>
+            
+            <!-- Results (hidden until generated) -->
+            <div id="outputSection" style="display: none; margin-top: 20px;">
+              <div style="padding: 16px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; margin-bottom: 16px;">
+                <div style="font-size: 13px; font-weight: 700; color: #22c55e; margin-bottom: 8px;">✓ Resume Generated</div>
+                <div style="font-size: 11px; color: var(--muted);">Your tailored resume is ready!</div>
+              </div>
+              
+              <div class="jdm-metrics-grid" id="metricsGrid"></div>
+              
+              <button class="jdm-preview-btn" onclick="previewResume()">📄 Preview Resume</button>
+              
+              <div class="jdm-download-group">
+                <button class="jdm-download-btn pdf" onclick="downloadPDF()">PDF</button>
+                <button class="jdm-download-btn doc" onclick="downloadDOC()">DOC</button>
+                <button class="jdm-download-btn html" onclick="downloadHTML()">HTML</button>
+              </div>
+              
+              <button class="jdm-btn-secondary" onclick="saveToHistory()" style="width: 100%; margin-top: 12px;">Save to History</button>
+            </div>
+          </div>
+
+          <!-- Quick Access Tabs (History & Settings) -->
+          <div class="jdm-workspace-section">
+            <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+              <button class="jdm-btn-secondary" onclick="toggleQuickPanel('history')" style="flex: 1;">📋 History</button>
+              <button class="jdm-btn-secondary" onclick="toggleQuickPanel('settings')" style="flex: 1;">⚙️ Settings</button>
+            </div>
+            <div id="historyQuickPanel" style="display: none;"></div>
+            <div id="settingsQuickPanel" style="display: none;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OLD PANELS (Hidden - for backward compatibility) -->
+    <div style="display: none;">
+      <div id="generate" class="jdm-panel active"></div>
+      <div id="templates" class="jdm-panel"></div>
+      <div id="history" class="jdm-panel"></div>
+      <div id="settings" class="jdm-panel"></div>
+    </div>
+
+    <!-- PHASED PROGRESS OVERLAY -->
+    <div class="jdm-progress-overlay" id="progressOverlay">
+      <div class="jdm-progress-container">
+        <div class="jdm-progress-title">Generating Your Resume</div>
+        <div class="jdm-progress-phases">
+          <div class="jdm-progress-phase" data-phase="1">
+            <div class="jdm-progress-phase-icon">📄</div>
+            <div class="jdm-progress-phase-text">Parsing Base Resume</div>
+          </div>
+          <div class="jdm-progress-phase" data-phase="2">
+            <div class="jdm-progress-phase-icon">🎯</div>
+            <div class="jdm-progress-phase-text">Understanding Job Description</div>
+          </div>
+          <div class="jdm-progress-phase" data-phase="3">
+            <div class="jdm-progress-phase-icon">🔍</div>
+            <div class="jdm-progress-phase-text">Optimizing Keywords</div>
+          </div>
+          <div class="jdm-progress-phase" data-phase="4">
+            <div class="jdm-progress-phase-icon">⚡</div>
+            <div class="jdm-progress-phase-text">ATS Structuring</div>
+          </div>
+          <div class="jdm-progress-phase" data-phase="5">
+            <div class="jdm-progress-phase-icon">✨</div>
+            <div class="jdm-progress-phase-text">Finalizing</div>
+          </div>
+        </div>
+        <div class="jdm-progress-bar">
+          <div class="jdm-progress-bar-fill" id="progressBar" style="width: 0%;"></div>
+        </div>
+        <div class="jdm-progress-percentage" id="progressPercentage">0%</div>
+      </div>
+    </div>
+
+    <!-- TEMPLATE DRAWER -->
+    <div class="jdm-drawer-overlay" id="drawerOverlay" onclick="closeTemplateDrawer()"></div>
+    <div class="jdm-drawer" id="templateDrawer">
+      <div class="jdm-drawer-header">
+        <div class="jdm-drawer-title">Choose Template</div>
+        <button class="jdm-drawer-close" onclick="closeTemplateDrawer()">×</button>
+      </div>
+      <div class="jdm-drawer-content">
+        <div class="jdm-templates-controls">
+          <input type="text" id="templateSearch" class="jdm-search-box" placeholder="Search templates…" oninput="filterTemplates()">
+          <select id="templateSort" class="jdm-sort-select" onchange="filterTemplates()">
+            <option value="default">All Styles</option>
+            <option value="modern">Modern</option>
+            <option value="clean">Clean</option>
+            <option value="professional">Professional</option>
+            <option value="classic">Classic</option>
+          </select>
+        </div>
+        <div class="jdm-templates-grid" id="templatesGrid"></div>
+      </div>
+      <div class="jdm-drawer-actions">
+        <button class="jdm-btn-secondary" onclick="closeTemplateDrawer()" style="flex: 1;">Cancel</button>
+        <button class="jdm-btn-primary" onclick="confirmTemplateSelection()" style="flex: 2;">Select Template</button>
+      </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
                   <input type="radio" id="manualMode" name="targetMode" value="manual" onchange="toggleSlider()">
                   <label for="manualMode">Manual</label>
                 </div>
@@ -1288,6 +2177,417 @@
       tag: ['Modern', 'Clean', 'Professional', 'Classic'][i % 4],
       previewThumbnail: `https://via.placeholder.com/300x400/6B46C1/FFFFFF?text=Template+${String(i + 1).padStart(2, '0')}`
     }));
+
+    let currentStep = 1;
+    let completedSteps = new Set();
+    let skillsMap = new Map(); // {skill: frequency}
+    let uploadedFile = null;
+
+    // ========================
+    // WIZARD NAVIGATION
+    // ========================
+    function goToStep(step) {
+      currentStep = step;
+      updateWizardUI();
+      
+      // Scroll to relevant section based on step
+      const sectionMap = {
+        1: 'baseResumeSection',
+        2: 'jobDescription',
+        3: 'strictnessSlider',
+        4: () => openTemplateDrawer(),
+        5: 'generateBtn'
+      };
+      
+      const targetId = sectionMap[step];
+      if (typeof targetId === 'function') {
+        targetId();
+      } else if (targetId) {
+        const element = document.getElementById(targetId);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    }
+
+    function updateWizardUI() {
+      document.querySelectorAll('.jdm-wizard-step').forEach(step => {
+        const stepNum = parseInt(step.dataset.step);
+        step.classList.remove('active', 'completed');
+        
+        if (stepNum === currentStep) {
+          step.classList.add('active');
+        } else if (completedSteps.has(stepNum) || stepNum < currentStep) {
+          step.classList.add('completed');
+          step.querySelector('.jdm-wizard-step-circle').textContent = '✓';
+        } else {
+          step.querySelector('.jdm-wizard-step-circle').textContent = stepNum;
+        }
+      });
+    }
+
+    function markStepCompleted(step) {
+      completedSteps.add(step);
+      updateWizardUI();
+    }
+
+    // ========================
+    // DRAG & DROP FILE UPLOAD
+    // ========================
+    function initDragDrop() {
+      const uploadZone = document.getElementById('uploadZone');
+      const fileInput = document.getElementById('baseResumeFile');
+
+      uploadZone.addEventListener('click', () => fileInput.click());
+
+      uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+      });
+
+      uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragover');
+      });
+
+      uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          handleFile(files[0]);
+        }
+      });
+    }
+
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (file) handleFile(file);
+    }
+
+    async function handleFile(file) {
+      uploadedFile = file;
+      const container = document.getElementById('fileCardContainer');
+      
+      // Read file content
+      if (file.name.endsWith('.txt')) {
+        const text = await file.text();
+        document.getElementById('baseResumePaste').value = text;
+        baseResumeText = text;
+      }
+
+      // Display file card
+      const sizeKB = (file.size / 1024).toFixed(1);
+      container.innerHTML = `
+        <div class="jdm-file-card">
+          <div class="jdm-file-icon">📄</div>
+          <div class="jdm-file-info">
+            <div class="jdm-file-name">${file.name}</div>
+            <div class="jdm-file-size">${sizeKB} KB</div>
+          </div>
+          <div class="jdm-file-actions">
+            <button class="jdm-icon-btn" onclick="replaceFile()" title="Replace">🔄</button>
+            <button class="jdm-icon-btn danger" onclick="removeFile()" title="Remove">🗑️</button>
+          </div>
+        </div>
+      `;
+
+      markStepCompleted(1);
+      showToast('Resume uploaded successfully!', 'success');
+    }
+
+    function replaceFile() {
+      document.getElementById('baseResumeFile').click();
+    }
+
+    function removeFile() {
+      uploadedFile = null;
+      document.getElementById('fileCardContainer').innerHTML = '';
+      document.getElementById('baseResumePaste').value = '';
+      baseResumeText = '';
+      showToast('File removed', 'success');
+    }
+
+    // ========================
+    // SKILL FREQUENCY STEPPER
+    // ========================
+    function handleSkillKeypress(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        const input = event.target;
+        const skill = input.value.trim();
+        if (skill) {
+          addSkill(skill);
+          input.value = '';
+        }
+      }
+    }
+
+    function addSkill(skill) {
+      if (skillsMap.has(skill)) {
+        showToast('Skill already added', 'error');
+        return;
+      }
+      skillsMap.set(skill, 3); // Default frequency
+      renderSkills();
+      showToast(`Added: ${skill}`, 'success');
+    }
+
+    function removeSkill(skill) {
+      skillsMap.delete(skill);
+      renderSkills();
+    }
+
+    function updateSkillFrequency(skill, delta) {
+      const current = skillsMap.get(skill) || 3;
+      const newValue = Math.max(1, Math.min(10, current + delta));
+      skillsMap.set(skill, newValue);
+      renderSkills();
+    }
+
+    function renderSkills() {
+      const container = document.getElementById('skillsList');
+      if (skillsMap.size === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--muted2); font-size: 12px;">No skills added yet. Type and press Enter.</div>';
+        return;
+      }
+
+      container.innerHTML = Array.from(skillsMap.entries()).map(([skill, freq]) => `
+        <div class="jdm-skill-row">
+          <div class="jdm-skill-name">${skill}</div>
+          <div class="jdm-skill-stepper">
+            <button class="jdm-stepper-btn" onclick="updateSkillFrequency('${skill}', -1)">−</button>
+            <div class="jdm-stepper-value">${freq}</div>
+            <button class="jdm-stepper-btn" onclick="updateSkillFrequency('${skill}', 1)">+</button>
+          </div>
+          <button class="jdm-skill-remove" onclick="removeSkill('${skill}')">×</button>
+        </div>
+      `).join('');
+    }
+
+    // ========================
+    // STRICTNESS CONTROL
+    // ========================
+    function updateStrictnessValue(value) {
+      document.getElementById('strictnessDisplay').textContent = value + '%';
+    }
+
+    // ========================
+    // TEMPLATE DRAWER
+    // ========================
+    function openTemplateDrawer() {
+      document.getElementById('drawerOverlay').classList.add('active');
+      document.getElementById('templateDrawer').classList.add('active');
+      renderTemplatesGrid();
+    }
+
+    function closeTemplateDrawer() {
+      document.getElementById('drawerOverlay').classList.remove('active');
+      document.getElementById('templateDrawer').classList.remove('active');
+    }
+
+    function confirmTemplateSelection() {
+      const template = TEMPLATES.find(t => t.id === selectedTemplate);
+      document.getElementById('selectedTemplatePreview').src = template.previewThumbnail;
+      document.getElementById('selectedTemplateName').textContent = template.name;
+      markStepCompleted(4);
+      closeTemplateDrawer();
+      showToast(`Template selected: ${template.name}`, 'success');
+    }
+
+    // ========================
+    // PHASED PROGRESS ANIMATION
+    // ========================
+    function showPhasedProgress() {
+      const overlay = document.getElementById('progressOverlay');
+      overlay.classList.add('active');
+      
+      const phases = [
+        { duration: 800, name: 'Parsing Base Resume' },
+        { duration: 1000, name: 'Understanding Job Description' },
+        { duration: 900, name: 'Optimizing Keywords' },
+        { duration: 1100, name: 'ATS Structuring' },
+        { duration: 700, name: 'Finalizing' }
+      ];
+
+      let currentPhase = 0;
+      let totalProgress = 0;
+
+      function animatePhase() {
+        if (currentPhase >= phases.length) {
+          return Promise.resolve();
+        }
+
+        const phaseElement = document.querySelector(`.jdm-progress-phase[data-phase="${currentPhase + 1}"]`);
+        phaseElement.classList.add('active');
+
+        const phaseProgress = 100 / phases.length;
+        const startProgress = totalProgress;
+        const endProgress = totalProgress + phaseProgress;
+
+        return new Promise(resolve => {
+          const startTime = Date.now();
+          const duration = phases[currentPhase].duration;
+
+          function updateProgress() {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            const currentProgress = startProgress + (phaseProgress * progress);
+
+            document.getElementById('progressBar').style.width = currentProgress + '%';
+            document.getElementById('progressPercentage').textContent = Math.round(currentProgress) + '%';
+
+            if (progress < 1) {
+              requestAnimationFrame(updateProgress);
+            } else {
+              phaseElement.classList.remove('active');
+              phaseElement.classList.add('completed');
+              totalProgress = endProgress;
+              currentPhase++;
+              resolve();
+            }
+          }
+
+          updateProgress();
+        }).then(() => animatePhase());
+      }
+
+      return animatePhase();
+    }
+
+    function hidePhasedProgress() {
+      const overlay = document.getElementById('progressOverlay');
+      setTimeout(() => {
+        overlay.classList.remove('active');
+        // Reset phases
+        document.querySelectorAll('.jdm-progress-phase').forEach(p => {
+          p.classList.remove('active', 'completed');
+        });
+        document.getElementById('progressBar').style.width = '0%';
+        document.getElementById('progressPercentage').textContent = '0%';
+      }, 500);
+    }
+
+    // ========================
+    // MAIN GENERATION HANDLER
+    // ========================
+    async function handleGenerate() {
+      // Validation
+      const companyName = document.getElementById('companyName').value.trim();
+      const jobDescription = document.getElementById('jobDescription').value.trim();
+
+      if (!baseResumeText && !uploadedFile) {
+        showToast('Please upload or paste your base resume', 'error');
+        goToStep(1);
+        return;
+      }
+
+      if (!companyName || !jobDescription) {
+        showToast('Please fill in company name and job description', 'error');
+        goToStep(2);
+        return;
+      }
+
+      markStepCompleted(2);
+      markStepCompleted(3);
+      markStepCompleted(5);
+
+      const btn = document.getElementById('generateBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<span>⚙️ Generating...</span>';
+
+      try {
+        // Show phased progress
+        showPhasedProgress();
+
+        const strictness = document.getElementById('strictnessSlider').value;
+        const skillsArray = Array.from(skillsMap.entries()).map(([skill, freq]) => 
+          Array(freq).fill(skill)
+        ).flat().join(', ');
+
+        const response = await fetch('/.netlify/functions/generateResume', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            candidateId: currentCandidateId,
+            companyName,
+            jobDescription,
+            targetMatchMode: 'manual',
+            targetMatchValue: parseInt(strictness),
+            mustIncludeSkills: skillsArray,
+            templateId: selectedTemplate,
+            baseResumeText: baseResumeText
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Generation failed');
+        }
+
+        // Wait for progress animation to complete
+        await new Promise(resolve => setTimeout(resolve, 500));
+        hidePhasedProgress();
+
+        currentGeneration = data;
+        displayResults(data);
+        showToast('Resume generated successfully!', 'success');
+
+      } catch (error) {
+        hidePhasedProgress();
+        showToast(`Error: ${error.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span>🚀 Generate Matched Resume</span>';
+      }
+    }
+
+    function displayResults(data) {
+      const outputSection = document.getElementById('outputSection');
+      const metricsGrid = document.getElementById('metricsGrid');
+
+      metricsGrid.innerHTML = `
+        <div class="jdm-metric-card">
+          <div class="jdm-metric-label">JD Match</div>
+          <div class="jdm-metric-value">${data.metrics?.jdMatch || '—'}%</div>
+        </div>
+        <div class="jdm-metric-card">
+          <div class="jdm-metric-label">ATS Score</div>
+          <div class="jdm-metric-value">${data.metrics?.atsFriendliness || '—'}%</div>
+        </div>
+        <div class="jdm-metric-card">
+          <div class="jdm-metric-label">HR Appeal</div>
+          <div class="jdm-metric-value">${data.metrics?.hrCatchiness || '—'}%</div>
+        </div>
+        <div class="jdm-metric-card">
+          <div class="jdm-metric-label">Shortlist %</div>
+          <div class="jdm-metric-value">${data.metrics?.chancesOfShortlisting || '—'}%</div>
+        </div>
+      `;
+
+      outputSection.style.display = 'block';
+      outputSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // ========================
+    // QUICK PANELS
+    // ========================
+    function toggleQuickPanel(panelName) {
+      const historyPanel = document.getElementById('historyQuickPanel');
+      const settingsPanel = document.getElementById('settingsQuickPanel');
+
+      if (panelName === 'history') {
+        const isVisible = historyPanel.style.display !== 'none';
+        historyPanel.style.display = isVisible ? 'none' : 'block';
+        settingsPanel.style.display = 'none';
+        if (!isVisible) renderHistory();
+      } else {
+        const isVisible = settingsPanel.style.display !== 'none';
+        settingsPanel.style.display = isVisible ? 'none' : 'block';
+        historyPanel.style.display = 'none';
+        if (!isVisible) updateSettings();
+      }
+    }
 
     // ========================
     // UTILITY FUNCTIONS
@@ -1739,15 +3039,39 @@
       baseResumeText = localStorage.getItem(getStorageKey('base_resume')) || '';
       selectedTemplate = localStorage.getItem(getStorageKey('selected_template')) || 'template_01';
 
+      // Initialize new features
+      initDragDrop();
+      renderSkills();
       renderTemplatesGrid();
-      updateSidebar();
+      updateWizardUI();
+
+      // Update template preview
+      const template = TEMPLATES.find(t => t.id === selectedTemplate);
+      if (template) {
+        document.getElementById('selectedTemplatePreview').src = template.previewThumbnail;
+        document.getElementById('selectedTemplateName').textContent = template.name;
+      }
+
+      // Restore base resume if saved
+      if (baseResumeText) {
+        document.getElementById('baseResumePaste').value = baseResumeText;
+        markStepCompleted(1);
+      }
+
+      // Legacy sidebar update (if elements exist)
+      if (document.getElementById('sidebarTemplate')) {
+        updateSidebar();
+      }
 
       // Close preview modal on backdrop click
-      document.getElementById('previewModal').addEventListener('click', (e) => {
-        if (e.target.id === 'previewModal') {
-          e.target.style.display = 'none';
-        }
-      });
+      const previewModal = document.getElementById('previewModal');
+      if (previewModal) {
+        previewModal.addEventListener('click', (e) => {
+          if (e.target.id === 'previewModal') {
+            e.target.style.display = 'none';
+          }
+        });
+      }
     });
   </script>
 </body>
