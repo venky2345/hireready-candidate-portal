@@ -38,7 +38,7 @@
       align-items: center;
       gap: 20px;
       padding: 16px 28px;
-      background: var(--panel);
+      background: rgba(11, 10, 18, 0.98);
       backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--border);
       position: sticky;
@@ -52,10 +52,10 @@
       align-items: center;
       gap: 8px;
       padding: 8px 14px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--border);
+      background: rgba(182, 156, 255, 0.1);
+      border: 1px solid rgba(182, 156, 255, 0.3);
       border-radius: 8px;
-      color: var(--muted2);
+      color: var(--accentA);
       font-size: 13px;
       font-weight: 500;
       cursor: pointer;
@@ -63,9 +63,10 @@
     }
 
     .jdm-back-btn:hover {
-      background: rgba(182, 156, 255, 0.1);
-      border-color: rgba(182, 156, 255, 0.3);
+      background: rgba(182, 156, 255, 0.18);
+      border-color: rgba(182, 156, 255, 0.5);
       color: var(--accentA);
+      transform: translateY(-1px);
     }
 
     .jdm-title {
@@ -825,6 +826,68 @@
       color: #ef4444;
     }
 
+    /* File Status Indicator */
+    .jdm-file-status {
+      padding: 10px 14px;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 8px;
+      font-size: 12px;
+      color: #22c55e;
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .jdm-file-status.loading {
+      background: rgba(251, 191, 36, 0.1);
+      border-color: rgba(251, 191, 36, 0.3);
+      color: #fbbf24;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Resume Input Toggle */
+    .jdm-input-toggle {
+      display: flex;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 6px;
+      margin-bottom: 16px;
+    }
+
+    .jdm-toggle-btn {
+      flex: 1;
+      padding: 10px;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      color: var(--muted2);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .jdm-toggle-btn.active {
+      background: linear-gradient(135deg, var(--accentA), var(--accentB));
+      color: white;
+      box-shadow: 0 2px 8px rgba(182, 156, 255, 0.3);
+    }
+
+    .jdm-toggle-btn:hover:not(.active) {
+      background: rgba(182, 156, 255, 0.1);
+      color: var(--accentA);
+    }
+
     /* ========================================
        MATCH INTELLIGENCE CONTROLS
        ======================================== */
@@ -834,7 +897,7 @@
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid var(--border);
       border-radius: 12px;
-      padding: 18px;
+      padding: 20px;
     }
 
     .jdm-strictness-header {
@@ -842,6 +905,7 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 16px;
+      padding: 0 4px;
     }
 
     .jdm-strictness-label {
@@ -932,8 +996,9 @@
     .jdm-skill-row {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 12px;
-      padding: 12px;
+      padding: 12px 16px;
       background: rgba(255, 255, 255, 0.03);
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -1748,6 +1813,92 @@
       }
     }
 
+    /* ========================================
+       RESUME EDITOR
+       ======================================== */
+    
+    .jdm-editor {
+      display: none;
+      margin-top: 20px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+    }
+
+    .jdm-editor.active {
+      display: block;
+    }
+
+    .jdm-editor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .jdm-editor-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .jdm-editor-section {
+      margin-bottom: 24px;
+    }
+
+    .jdm-editor-section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accentA);
+      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .jdm-editor-item {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+
+    .jdm-editor-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .jdm-editor-add-btn {
+      width: 100%;
+      padding: 10px;
+      background: rgba(182, 156, 255, 0.1);
+      border: 1px dashed rgba(182, 156, 255, 0.3);
+      border-radius: 8px;
+      color: var(--accentA);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .jdm-editor-add-btn:hover {
+      background: rgba(182, 156, 255, 0.15);
+      border-style: solid;
+    }
+
+    .jdm-editor-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
     /* RESPONSIVE */
     @media (max-width: 768px) {
       .jdm-header {
@@ -1828,23 +1979,43 @@
           <!-- Base Resume Upload -->
           <div class="jdm-workspace-section" id="baseResumeSection">
             <h3 class="jdm-section-title">Base Resume</h3>
-            <div class="jdm-upload-zone" id="uploadZone">
-              <input type="file" id="baseResumeFile" accept=".txt,.docx,.doc,.pdf" style="display: none;" onchange="handleFileUpload(event)">
-              <div class="jdm-upload-icon">📄</div>
-              <div class="jdm-upload-text">Drag & drop your resume here</div>
-              <div class="jdm-upload-hint">or click to browse (TXT, DOCX, PDF)</div>
+            
+            <!-- Input Method Toggle -->
+            <div class="jdm-input-toggle">
+              <button class="jdm-toggle-btn active" id="uploadModeBtn" onclick="switchInputMode('upload')">Upload/Paste Resume</button>
+              <button class="jdm-toggle-btn" id="adminModeBtn" onclick="switchInputMode('admin')">Use Admin-Approved Data</button>
             </div>
-            <div id="fileCardContainer"></div>
-            <div style="margin-top: 12px;">
-              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                <div style="flex: 1; height: 1px; background: var(--border);"></div>
-                <span style="color: var(--muted2); font-size: 12px; font-weight: 600;">OR PASTE TEXT</span>
-                <div style="flex: 1; height: 1px; background: var(--border);"></div>
+
+            <!-- Upload Mode -->
+            <div id="uploadModeContainer">
+              <div class="jdm-upload-zone" id="uploadZone">
+                <input type="file" id="baseResumeFile" accept=".txt,.docx,.doc,.pdf" style="display: none;" onchange="handleFileUpload(event)">
+                <div class="jdm-upload-icon">📄</div>
+                <div class="jdm-upload-text">Drag & drop your resume here</div>
+                <div class="jdm-upload-hint">or click to browse (TXT, DOCX, PDF)</div>
               </div>
-              <textarea id="baseResumePaste" class="jdm-textarea" placeholder="Paste your resume text here…" style="min-height: 150px;"></textarea>
-              <div style="display: flex; gap: 8px; margin-top: 12px;">
-                <button type="button" class="jdm-btn-secondary" onclick="saveBaseResume()" style="flex: 1;">Save Resume</button>
-                <button type="button" class="jdm-btn-secondary" onclick="clearBaseResume()" style="flex: 1;">Clear</button>
+              <div id="fileCardContainer"></div>
+              <div id="fileStatusContainer"></div>
+              <div style="margin-top: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                  <div style="flex: 1; height: 1px; background: var(--border);"></div>
+                  <span style="color: var(--muted2); font-size: 12px; font-weight: 600;">OR PASTE TEXT</span>
+                  <div style="flex: 1; height: 1px; background: var(--border);"></div>
+                </div>
+                <textarea id="baseResumePaste" class="jdm-textarea" placeholder="Paste your resume text here…" style="min-height: 150px;"></textarea>
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                  <button type="button" class="jdm-btn-secondary" onclick="saveBaseResume()" style="flex: 1;">Save Resume</button>
+                  <button type="button" class="jdm-btn-secondary" onclick="clearBaseResume()" style="flex: 1;">Clear</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Admin Data Mode -->
+            <div id="adminModeContainer" style="display: none;">
+              <div style="padding: 16px; background: rgba(109, 169, 255, 0.1); border: 1px solid rgba(109, 169, 255, 0.3); border-radius: 10px; text-align: center;">
+                <div style="font-size: 24px; margin-bottom: 8px;">✓</div>
+                <div style="font-size: 13px; font-weight: 600; color: var(--accentB); margin-bottom: 4px;">Using Admin-Approved Profile Data</div>
+                <div style="font-size: 11px; color: var(--muted2);" id="adminDataStatus">Loading candidate details...</div>
               </div>
             </div>
           </div>
@@ -1940,6 +2111,49 @@
               </div>
               
               <button class="jdm-btn-secondary" onclick="saveToHistory()" style="width: 100%; margin-top: 12px;">Save to History</button>
+
+              <!-- Resume Editor Button -->
+              <button class="jdm-btn-secondary" onclick="toggleEditor()" id="editorToggleBtn" style="width: 100%; margin-top: 8px;">✏️ Edit Resume Content</button>
+            </div>
+
+            <!-- Resume Editor (hidden initially) -->
+            <div id="resumeEditor" class="jdm-editor">
+              <div class="jdm-editor-header">
+                <span class="jdm-editor-title">Edit Resume Content</span>
+                <button class="jdm-icon-btn" onclick="toggleEditor()">✕</button>
+              </div>
+
+              <!-- Summary Section -->
+              <div class="jdm-editor-section">
+                <div class="jdm-editor-section-title">Professional Summary</div>
+                <textarea id="editorSummary" class="jdm-textarea" placeholder="Edit professional summary..." style="min-height: 100px;"></textarea>
+              </div>
+
+              <!-- Skills Section -->
+              <div class="jdm-editor-section">
+                <div class="jdm-editor-section-title">Skills</div>
+                <textarea id="editorSkills" class="jdm-textarea" placeholder="Edit skills (comma-separated)..." style="min-height: 80px;"></textarea>
+              </div>
+
+              <!-- Employment Section -->
+              <div class="jdm-editor-section">
+                <div class="jdm-editor-section-title">Employment History</div>
+                <div id="employmentContainer"></div>
+                <button class="jdm-editor-add-btn" onclick="addEmploymentEntry()">+ Add Employment</button>
+              </div>
+
+              <!-- Education Section -->
+              <div class="jdm-editor-section">
+                <div class="jdm-editor-section-title">Education</div>
+                <div id="educationContainer"></div>
+                <button class="jdm-editor-add-btn" onclick="addEducationEntry()">+ Add Education</button>
+              </div>
+
+              <!-- Actions -->
+              <div class="jdm-editor-actions">
+                <button class="jdm-btn-primary" onclick="saveDraft()" style="flex: 1;">💾 Save Draft</button>
+                <button class="jdm-btn-secondary" onclick="regenerateResume()" style="flex: 1;">🔄 Regenerate</button>
+              </div>
             </div>
           </div>
 
@@ -2182,6 +2396,380 @@
     let completedSteps = new Set();
     let skillsMap = new Map(); // {skill: frequency}
     let uploadedFile = null;
+    let inputMode = 'upload'; // 'upload' or 'admin'
+    let adminCandidateData = null;
+    let editedResumeData = null;
+
+    // ========================
+    // INPUT MODE SWITCHING
+    // ========================
+    function switchInputMode(mode) {
+      inputMode = mode;
+      document.getElementById('uploadModeBtn').classList.toggle('active', mode === 'upload');
+      document.getElementById('adminModeBtn').classList.toggle('active', mode === 'admin');
+      document.getElementById('uploadModeContainer').style.display = mode === 'upload' ? 'block' : 'none';
+      document.getElementById('adminModeContainer').style.display = mode === 'admin' ? 'block' : 'none';
+
+      if (mode === 'admin') {
+        loadAdminApprovedData();
+      } else {
+        markStepCompleted(1);
+      }
+    }
+
+    async function loadAdminApprovedData() {
+      const statusEl = document.getElementById('adminDataStatus');
+      statusEl.textContent = 'Loading candidate details...';
+      
+      try {
+        // Initialize Firebase if not already done
+        if (!window.db) {
+          const firebaseConfig = {
+            apiKey: "AIzaSyBl4Mjn-X8hXq_kpVu7YkOjFhQPqh6YFFs",
+            authDomain: "hireready-405212.firebaseapp.com",
+            projectId: "hireready-405212",
+            storageBucket: "hireready-405212.appspot.com",
+            messagingSenderId: "966687008821",
+            appId: "1:966687008821:web:3c21f43e0ce3e6d5b8e6c7"
+          };
+          firebase.initializeApp(firebaseConfig);
+          window.db = firebase.firestore();
+        }
+
+        // Fetch admin-approved candidate details
+        const docRef = window.db.collection('candidateDetails').doc(currentCandidateId);
+        const docSnap = await docRef.get();
+
+        if (docSnap.exists) {
+          adminCandidateData = docSnap.data();
+          statusEl.textContent = `Loaded: ${adminCandidateData.personalInfo?.fullName || 'Candidate'}`;
+          baseResumeText = formatAdminDataAsResume(adminCandidateData);
+          markStepCompleted(1);
+          showToast('Admin-approved data loaded successfully!', 'success');
+        } else {
+          throw new Error('Candidate data not found');
+        }
+      } catch (error) {
+        console.error('Error loading admin data:', error);
+        statusEl.textContent = 'Error loading data. Please use upload mode.';
+        showToast('Failed to load admin data', 'error');
+        setTimeout(() => switchInputMode('upload'), 2000);
+      }
+    }
+
+    function formatAdminDataAsResume(data) {
+      let resume = '';
+      
+      // Personal Info
+      if (data.personalInfo) {
+        resume += `${data.personalInfo.fullName || ''}\n`;
+        resume += `${data.personalInfo.email || ''} | ${data.personalInfo.phone || ''}\n`;
+        resume += `${data.personalInfo.city || ''}, ${data.personalInfo.state || ''}\n\n`;
+      }
+
+      // Professional Summary
+      if (data.professionalSummary) {
+        resume += `PROFESSIONAL SUMMARY\n${data.professionalSummary}\n\n`;
+      }
+
+      // Skills
+      if (data.skills && data.skills.length > 0) {
+        resume += `SKILLS\n${data.skills.join(', ')}\n\n`;
+      }
+
+      // Employment
+      if (data.employment && data.employment.length > 0) {
+        resume += `EMPLOYMENT HISTORY\n`;
+        data.employment.forEach(job => {
+          resume += `${job.jobTitle || ''} at ${job.company || ''}\n`;
+          resume += `${job.startDate || ''} - ${job.current ? 'Present' : job.endDate || ''}\n`;
+          resume += `${job.description || ''}\n\n`;
+        });
+      }
+
+      // Education
+      if (data.education && data.education.length > 0) {
+        resume += `EDUCATION\n`;
+        data.education.forEach(edu => {
+          resume += `${edu.degree || ''} in ${edu.fieldOfStudy || ''}\n`;
+          resume += `${edu.institution || ''}, ${edu.graduationYear || ''}\n\n`;
+        });
+      }
+
+      // Certifications
+      if (data.certifications && data.certifications.length > 0) {
+        resume += `CERTIFICATIONS\n`;
+        data.certifications.forEach(cert => {
+          resume += `${cert.name || ''} - ${cert.issuingOrganization || ''} (${cert.dateObtained || ''})\n`;
+        });
+      }
+
+      return resume;
+    }
+
+    // ========================
+    // ENHANCED FILE UPLOAD WITH STATUS
+    // ========================
+    async function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      handleFile(file);
+    }
+
+    async function handleFile(file) {
+      const fileCardContainer = document.getElementById('fileCardContainer');
+      const fileStatusContainer = document.getElementById('fileStatusContainer');
+      
+      // Show loading status
+      fileStatusContainer.innerHTML = '<div class="jdm-file-status loading"><span>📄</span> Reading file...</div>';
+
+      uploadedFile = file;
+      
+      // Display file card
+      const fileSize = (file.size / 1024).toFixed(2) + ' KB';
+      const fileType = file.name.split('.').pop().toUpperCase();
+      
+      fileCardContainer.innerHTML = `
+        <div class="jdm-file-card">
+          <div class="jdm-file-icon">📄</div>
+          <div class="jdm-file-info">
+            <div class="jdm-file-name">${file.name}</div>
+            <div class="jdm-file-size">${fileType} • ${fileSize}</div>
+          </div>
+          <div class="jdm-file-actions">
+            <button class="jdm-icon-btn" onclick="replaceFile()" title="Replace">🔄</button>
+            <button class="jdm-icon-btn danger" onclick="removeFile()" title="Remove">🗑️</button>
+          </div>
+        </div>
+      `;
+
+      // Read file content if TXT
+      if (file.name.endsWith('.txt')) {
+        try {
+          const text = await file.text();
+          document.getElementById('baseResumePaste').value = text;
+          baseResumeText = text;
+          localStorage.setItem(getStorageKey('base_resume'), text);
+          
+          fileStatusContainer.innerHTML = '<div class="jdm-file-status"><span>✓</span> File uploaded successfully! Resume saved.</div>';
+          markStepCompleted(1);
+          showToast('Resume uploaded and saved!', 'success');
+        } catch (error) {
+          fileStatusContainer.innerHTML = '<div class="jdm-file-status loading"><span>⚠</span> Could not read file. Please paste text manually.</div>';
+        }
+      } else {
+        fileStatusContainer.innerHTML = '<div class="jdm-file-status"><span>✓</span> File attached. Conversion support limited - paste text if needed.</div>';
+        markStepCompleted(1);
+      }
+    }
+
+    function replaceFile() {
+      document.getElementById('baseResumeFile').click();
+    }
+
+    function removeFile() {
+      uploadedFile = null;
+      document.getElementById('fileCardContainer').innerHTML = '';
+      document.getElementById('fileStatusContainer').innerHTML = '';
+      document.getElementById('baseResumeFile').value = '';
+      showToast('File removed', 'success');
+    }
+
+    // ========================
+    // RESUME EDITOR
+    // ========================
+    function toggleEditor() {
+      const editor = document.getElementById('resumeEditor');
+      const isActive = editor.classList.toggle('active');
+      
+      if (isActive) {
+        populateEditor();
+        document.getElementById('editorToggleBtn').textContent = '✕ Close Editor';
+      } else {
+        document.getElementById('editorToggleBtn').textContent = '✏️ Edit Resume Content';
+      }
+    }
+
+    function populateEditor() {
+      // Parse current generated resume data
+      if (!currentGeneration) return;
+      
+      // For now, populate with placeholder data
+      // In production, parse currentGeneration.resumeHtml to extract sections
+      document.getElementById('editorSummary').value = 'Results-driven professional with X years of experience...';
+      document.getElementById('editorSkills').value = Array.from(skillsMap.keys()).join(', ');
+      
+      renderEmploymentEntries();
+      renderEducationEntries();
+    }
+
+    let employmentEntries = [];
+    let educationEntries = [];
+
+    function renderEmploymentEntries() {
+      const container = document.getElementById('employmentContainer');
+      
+      if (adminCandidateData && adminCandidateData.employment) {
+        employmentEntries = adminCandidateData.employment;
+      } else if (employmentEntries.length === 0) {
+        employmentEntries = [{
+          jobTitle: '',
+          company: '',
+          startDate: '',
+          endDate: '',
+          description: ''
+        }];
+      }
+
+      container.innerHTML = employmentEntries.map((entry, idx) => `
+        <div class="jdm-editor-item">
+          <div class="jdm-editor-item-header">
+            <span style="font-size: 12px; font-weight: 600; color: var(--text);">Position ${idx + 1}</span>
+            <button class="jdm-icon-btn danger" onclick="removeEmploymentEntry(${idx})">🗑️</button>
+          </div>
+          <div class="jdm-form-group">
+            <input type="text" class="jdm-input" placeholder="Job Title" value="${entry.jobTitle || ''}" onchange="updateEmploymentEntry(${idx}, 'jobTitle', this.value)" style="margin-bottom: 8px;">
+            <input type="text" class="jdm-input" placeholder="Company" value="${entry.company || ''}" onchange="updateEmploymentEntry(${idx}, 'company', this.value)" style="margin-bottom: 8px;">
+            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+              <input type="text" class="jdm-input" placeholder="Start Date" value="${entry.startDate || ''}" onchange="updateEmploymentEntry(${idx}, 'startDate', this.value)" style="flex: 1;">
+              <input type="text" class="jdm-input" placeholder="End Date" value="${entry.endDate || ''}" onchange="updateEmploymentEntry(${idx}, 'endDate', this.value)" style="flex: 1;">
+            </div>
+            <textarea class="jdm-textarea" placeholder="Description..." onchange="updateEmploymentEntry(${idx}, 'description', this.value)" style="min-height: 80px;">${entry.description || ''}</textarea>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function addEmploymentEntry() {
+      employmentEntries.push({
+        jobTitle: '',
+        company: '',
+        startDate: '',
+        endDate: '',
+        description: ''
+      });
+      renderEmploymentEntries();
+    }
+
+    function updateEmploymentEntry(idx, field, value) {
+      if (employmentEntries[idx]) {
+        employmentEntries[idx][field] = value;
+      }
+    }
+
+    function removeEmploymentEntry(idx) {
+      if (confirm('Remove this employment entry?')) {
+        employmentEntries.splice(idx, 1);
+        renderEmploymentEntries();
+      }
+    }
+
+    function renderEducationEntries() {
+      const container = document.getElementById('educationContainer');
+      
+      if (adminCandidateData && adminCandidateData.education) {
+        educationEntries = adminCandidateData.education;
+      } else if (educationEntries.length === 0) {
+        educationEntries = [{
+          degree: '',
+          institution: '',
+          graduationYear: ''
+        }];
+      }
+
+      container.innerHTML = educationEntries.map((entry, idx) => `
+        <div class="jdm-editor-item">
+          <div class="jdm-editor-item-header">
+            <span style="font-size: 12px; font-weight: 600; color: var(--text);">Education ${idx + 1}</span>
+            <button class="jdm-icon-btn danger" onclick="removeEducationEntry(${idx})">🗑️</button>
+          </div>
+          <div class="jdm-form-group">
+            <input type="text" class="jdm-input" placeholder="Degree" value="${entry.degree || ''}" onchange="updateEducationEntry(${idx}, 'degree', this.value)" style="margin-bottom: 8px;">
+            <input type="text" class="jdm-input" placeholder="Institution" value="${entry.institution || ''}" onchange="updateEducationEntry(${idx}, 'institution', this.value)" style="margin-bottom: 8px;">
+            <input type="text" class="jdm-input" placeholder="Graduation Year" value="${entry.graduationYear || ''}" onchange="updateEducationEntry(${idx}, 'graduationYear', this.value)">
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function addEducationEntry() {
+      educationEntries.push({
+        degree: '',
+        institution: '',
+        graduationYear: ''
+      });
+      renderEducationEntries();
+    }
+
+    function updateEducationEntry(idx, field, value) {
+      if (educationEntries[idx]) {
+        educationEntries[idx][field] = value;
+      }
+    }
+
+    function removeEducationEntry(idx) {
+      if (confirm('Remove this education entry?')) {
+        educationEntries.splice(idx, 1);
+        renderEducationEntries();
+      }
+    }
+
+    function saveDraft() {
+      editedResumeData = {
+        summary: document.getElementById('editorSummary').value,
+        skills: document.getElementById('editorSkills').value,
+        employment: employmentEntries,
+        education: educationEntries
+      };
+      
+      // Store edited data
+      localStorage.setItem(getStorageKey('edited_resume'), JSON.stringify(editedResumeData));
+      showToast('Draft saved successfully!', 'success');
+    }
+
+    async function regenerateResume() {
+      if (!confirm('Regenerate resume with current edits? This will create a new resume.')) return;
+      
+      saveDraft();
+      toggleEditor();
+      
+      // Update baseResumeText with edited data
+      baseResumeText = formatEditedDataAsResume(editedResumeData);
+      
+      // Trigger generation
+      await handleGenerate();
+    }
+
+    function formatEditedDataAsResume(data) {
+      let resume = '';
+      
+      if (data.summary) {
+        resume += `PROFESSIONAL SUMMARY\n${data.summary}\n\n`;
+      }
+
+      if (data.skills) {
+        resume += `SKILLS\n${data.skills}\n\n`;
+      }
+
+      if (data.employment && data.employment.length > 0) {
+        resume += `EMPLOYMENT HISTORY\n`;
+        data.employment.forEach(job => {
+          resume += `${job.jobTitle} at ${job.company}\n`;
+          resume += `${job.startDate} - ${job.endDate}\n`;
+          resume += `${job.description}\n\n`;
+        });
+      }
+
+      if (data.education && data.education.length > 0) {
+        resume += `EDUCATION\n`;
+        data.education.forEach(edu => {
+          resume += `${edu.degree}, ${edu.institution}, ${edu.graduationYear}\n`;
+        });
+      }
+
+      return resume;
+    }
 
     // ========================
     // WIZARD NAVIGATION
@@ -2475,8 +3063,15 @@
       const companyName = document.getElementById('companyName').value.trim();
       const jobDescription = document.getElementById('jobDescription').value.trim();
 
-      if (!baseResumeText && !uploadedFile) {
+      // Check if we have resume data (either uploaded or admin mode)
+      if (inputMode === 'upload' && !baseResumeText && !uploadedFile) {
         showToast('Please upload or paste your base resume', 'error');
+        goToStep(1);
+        return;
+      }
+
+      if (inputMode === 'admin' && !adminCandidateData && !baseResumeText) {
+        showToast('Admin data not loaded. Please wait or switch to upload mode.', 'error');
         goToStep(1);
         return;
       }
