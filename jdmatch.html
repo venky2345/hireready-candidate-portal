@@ -3416,6 +3416,7 @@
       const template = TEMPLATES.find(t => t.id === selectedTemplate) || TEMPLATES[0];
       if (!template) { closeTemplateDrawer(); return; }
       document.getElementById('selectedTemplateName').textContent = template.name;
+      renderSelectedTemplatePreview();
       markStepCompleted(4);
       closeTemplateDrawer();
       showToast(`Template selected: ${template.name}`, 'success');
@@ -3731,6 +3732,17 @@
     // ========================
     // TEMPLATES
     // ========================
+    function renderSelectedTemplatePreview() {
+      const el = document.getElementById('selectedTemplatePreview');
+      if (!el) return;
+      const tpl = TEMPLATES.find(t => t.id === selectedTemplate) || TEMPLATES[0];
+      if (!tpl) return;
+      const _w1s = ['w-80','w-70','w-60','w-90','w-80','w-70','w-50','w-90','w-80','w-60','w-70','w-80'];
+      const _idx = TEMPLATES.indexOf(tpl);
+      const _w1 = _w1s[_idx] || 'w-80';
+      el.innerHTML = `<div class="tpl-thumb-fallback fill" role="img" aria-label="${tpl.name} preview" style="height:100%;"><div class="tpl-thumb-lines"><span class="line ${_w1}"></span><span class="line w-60"></span><span class="line w-90"></span><span class="line w-70"></span><span class="line w-50"></span></div><div class="tpl-thumb-tag">${tpl.name}</div></div>`;
+    }
+
     function renderTemplatesGrid() {
       const grid = document.getElementById('templatesGrid');
       grid.innerHTML = TEMPLATES.map(template => `
@@ -3793,6 +3805,7 @@
       selectedTemplate = found.id;
       localStorage.setItem(getStorageKey('selected_template'), found.id);
       document.getElementById('selectedTemplateName').textContent = found.name;
+      renderSelectedTemplatePreview();
       renderTemplatesGrid();
       showToast(`${found.name} selected!`, 'success');
       updateSidebar();
@@ -4065,6 +4078,7 @@
       document.getElementById('baseResumePaste').value = '';
       document.getElementById('skillsInput').value = '';
       renderTemplatesGrid();
+      renderSelectedTemplatePreview();
       updateSettings();
       updateSidebar();
       showToast('All data cleared', 'success');
@@ -4463,6 +4477,7 @@
       if (template) {
         selectedTemplate = template.id;
         document.getElementById('selectedTemplateName').textContent = template.name;
+        renderSelectedTemplatePreview();
       }
 
       // Restore base resume if saved
