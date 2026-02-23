@@ -2229,8 +2229,8 @@
               </div>
               <div id="sliderGroup" class="jdm-slider-group">
                 <div class="jdm-slider-wrapper">
-                  <input type="range" id="targetSlider" class="jdm-slider" min="90" max="99" value="92" oninput="updateSliderValue(this.value)">
-                  <input type="number" id="targetInput" class="jdm-slider-input" min="90" max="99" value="92" oninput="updateSliderValue(this.value)">
+                  <input type="range" id="targetSlider" class="jdm-slider" min="5" max="100" step="1" value="75" oninput="updateSliderValue(this.value)">
+                  <input type="number" id="targetInput" class="jdm-slider-input" min="5" max="100" step="1" value="75" oninput="updateSliderValue(this.value)">
                   <div class="jdm-slider-value-display" id="sliderDisplay">92%</div>
                 </div>
               </div>
@@ -2754,9 +2754,11 @@
 
     function removeFile() {
       uploadedFile = null;
+      baseResumeText = '';
       document.getElementById('fileCardContainer').innerHTML = '';
       document.getElementById('fileStatusContainer').innerHTML = '';
       document.getElementById('baseResumeFile').value = '';
+      document.getElementById('baseResumePaste').value = '';
       showToast('File removed', 'success');
     }
 
@@ -3029,54 +3031,6 @@
           handleFile(files[0]);
         }
       });
-    }
-
-    function handleFileUpload(event) {
-      const file = event.target.files[0];
-      if (file) handleFile(file);
-    }
-
-    async function handleFile(file) {
-      uploadedFile = file;
-      const container = document.getElementById('fileCardContainer');
-      
-      // Read file content
-      if (file.name.endsWith('.txt')) {
-        const text = await file.text();
-        document.getElementById('baseResumePaste').value = text;
-        baseResumeText = text;
-      }
-
-      // Display file card
-      const sizeKB = (file.size / 1024).toFixed(1);
-      container.innerHTML = `
-        <div class="jdm-file-card">
-          <div class="jdm-file-icon">📄</div>
-          <div class="jdm-file-info">
-            <div class="jdm-file-name">${file.name}</div>
-            <div class="jdm-file-size">${sizeKB} KB</div>
-          </div>
-          <div class="jdm-file-actions">
-            <button class="jdm-icon-btn" onclick="replaceFile()" title="Replace">🔄</button>
-            <button class="jdm-icon-btn danger" onclick="removeFile()" title="Remove">🗑️</button>
-          </div>
-        </div>
-      `;
-
-      markStepCompleted(1);
-      showToast('Resume uploaded successfully!', 'success');
-    }
-
-    function replaceFile() {
-      document.getElementById('baseResumeFile').click();
-    }
-
-    function removeFile() {
-      uploadedFile = null;
-      document.getElementById('fileCardContainer').innerHTML = '';
-      document.getElementById('baseResumePaste').value = '';
-      baseResumeText = '';
-      showToast('File removed', 'success');
     }
 
     // ========================
@@ -3438,7 +3392,7 @@
     }
 
     function updateSliderValue(value) {
-      value = Math.max(90, Math.min(99, parseInt(value)));
+      value = Math.max(5, Math.min(100, parseInt(value)));
       document.getElementById('targetSlider').value = value;
       document.getElementById('targetInput').value = value;
       document.getElementById('sliderDisplay').textContent = value + '%';
@@ -3448,20 +3402,6 @@
     // ========================
     // BASE RESUME
     // ========================
-    async function handleFileUpload(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const status = document.getElementById('uploadStatus');
-      if (file.name.endsWith('.txt')) {
-        const text = await file.text();
-        document.getElementById('baseResumePaste').value = text;
-        status.textContent = '✔ File loaded. Click "Save Resume" to save.';
-        status.style.color = '#22c55e';
-      } else {
-        status.textContent = '⚠️ Conversion support limited. Paste manually if needed.';
-        status.style.color = '#f59e0b';
-      }
-    }
 
     function saveBaseResume() {
       const text = document.getElementById('baseResumePaste').value.trim();
