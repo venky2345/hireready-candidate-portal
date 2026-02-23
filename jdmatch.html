@@ -2157,7 +2157,7 @@
             <div id="uploadModeContainer">
               <div class="jdm-upload-zone" id="uploadZone">
                 <input type="file" id="baseResumeFile" accept=".txt,.docx,.doc,.pdf" style="display: none;" onchange="handleFileUpload(event)">
-                <div class="jdm-upload-icon">≡ƒôä</div>
+                <div class="jdm-upload-icon">📄</div>
                 <div class="jdm-upload-text">Drag & drop your resume here</div>
                 <div class="jdm-upload-hint">or click to browse (TXT, DOCX, PDF)</div>
               </div>
@@ -2169,7 +2169,7 @@
                   <span style="color: var(--muted2); font-size: 12px; font-weight: 600;">OR PASTE TEXT</span>
                   <div style="flex: 1; height: 1px; background: var(--border);"></div>
                 </div>
-                <textarea id="baseResumePaste" class="jdm-textarea" placeholder="Paste your resume text hereΓÇª" style="min-height: 150px;"></textarea>
+                <textarea id="baseResumePaste" class="jdm-textarea" placeholder="Paste your resume text here…" style="min-height: 150px;"></textarea>
                 <div style="display: flex; gap: 8px; margin-top: 12px;">
                   <button type="button" class="jdm-btn-secondary" onclick="saveBaseResume()" style="flex: 1;">Save Resume</button>
                   <button type="button" class="jdm-btn-secondary" onclick="clearBaseResume()" style="flex: 1;">Clear</button>
@@ -2180,7 +2180,7 @@
             <!-- Admin Data Mode -->
             <div id="adminModeContainer" style="display: none;">
               <div style="padding: 16px; background: rgba(109, 169, 255, 0.1); border: 1px solid rgba(109, 169, 255, 0.3); border-radius: 10px; text-align: center;">
-                <div style="font-size: 24px; margin-bottom: 8px;">Γ£ô</div>
+                <div style="font-size: 24px; margin-bottom: 8px;">✔</div>
                 <div style="font-size: 13px; font-weight: 600; color: var(--accentB); margin-bottom: 4px;">Using Admin-Approved Profile Data</div>
                 <div style="font-size: 11px; color: var(--muted2);" id="adminDataStatus">Loading candidate details...</div>
               </div>
@@ -2197,7 +2197,7 @@
             <div class="jdm-form-group" style="margin-bottom: 0;">
               <label class="jdm-label">Job Description</label>
               <span class="jdm-hint">Paste the complete job posting for precise matching</span>
-              <textarea id="jobDescription" class="jdm-textarea" placeholder="Paste full job description hereΓÇª" style="min-height: 200px;" required></textarea>
+              <textarea id="jobDescription" class="jdm-textarea" placeholder="Paste full job description here…" style="min-height: 200px;" required></textarea>
             </div>
           </div>
         </div>
@@ -2239,7 +2239,7 @@
                 </div>
               </div>
               <div style="margin-top: 12px; padding: 12px; background: rgba(182, 156, 255, 0.05); border-radius: 8px; font-size: 11px; color: var(--muted2);">
-                ≡ƒÆí Higher percentage = stricter ATS keyword matching
+                💡 Higher percentage = stricter ATS keyword matching
               </div>
             </div>
           </div>
@@ -2315,19 +2315,19 @@
           <!-- Generate Button & Output -->
           <div class="jdm-workspace-section">
             <button type="button" class="jdm-btn-primary" id="generateBtn" onclick="handleGenerate()">
-              <span>≡ƒÜÇ Generate Matched Resume</span>
+              <span>🚀 Generate Matched Resume</span>
             </button>
             
             <!-- Results (hidden until generated) -->
             <div id="outputSection" style="display: none; margin-top: 20px;">
               <div style="padding: 16px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; margin-bottom: 16px;">
-                <div style="font-size: 13px; font-weight: 700; color: #22c55e; margin-bottom: 8px;">Γ£ô Resume Generated</div>
+                <div style="font-size: 13px; font-weight: 700; color: #22c55e; margin-bottom: 8px;">✔ Resume Generated</div>
                 <div style="font-size: 11px; color: var(--muted);">Your tailored resume is ready!</div>
               </div>
               
               <div class="jdm-metrics-grid" id="metricsGrid"></div>
               
-              <button class="jdm-preview-btn" onclick="previewResume()">≡ƒôä Preview Resume</button>
+              <button class="jdm-preview-btn" onclick="previewResume()">📄 Preview Resume</button>
               
               <div class="jdm-download-group">
                 <button class="jdm-download-btn pdf" onclick="downloadPDF()">PDF</button>
@@ -2338,14 +2338,14 @@
               <button class="jdm-btn-secondary" onclick="saveToHistory()" style="width: 100%; margin-top: 12px;">Save to History</button>
 
               <!-- Resume Editor Button -->
-              <button class="jdm-btn-secondary" onclick="toggleEditor()" id="editorToggleBtn" style="width: 100%; margin-top: 8px;">Γ£Å∩╕Å Edit Resume Content</button>
+              <button class="jdm-btn-secondary" onclick="toggleEditor()" id="editorToggleBtn" style="width: 100%; margin-top: 8px;">✅ Edit Resume Content</button>
             </div>
 
             <!-- Resume Editor (hidden initially) -->
             <div id="resumeEditor" class="jdm-editor">
               <div class="jdm-editor-header">
                 <span class="jdm-editor-title">Edit Resume Content</span>
-                <button class="jdm-icon-btn" onclick="toggleEditor()">Γ£ò</button>
+                <button class="jdm-icon-btn" onclick="toggleEditor()">✕</button>
               </div>
 
               <!-- Summary Section -->
@@ -2376,8 +2376,8 @@
 
               <!-- Actions -->
               <div class="jdm-editor-actions">
-                <button class="jdm-btn-primary" onclick="saveDraft()" style="flex: 1;">≡ƒÆ╛ Save Draft</button>
-                <button class="jdm-btn-secondary" onclick="regenerateResume()" style="flex: 1;">≡ƒöä Regenerate</button>
+                <button class="jdm-btn-primary" onclick="saveDraft()" style="flex: 1;">💾 Save Draft</button>
+                <button class="jdm-btn-secondary" onclick="regenerateResume()" style="flex: 1;">🔄 Regenerate</button>
               </div>
             </div>
           </div>
@@ -2489,23 +2489,23 @@
         <div class="jdm-progress-title">Generating Your Resume</div>
         <div class="jdm-progress-phases">
           <div class="jdm-progress-phase" data-phase="1">
-            <div class="jdm-progress-phase-icon">≡ƒôä</div>
+            <div class="jdm-progress-phase-icon">📄</div>
             <div class="jdm-progress-phase-text">Parsing Base Resume</div>
           </div>
           <div class="jdm-progress-phase" data-phase="2">
-            <div class="jdm-progress-phase-icon">≡ƒÄ»</div>
+            <div class="jdm-progress-phase-icon">🎯</div>
             <div class="jdm-progress-phase-text">Understanding Job Description</div>
           </div>
           <div class="jdm-progress-phase" data-phase="3">
-            <div class="jdm-progress-phase-icon">≡ƒöì</div>
+            <div class="jdm-progress-phase-icon">🔍</div>
             <div class="jdm-progress-phase-text">Optimizing Keywords</div>
           </div>
           <div class="jdm-progress-phase" data-phase="4">
-            <div class="jdm-progress-phase-icon">ΓÜí</div>
+            <div class="jdm-progress-phase-icon">⚡</div>
             <div class="jdm-progress-phase-text">ATS Structuring</div>
           </div>
           <div class="jdm-progress-phase" data-phase="5">
-            <div class="jdm-progress-phase-icon">Γ£¿</div>
+            <div class="jdm-progress-phase-icon">✅</div>
             <div class="jdm-progress-phase-text">Finalizing</div>
           </div>
         </div>
@@ -2521,11 +2521,11 @@
     <div class="jdm-drawer" id="templateDrawer">
       <div class="jdm-drawer-header">
         <div class="jdm-drawer-title">Choose Template</div>
-        <button class="jdm-drawer-close" onclick="closeTemplateDrawer()">├ù</button>
+        <button class="jdm-drawer-close" onclick="closeTemplateDrawer()">×</button>
       </div>
       <div class="jdm-drawer-content">
         <div class="jdm-templates-controls">
-          <input type="text" id="templateSearch" class="jdm-search-box" placeholder="Search templatesΓÇª" oninput="filterTemplates()">
+          <input type="text" id="templateSearch" class="jdm-search-box" placeholder="Search templates…" oninput="filterTemplates()">
           <select id="templateSort" class="jdm-sort-select" onchange="filterTemplates()">
             <option value="default">All Styles</option>
             <option value="modern">Modern</option>
@@ -2550,7 +2550,7 @@
     <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border: 1px solid rgba(6, 182, 212, 0.2); border-radius: 8px; max-width: 900px; margin: auto; height: 100%; display: flex; flex-direction: column; padding: 20px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
         <h3 style="color: #e2e8f0; margin: 0; font-size: 18px;">Resume Preview</h3>
-        <button onclick="document.getElementById('previewModal').style.display='none'" style="background: none; border: none; color: #64748b; font-size: 24px; cursor: pointer;">├ù</button>
+        <button onclick="document.getElementById('previewModal').style.display='none'" style="background: none; border: none; color: #64748b; font-size: 24px; cursor: pointer;">×</button>
       </div>
       <iframe id="previewIframe" style="flex: 1; border: none; border-radius: 6px; background: white;"></iframe>
     </div>
@@ -2702,7 +2702,7 @@
       const fileStatusContainer = document.getElementById('fileStatusContainer');
       
       // Show loading status
-      fileStatusContainer.innerHTML = '<div class="jdm-file-status loading"><span>≡ƒôä</span> Reading file...</div>';
+      fileStatusContainer.innerHTML = '<div class="jdm-file-status loading"><span>📄</span> Reading file...</div>';
 
       uploadedFile = file;
       
@@ -2712,14 +2712,14 @@
       
       fileCardContainer.innerHTML = `
         <div class="jdm-file-card">
-          <div class="jdm-file-icon">≡ƒôä</div>
+          <div class="jdm-file-icon">📄</div>
           <div class="jdm-file-info">
             <div class="jdm-file-name">${file.name}</div>
-            <div class="jdm-file-size">${fileType} ΓÇó ${fileSize}</div>
+            <div class="jdm-file-size">${fileType} • ${fileSize}</div>
           </div>
           <div class="jdm-file-actions">
-            <button class="jdm-icon-btn" onclick="replaceFile()" title="Replace">≡ƒöä</button>
-            <button class="jdm-icon-btn danger" onclick="removeFile()" title="Remove">≡ƒùæ∩╕Å</button>
+            <button class="jdm-icon-btn" onclick="replaceFile()" title="Replace">🔄</button>
+            <button class="jdm-icon-btn danger" onclick="removeFile()" title="Remove">🗑️</button>
           </div>
         </div>
       `;
@@ -2732,14 +2732,14 @@
           baseResumeText = text;
           localStorage.setItem(getStorageKey('base_resume'), text);
           
-          fileStatusContainer.innerHTML = '<div class="jdm-file-status"><span>Γ£ô</span> File uploaded successfully! Resume saved.</div>';
+          fileStatusContainer.innerHTML = '<div class="jdm-file-status"><span>✔</span> File uploaded successfully! Resume saved.</div>';
           markStepCompleted(1);
           showToast('Resume uploaded and saved!', 'success');
         } catch (error) {
-          fileStatusContainer.innerHTML = '<div class="jdm-file-status loading"><span>ΓÜá</span> Could not read file. Please paste text manually.</div>';
+          fileStatusContainer.innerHTML = '<div class="jdm-file-status loading"><span>⚠️</span> Could not read file. Please paste text manually.</div>';
         }
       } else {
-        fileStatusContainer.innerHTML = '<div class="jdm-file-status"><span>Γ£ô</span> File attached. Conversion support limited - paste text if needed.</div>';
+        fileStatusContainer.innerHTML = '<div class="jdm-file-status"><span>✔</span> File attached. Conversion support limited - paste text if needed.</div>';
         markStepCompleted(1);
       }
     }
@@ -2765,9 +2765,9 @@
       
       if (isActive) {
         populateEditor();
-        document.getElementById('editorToggleBtn').textContent = 'Γ£ò Close Editor';
+        document.getElementById('editorToggleBtn').textContent = '✕ Close Editor';
       } else {
-        document.getElementById('editorToggleBtn').textContent = 'Γ£Å∩╕Å Edit Resume Content';
+        document.getElementById('editorToggleBtn').textContent = '✅ Edit Resume Content';
       }
     }
 
@@ -2806,7 +2806,7 @@
         <div class="jdm-editor-item">
           <div class="jdm-editor-item-header">
             <span style="font-size: 12px; font-weight: 600; color: var(--text);">Position ${idx + 1}</span>
-            <button class="jdm-icon-btn danger" onclick="removeEmploymentEntry(${idx})">≡ƒùæ∩╕Å</button>
+            <button class="jdm-icon-btn danger" onclick="removeEmploymentEntry(${idx})">🗑️</button>
           </div>
           <div class="jdm-form-group">
             <input type="text" class="jdm-input" placeholder="Job Title" value="${entry.jobTitle || ''}" onchange="updateEmploymentEntry(${idx}, 'jobTitle', this.value)" style="margin-bottom: 8px;">
@@ -2862,7 +2862,7 @@
         <div class="jdm-editor-item">
           <div class="jdm-editor-item-header">
             <span style="font-size: 12px; font-weight: 600; color: var(--text);">Education ${idx + 1}</span>
-            <button class="jdm-icon-btn danger" onclick="removeEducationEntry(${idx})">≡ƒùæ∩╕Å</button>
+            <button class="jdm-icon-btn danger" onclick="removeEducationEntry(${idx})">🗑️</button>
           </div>
           <div class="jdm-form-group">
             <input type="text" class="jdm-input" placeholder="Degree" value="${entry.degree || ''}" onchange="updateEducationEntry(${idx}, 'degree', this.value)" style="margin-bottom: 8px;">
@@ -2987,7 +2987,7 @@
           step.classList.add('active');
         } else if (completedSteps.has(stepNum) || stepNum < currentStep) {
           step.classList.add('completed');
-          step.querySelector('.jdm-wizard-step-circle').textContent = 'Γ£ô';
+          step.querySelector('.jdm-wizard-step-circle').textContent = '✔';
         } else {
           step.querySelector('.jdm-wizard-step-circle').textContent = stepNum;
         }
@@ -3047,14 +3047,14 @@
       const sizeKB = (file.size / 1024).toFixed(1);
       container.innerHTML = `
         <div class="jdm-file-card">
-          <div class="jdm-file-icon">≡ƒôä</div>
+          <div class="jdm-file-icon">📄</div>
           <div class="jdm-file-info">
             <div class="jdm-file-name">${file.name}</div>
             <div class="jdm-file-size">${sizeKB} KB</div>
           </div>
           <div class="jdm-file-actions">
-            <button class="jdm-icon-btn" onclick="replaceFile()" title="Replace">≡ƒöä</button>
-            <button class="jdm-icon-btn danger" onclick="removeFile()" title="Remove">≡ƒùæ∩╕Å</button>
+            <button class="jdm-icon-btn" onclick="replaceFile()" title="Replace">🔄</button>
+            <button class="jdm-icon-btn danger" onclick="removeFile()" title="Remove">🗑️</button>
           </div>
         </div>
       `;
@@ -3123,11 +3123,11 @@
         <div class="jdm-skill-row">
           <div class="jdm-skill-name">${skill}</div>
           <div class="jdm-skill-stepper">
-            <button class="jdm-stepper-btn" onclick="updateSkillFrequency('${skill}', -1)">ΓêÆ</button>
+            <button class="jdm-stepper-btn" onclick="updateSkillFrequency('${skill}', -1)">−</button>
             <div class="jdm-stepper-value">${freq}</div>
             <button class="jdm-stepper-btn" onclick="updateSkillFrequency('${skill}', 1)">+</button>
           </div>
-          <button class="jdm-skill-remove" onclick="removeSkill('${skill}')">├ù</button>
+          <button class="jdm-skill-remove" onclick="removeSkill('${skill}')">×</button>
         </div>
       `).join('');
     }
@@ -3268,7 +3268,7 @@
 
       const btn = document.getElementById('generateBtn');
       btn.disabled = true;
-      btn.innerHTML = '<span>ΓÜÖ∩╕Å Generating...</span>';
+      btn.innerHTML = '<span>⚙️ Generating...</span>';
 
       try {
         // Show phased progress
@@ -3313,7 +3313,7 @@
         showToast(`Error: ${error.message}`, 'error');
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<span>≡ƒÜÇ Generate Matched Resume</span>';
+        btn.innerHTML = '<span>🚀 Generate Matched Resume</span>';
       }
     }
 
@@ -3324,19 +3324,19 @@
       metricsGrid.innerHTML = `
         <div class="jdm-metric-card">
           <div class="jdm-metric-label">JD Match</div>
-          <div class="jdm-metric-value">${data.metrics?.jdMatch || 'ΓÇö'}%</div>
+          <div class="jdm-metric-value">${data.metrics?.jdMatch || '—'}%</div>
         </div>
         <div class="jdm-metric-card">
           <div class="jdm-metric-label">ATS Score</div>
-          <div class="jdm-metric-value">${data.metrics?.atsFriendliness || 'ΓÇö'}%</div>
+          <div class="jdm-metric-value">${data.metrics?.atsFriendliness || '—'}%</div>
         </div>
         <div class="jdm-metric-card">
           <div class="jdm-metric-label">HR Appeal</div>
-          <div class="jdm-metric-value">${data.metrics?.hrCatchiness || 'ΓÇö'}%</div>
+          <div class="jdm-metric-value">${data.metrics?.hrCatchiness || '—'}%</div>
         </div>
         <div class="jdm-metric-card">
           <div class="jdm-metric-label">Shortlist %</div>
-          <div class="jdm-metric-value">${data.metrics?.chancesOfShortlisting || 'ΓÇö'}%</div>
+          <div class="jdm-metric-value">${data.metrics?.chancesOfShortlisting || '—'}%</div>
         </div>
       `;
 
@@ -3396,10 +3396,10 @@
         const value = document.getElementById('targetSlider').value;
         document.getElementById('sidebarTarget').textContent = `Manual (${value}%)`;
       } else {
-        document.getElementById('sidebarTarget').textContent = 'Auto (90ΓÇô95%)';
+        document.getElementById('sidebarTarget').textContent = 'Auto (90–95%)';
       }
       const skills = document.getElementById('skillsInput').value;
-      document.getElementById('sidebarSkills').textContent = skills ? skills.split(',').length + ' skills' : 'ΓÇô';
+      document.getElementById('sidebarSkills').textContent = skills ? skills.split(',').length + ' skills' : '–';
       document.getElementById('sidebarResume').textContent = baseResumeText ? 'Saved' : 'Not saved';
     }
 
@@ -3451,10 +3451,10 @@
       if (file.name.endsWith('.txt')) {
         const text = await file.text();
         document.getElementById('baseResumePaste').value = text;
-        status.textContent = 'Γ£ô File loaded. Click "Save Resume" to save.';
+        status.textContent = '✔ File loaded. Click "Save Resume" to save.';
         status.style.color = '#22c55e';
       } else {
-        status.textContent = 'ΓÜá Conversion support limited. Paste manually if needed.';
+        status.textContent = '⚠️ Conversion support limited. Paste manually if needed.';
         status.style.color = '#f59e0b';
       }
     }
@@ -3486,7 +3486,7 @@
       const grid = document.getElementById('templatesGrid');
       grid.innerHTML = TEMPLATES.map(template => `
         <div class="jdm-template-card ${selectedTemplate === template.id ? 'selected' : ''}" onclick="selectTemplate('${template.id}')">
-          <div class="jdm-template-checkmark">Γ£ô</div>
+          <div class="jdm-template-checkmark">✔</div>
           <div class="jdm-template-preview loading">
             <img src="${template.previewThumbnail}" 
                  alt="${template.name}" 
@@ -3495,7 +3495,7 @@
           </div>
           <div class="jdm-template-name">${template.name}</div>
           <span class="jdm-template-tag">${template.tag}</span>
-          <button type="button" class="jdm-template-select-btn">${selectedTemplate === template.id ? 'Γ£ô Selected' : 'Select'}</button>
+          <button type="button" class="jdm-template-select-btn">${selectedTemplate === template.id ? '✔ Selected' : 'Select'}</button>
         </div>
       `).join('');
     }
@@ -3512,7 +3512,7 @@
 
       grid.innerHTML = filtered.map(template => `
         <div class="jdm-template-card ${selectedTemplate === template.id ? 'selected' : ''}" onclick="selectTemplate('${template.id}')">
-          <div class="jdm-template-checkmark">Γ£ô</div>
+          <div class="jdm-template-checkmark">✔</div>
           <div class="jdm-template-preview loading">
             <img src="${template.previewThumbnail}" 
                  alt="${template.name}" 
@@ -3521,7 +3521,7 @@
           </div>
           <div class="jdm-template-name">${template.name}</div>
           <span class="jdm-template-tag">${template.tag}</span>
-          <button type="button" class="jdm-template-select-btn">${selectedTemplate === template.id ? 'Γ£ô Selected' : 'Select'}</button>
+          <button type="button" class="jdm-template-select-btn">${selectedTemplate === template.id ? '✔ Selected' : 'Select'}</button>
         </div>
       `).join('');
     }
@@ -3554,7 +3554,7 @@
       const btn = document.getElementById('generateBtn');
       btn.disabled = true;
       btn.classList.add('loading');
-      btn.textContent = 'GeneratingΓÇª';
+      btn.textContent = 'Generating…';
 
       try {
         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -3610,19 +3610,19 @@
       metricsGrid.innerHTML = `
         <div class="jdm-metric-card">
           <div class="jdm-metric-label">JD Match</div>
-          <div class="jdm-metric-value">${data.metrics?.jdMatch || 'ΓÇô'}%</div>
+          <div class="jdm-metric-value">${data.metrics?.jdMatch || '–'}%</div>
         </div>
         <div class="jdm-metric-card">
           <div class="jdm-metric-label">ATS Friendliness</div>
-          <div class="jdm-metric-value">${data.metrics?.atsFriendliness || 'ΓÇô'}%</div>
+          <div class="jdm-metric-value">${data.metrics?.atsFriendliness || '–'}%</div>
         </div>
         <div class="jdm-metric-card">
           <div class="jdm-metric-label">HR Catchiness</div>
-          <div class="jdm-metric-value">${data.metrics?.hrCatchiness || 'ΓÇô'}%</div>
+          <div class="jdm-metric-value">${data.metrics?.hrCatchiness || '–'}%</div>
         </div>
         <div class="jdm-metric-card">
           <div class="jdm-metric-label">Shortlist Chance</div>
-          <div class="jdm-metric-value">${data.metrics?.chancesOfShortlisting || 'ΓÇô'}%</div>
+          <div class="jdm-metric-value">${data.metrics?.chancesOfShortlisting || '–'}%</div>
         </div>
       `;
 
@@ -3714,16 +3714,16 @@
           <div class="jdm-history-header" onclick="toggleHistoryItem(${idx})">
             <div>
               <div class="jdm-history-title">${item.companyName}</div>
-              <div class="jdm-history-meta">${new Date(item.createdAt).toLocaleDateString()} ΓÇó ${TEMPLATES.find(t => t.id === item.templateId)?.name || 'Template'}</div>
+              <div class="jdm-history-meta">${new Date(item.createdAt).toLocaleDateString()} • ${TEMPLATES.find(t => t.id === item.templateId)?.name || 'Template'}</div>
             </div>
-            <div class="jdm-history-expand-icon">Γû╝</div>
+            <div class="jdm-history-expand-icon">▼</div>
           </div>
           <div class="jdm-history-content" id="hist-${idx}">
             <div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">${item.shortJDSnippet}...</div>
             <div class="jdm-history-metrics">
-              <div class="jdm-history-metric"><span class="jdm-history-metric-label">JD Match</span><span class="jdm-history-metric-value">${item.metrics?.jdMatch || 'ΓÇô'}%</span></div>
-              <div class="jdm-history-metric"><span class="jdm-history-metric-label">ATS</span><span class="jdm-history-metric-value">${item.metrics?.atsFriendliness || 'ΓÇô'}%</span></div>
-              <div class="jdm-history-metric"><span class="jdm-history-metric-label">HR</span><span class="jdm-history-metric-value">${item.metrics?.hrCatchiness || 'ΓÇô'}%</span></div>
+              <div class="jdm-history-metric"><span class="jdm-history-metric-label">JD Match</span><span class="jdm-history-metric-value">${item.metrics?.jdMatch || '–'}%</span></div>
+              <div class="jdm-history-metric"><span class="jdm-history-metric-label">ATS</span><span class="jdm-history-metric-value">${item.metrics?.atsFriendliness || '–'}%</span></div>
+              <div class="jdm-history-metric"><span class="jdm-history-metric-label">HR</span><span class="jdm-history-metric-value">${item.metrics?.hrCatchiness || '–'}%</span></div>
             </div>
             <div class="jdm-history-actions">
               <button class="jdm-action-btn view" onclick="viewHistory(${idx})">View</button>
