@@ -1438,9 +1438,11 @@
 
     .tpl-thumb-fallback { width:100%; height:120px; border-radius:8px; border:1px solid rgba(255,255,255,.10); background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); position:relative; overflow:hidden; box-sizing:border-box; }
     .tpl-thumb-fallback.fill { height:260px; min-height:100%; width:100%; border-radius:6px; }
-    .selected-template-preview-host { width:100%; min-height:260px; border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,.10); background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02)); position:relative; }
-    #selectedTemplatePreviewFrame { width:100%; height:260px; border:0; display:block; background:#fff; }
-    @media (min-width:1024px) { #selectedTemplatePreviewFrame { height:300px; } .selected-template-preview-host { min-height:300px; } }
+    .selected-template-preview-host { width:100%; height:100%; border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,.10); background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02)); position:relative; display:flex; flex-direction:column; }
+    #selectedTemplatePreviewFrame { width:100%; flex:1 1 auto; border:0; display:block; background:#fff; min-height:260px; }
+    @media (max-width:640px) { #selectedTemplatePreviewFrame { min-height:280px; } }
+    @media (min-width:641px) and (max-width:1023px) { #selectedTemplatePreviewFrame { min-height:320px; } }
+    @media (min-width:1024px) { #selectedTemplatePreviewFrame { min-height:420px; } }
     .tpl-thumb-lines { padding:14px; display:flex; flex-direction:column; gap:8px; opacity:.85; }
     .tpl-thumb-lines .line { display:block; height:8px; border-radius:999px; background: rgba(255,255,255,.10); }
     .tpl-thumb-lines .w-90 { width:90%; } .tpl-thumb-lines .w-80 { width:80%; } .tpl-thumb-lines .w-70 { width:70%; } .tpl-thumb-lines .w-60 { width:60%; } .tpl-thumb-lines .w-50 { width:50%; }
@@ -3780,7 +3782,7 @@
         return;
       }
       const isFullDoc = /<html[\s>]/i.test(html);
-      const wrapped = isFullDoc ? html : ('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;padding:8px;background:#fff;}</style></head><body>' + html + '</body></html>');
+      const wrapped = isFullDoc ? html : ('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{height:100%;margin:0;padding:0;background:#fff;}</style></head><body>' + html + '</body></html>');
       if (fallback) { fallback.style.display = 'none'; }
       frame.style.display = 'block';
       frame.srcdoc = wrapped;
