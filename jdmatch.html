@@ -1444,13 +1444,17 @@
     @media (min-width:641px) and (max-width:1023px) { #selectedTemplatePreviewFrame { min-height:320px; } }
     @media (min-width:1024px) { #selectedTemplatePreviewFrame { min-height:420px; } }
     .tpl-thumb-lines { padding:14px; display:flex; flex-direction:column; gap:8px; opacity:.85; }
-    .tpl-thumb-lines .line { display:block; height:8px; border-radius:999px; background: rgba(255,255,255,.10); }
+    .tpl-thumb-lines .line { display:block; height:8px; border-radius:999px; background: rgba(255,255,255,.28); }
     .tpl-thumb-lines .w-90 { width:90%; } .tpl-thumb-lines .w-80 { width:80%; } .tpl-thumb-lines .w-70 { width:70%; } .tpl-thumb-lines .w-60 { width:60%; } .tpl-thumb-lines .w-50 { width:50%; }
     .tpl-thumb-tag { position:absolute; right:10px; bottom:10px; font-size:11px; padding:4px 8px; border-radius:999px; background: rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.10); color: rgba(255,255,255,.85); white-space:nowrap; max-width:80%; overflow:hidden; text-overflow:ellipsis; z-index:2; }
     .tpl-mini-wrap { position:relative; width:100%; height:136px; border-radius:14px; overflow:hidden; background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02)); border:1px solid rgba(255,255,255,0.08); isolation:isolate; }
     .tpl-mini-wrap::after { content:""; position:absolute; inset:0; background:linear-gradient(to top,rgba(9,10,22,0.14),rgba(9,10,22,0.03) 40%,transparent); pointer-events:none; z-index:2; }
     .tpl-mini-iframe { position:absolute; border:0; pointer-events:none; background:#fff; transform-origin:top left; box-shadow:0 0 0 1px rgba(0,0,0,0.03); }
     .tpl-mini-wrap .tpl-thumb-tag { position:absolute; right:8px; bottom:8px; z-index:5; max-width:calc(100% - 16px); padding:4px 10px; font-size:12px; line-height:1.2; border-radius:999px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background:rgba(12,14,28,0.78); border:1px solid rgba(255,255,255,0.14); backdrop-filter:blur(6px); }
+    /* Fallback skeleton — shown when iframe preview cannot render */
+    .tpl-mini-fallback { position:absolute; inset:0; display:flex; flex-direction:column; background:linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02)); z-index:1; }
+    .tpl-mini-fallback .tpl-thumb-lines { flex:1; justify-content:center; }
+    .tpl-mini-fallback .tpl-thumb-tag { position:absolute; right:8px; bottom:8px; z-index:5; max-width:calc(100% - 16px); padding:4px 10px; font-size:12px; line-height:1.2; border-radius:999px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background:rgba(12,14,28,0.78); border:1px solid rgba(255,255,255,0.14); backdrop-filter:blur(6px); }
 
     .jdm-template-name {
       font-weight: 600;
@@ -3409,7 +3413,10 @@
       document.getElementById('drawerOverlay').classList.add('active');
       document.getElementById('templateDrawer').classList.add('active');
       renderTemplatesGrid();
+      // Pass 1: immediate rAF for any already-visible scenario
       requestAnimationFrame(layoutTemplateMiniPreviews);
+      // Pass 2: after CSS transition completes (transition: 0.3s + tolerance)
+      setTimeout(layoutTemplateMiniPreviews, 350);
     }
 
     function closeTemplateDrawer() {
@@ -3797,10 +3804,17 @@
 
     function buildTemplatePreviewSrcdoc(tplId) {
       const tpl = TEMPLATES.find(t => t.id === tplId);
-      if (!tpl || typeof tpl.render !== 'function') return '';
+      if (!tpl || typeof tpl.render !== 'function') {
+        console.warn('[tpl-mini] no render fn for', tplId);
+        return '';
+      }
       let html = '';
-      try { html = tpl.render(getTemplatePreviewData()); } catch(e) { return ''; }
-      if (!html || String(html).trim().length < 50) return '';
+      try { html = tpl.render(getTemplatePreviewData()); }
+      catch(e) { console.error('[tpl-mini] render error for', tplId, e); return ''; }
+      if (!html || String(html).trim().length < 50) {
+        console.warn('[tpl-mini] render returned empty for', tplId);
+        return '';
+      }
       const isFullDoc = /<html[\s>]/i.test(html);
       return isFullDoc ? html : ('<!doctype html><html><head><meta charset="utf-8"><style>html,body{width:100%;height:100%;margin:0;padding:0;overflow:hidden;background:#ffffff;}</style></head><body>' + html + '</body></html>');
     }
@@ -3810,17 +3824,32 @@
 
     function hydrateTemplateMiniPreviews() {
       document.querySelectorAll('.tpl-mini-wrap[data-mini-preview]').forEach(wrap => {
-        if (wrap.querySelector('iframe')) return;
+        // Skip if already hydrated (has live iframe OR CSS fallback)
+        if (wrap.querySelector('iframe, .tpl-mini-fallback')) return;
         const tplId = wrap.getAttribute('data-mini-preview');
         const srcdoc = buildTemplatePreviewSrcdoc(tplId);
-        if (!srcdoc) return;
+        if (!srcdoc) {
+          // Guaranteed fallback: CSS skeleton when render fails — never blank
+          console.log('[tpl-mini] no srcdoc for', tplId, '— injecting CSS fallback');
+          const tpl = TEMPLATES.find(t => t.id === tplId);
+          const fb = document.createElement('div');
+          fb.className = 'tpl-mini-fallback';
+          fb.innerHTML = '<div class="tpl-thumb-lines"><span class="line w-80"></span><span class="line w-60"></span><span class="line w-90"></span><span class="line w-70"></span><span class="line w-50"></span></div><div class="tpl-thumb-tag">' + (tpl && tpl.name || tplId) + '</div>';
+          wrap.appendChild(fb);
+          return;
+        }
+        console.log('[tpl-mini] injecting iframe for', tplId);
         const frame = document.createElement('iframe');
         frame.className = 'tpl-mini-iframe';
         frame.setAttribute('title', 'Template preview ' + tplId);
-        frame.setAttribute('loading', 'lazy');
         frame.setAttribute('tabindex', '-1');
         frame.setAttribute('aria-hidden', 'true');
         frame.setAttribute('sandbox', 'allow-same-origin');
+        frame.addEventListener('load', () => console.log('[tpl-mini] iframe loaded', tplId));
+        frame.addEventListener('error', () => {
+          console.error('[tpl-mini] iframe error', tplId, '— showing fallback');
+          showMiniIframeFallback(wrap, tplId, 'error');
+        });
         frame.srcdoc = srcdoc;
         wrap.insertBefore(frame, wrap.firstChild);
       });
@@ -3828,20 +3857,49 @@
     }
 
     function layoutTemplateMiniPreviews() {
+      // Scale each iframe to fit card width, anchored top-left so resume header is always visible
       const wraps = document.querySelectorAll('.tpl-mini-wrap[data-mini-preview]');
+      let needsRetry = false;
       wraps.forEach(wrap => {
         const frame = wrap.querySelector('.tpl-mini-iframe');
         if (!frame) return;
         const rect = wrap.getBoundingClientRect();
-        const availW = Math.max(60, rect.width);
-        const availH = Math.max(60, rect.height);
-        const scale = Math.min(availW / MINI_SRC_W, availH / MINI_SRC_H);
-        frame.style.width = MINI_SRC_W + 'px';
+        const availW = rect.width;
+        const availH = rect.height;
+        // Guard: defer if container has no size yet (drawer mid CSS-transition)
+        if (availW <= 0 || availH <= 0) {
+          needsRetry = true;
+          return;
+        }
+        // Fit to card width; shows top of resume (name / header section)
+        const scale = availW / MINI_SRC_W;
+        if (!isFinite(scale) || scale <= 0) {
+          console.warn('[tpl-mini] invalid scale for', wrap.getAttribute('data-mini-preview'), scale, '— showing fallback');
+          showMiniIframeFallback(wrap, wrap.getAttribute('data-mini-preview'), 'zero-scale');
+          return;
+        }
+        frame.style.width  = MINI_SRC_W + 'px';
         frame.style.height = MINI_SRC_H + 'px';
-        frame.style.left = '50%';
-        frame.style.top = '50%';
-        frame.style.transform = 'translate(-50%,-50%) scale(' + scale + ')';
+        frame.style.left   = '0';
+        frame.style.top    = '0';
+        frame.style.transformOrigin = 'top left';
+        frame.style.transform = 'scale(' + scale + ')';
       });
+      // Retry next frame if any wrap still had zero dimensions
+      if (needsRetry) requestAnimationFrame(layoutTemplateMiniPreviews);
+    }
+
+    // Show CSS skeleton fallback when an iframe preview fails, times out, or has invalid scale
+    function showMiniIframeFallback(wrap, tplId, reason) {
+      if (!wrap || wrap.querySelector('.tpl-mini-fallback')) return; // already showing
+      const tpl = TEMPLATES.find(t => t.id === tplId);
+      const frame = wrap.querySelector('.tpl-mini-iframe');
+      if (frame) frame.style.display = 'none';
+      const fb = document.createElement('div');
+      fb.className = 'tpl-mini-fallback';
+      fb.innerHTML = '<div class="tpl-thumb-lines"><span class="line w-80"></span><span class="line w-60"></span><span class="line w-90"></span><span class="line w-70"></span><span class="line w-50"></span></div><div class="tpl-thumb-tag">' + (tpl && tpl.name || tplId) + '</div>';
+      wrap.appendChild(fb);
+      console.log('[tpl-mini] fallback shown for', tplId, 'reason:', reason);
     }
 
     function debugTemplateState() {
