@@ -371,6 +371,30 @@
       box-shadow: 0 0 0 3px rgba(182, 156, 255, 0.1);
     }
 
+    /* Dark-themed select dropdown */
+    select.jdm-select-dark {
+      background-color: #1a1824;
+      color: var(--text);
+      border: 1px solid var(--border);
+      appearance: auto;
+      -webkit-appearance: auto;
+    }
+    select.jdm-select-dark:focus {
+      outline: none;
+      border-color: rgba(182, 156, 255, 0.4);
+      box-shadow: 0 0 0 3px rgba(182, 156, 255, 0.1);
+    }
+    select.jdm-select-dark option {
+      background-color: #1a1824;
+      color: var(--text);
+      padding: 8px 12px;
+    }
+    select.jdm-select-dark option:checked,
+    select.jdm-select-dark option:hover {
+      background-color: #2d2640;
+      color: var(--text);
+    }
+
     .jdm-textarea {
       resize: vertical;
       min-height: 120px;
@@ -2402,7 +2426,7 @@
             <span class="jdm-hint">Auto-generate a cover letter from your resume + JD</span>
             <div class="jdm-form-group" style="margin-top:10px;">
               <label class="jdm-label">Tone</label>
-              <select id="coverTone" class="jdm-input">
+              <select id="coverTone" class="jdm-input jdm-select-dark">
                 <option value="professional">Professional</option>
                 <option value="enthusiastic">Enthusiastic</option>
                 <option value="concise">Concise</option>
