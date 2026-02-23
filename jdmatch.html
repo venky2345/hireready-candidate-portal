@@ -1436,6 +1436,13 @@
       border-color: rgba(239, 68, 68, 0.3);
     }
 
+    .tpl-thumb-fallback { width:100%; height:120px; border-radius:8px; border:1px solid rgba(255,255,255,.10); background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); position:relative; overflow:hidden; box-sizing:border-box; }
+    .tpl-thumb-fallback.fill { height:100%; border-radius:6px; }
+    .tpl-thumb-lines { padding:14px; display:flex; flex-direction:column; gap:8px; opacity:.85; }
+    .tpl-thumb-lines .line { display:block; height:8px; border-radius:999px; background: rgba(255,255,255,.10); }
+    .tpl-thumb-lines .w-90 { width:90%; } .tpl-thumb-lines .w-80 { width:80%; } .tpl-thumb-lines .w-70 { width:70%; } .tpl-thumb-lines .w-60 { width:60%; } .tpl-thumb-lines .w-50 { width:50%; }
+    .tpl-thumb-tag { position:absolute; right:10px; bottom:10px; font-size:11px; padding:4px 8px; border-radius:999px; background: rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.10); color: rgba(255,255,255,.85); white-space:nowrap; max-width:80%; overflow:hidden; text-overflow:ellipsis; }
+
     .jdm-template-name {
       font-weight: 600;
       color: var(--text);
@@ -2334,8 +2341,18 @@
           <div class="jdm-workspace-section">
             <h3 class="jdm-section-title">Resume Template</h3>
             <div id="templateQuickView" style="cursor: pointer;" onclick="openTemplateDrawer()">
-              <div style="aspect-ratio: 8.5/11; border: 2px solid var(--border); border-radius: 12px; overflow: hidden; background: white; margin-bottom: 12px;">
-                <img id="selectedTemplatePreview" src="https://via.placeholder.com/300x400/6B46C1/FFFFFF?text=Template+01" alt="Selected Template" style="width: 100%; height: 100%; object-fit: cover;">
+              <div style="aspect-ratio: 8.5/11; border: 2px solid var(--border); border-radius: 12px; overflow: hidden; background: linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.01)); margin-bottom: 12px;">
+                <div id="selectedTemplatePreview" style="width:100%;height:100%;">
+                  <div class="tpl-thumb-fallback fill" role="img" aria-label="Selected template preview" style="height:100%;">
+                    <div class="tpl-thumb-lines">
+                      <span class="line w-80"></span>
+                      <span class="line w-60"></span>
+                      <span class="line w-90"></span>
+                      <span class="line w-70"></span>
+                      <span class="line w-50"></span>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div style="text-align: center; padding: 12px; background: rgba(182, 156, 255, 0.1); border-radius: 8px;">
                 <div style="font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px;" id="selectedTemplateName">Template 01</div>
@@ -2781,18 +2798,18 @@
     const _CSS_T12 = _CSS_BASE + `body{font-family:Arial,sans-serif;font-size:10pt;color:#111827;line-height:1.5;background:#fff;}h1.r-name{font-size:18pt;color:#065f46;font-weight:700;margin-bottom:3px;}.r-contact{font-size:9pt;color:#047857;margin-bottom:14px;}.section{margin-bottom:13px;}h2.sec-title{font-size:10pt;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:1px;border-bottom:1.5px solid #a7f3d0;padding-bottom:3px;margin-bottom:7px;}.summary-p{color:#111827;}.grid-3{display:flex;flex-wrap:wrap;gap:3px 14px;}.cap-card{font-size:9.5pt;}.cap-card::before{content:"◉ ";color:#059669;font-size:7pt;vertical-align:middle;}.skills-row{display:flex;flex-wrap:wrap;gap:3px 14px;}.skill-item{font-size:9.5pt;}.skill-item::before{content:"◉ ";color:#059669;font-size:7pt;vertical-align:middle;}.section.exp-sec .role-block{position:relative;padding-left:18px;margin-bottom:11px;}.section.exp-sec .role-block::before{content:"";position:absolute;left:4px;top:5px;width:8px;height:8px;border-radius:50%;background:#059669;}.section.exp-sec .role-block::after{content:"";position:absolute;left:7.5px;top:13px;bottom:-5px;width:1px;background:#a7f3d0;}.section.exp-sec .role-block:last-child::after{display:none;}.role-title{font-weight:700;font-size:10.5pt;color:#065f46;}.role-dates{font-size:9pt;color:#6b7280;}.role-co{font-size:10pt;color:#047857;margin-bottom:3px;}.r-bullets{padding-left:14px;}.r-bullets li{font-size:10pt;margin-bottom:2px;}.edu-deg{font-weight:700;font-size:10pt;}.edu-dt{font-size:9pt;color:#6b7280;}.edu-sch{font-size:10pt;color:#047857;}.cert-list{font-size:10pt;}@media print{.section.exp-sec .role-block{padding-left:0!important;position:static!important;}.section.exp-sec .role-block::before,.section.exp-sec .role-block::after{display:none!important;}}`;
 
     const TEMPLATES = [
-      { id: 't01', name: 'Classic ATS',         tag: 'Classic',      previewThumbnail: 'https://via.placeholder.com/300x400/003366/FFFFFF?text=Classic+ATS',        render: d => buildCanonicalResumeHTML(d, _CSS_T01) },
-      { id: 't02', name: 'Modern Minimal',       tag: 'Modern',       previewThumbnail: 'https://via.placeholder.com/300x400/64748b/FFFFFF?text=Modern+Minimal',      render: d => buildCanonicalResumeHTML(d, _CSS_T02) },
-      { id: 't03', name: 'Executive Serif',      tag: 'Premium',      previewThumbnail: 'https://via.placeholder.com/300x400/4a2e10/FFFFFF?text=Executive+Serif',     render: d => buildCanonicalResumeHTML(d, _CSS_T03) },
-      { id: 't04', name: 'Compact Professional', tag: 'Professional', previewThumbnail: 'https://via.placeholder.com/300x400/1a3a5c/FFFFFF?text=Compact+Pro',         render: d => buildCanonicalResumeHTML(d, _CSS_T04) },
-      { id: 't05', name: 'Divider Sections',     tag: 'Clean',        previewThumbnail: 'https://via.placeholder.com/300x400/0d7a6e/FFFFFF?text=Divider+Sections',    render: d => buildCanonicalResumeHTML(d, _CSS_T05) },
-      { id: 't06', name: 'Left Accent Line',     tag: 'Modern',       previewThumbnail: 'https://via.placeholder.com/300x400/4f46e5/FFFFFF?text=Left+Accent',         render: d => buildCanonicalResumeHTML(d, _CSS_T06) },
-      { id: 't07', name: 'Bold Header Bar',      tag: 'Premium',      previewThumbnail: 'https://via.placeholder.com/300x400/0f172a/FFFFFF?text=Bold+Header',         render: d => buildCanonicalResumeHTML(d, _CSS_T07) },
-      { id: 't08', name: 'Clean Two-Column',     tag: 'Professional', previewThumbnail: 'https://via.placeholder.com/300x400/1b4332/FFFFFF?text=Two+Column',          render: d => buildCanonicalResumeHTML(d, _CSS_T08) },
-      { id: 't09', name: 'Skills-First',         tag: 'Modern',       previewThumbnail: 'https://via.placeholder.com/300x400/6d28d9/FFFFFF?text=Skills+First',        render: d => buildCanonicalResumeHTML(d, _CSS_T09) },
-      { id: 't10', name: 'Experience-First',     tag: 'Classic',      previewThumbnail: 'https://via.placeholder.com/300x400/78350f/FFFFFF?text=Experience+First',    render: d => buildCanonicalResumeHTML(d, _CSS_T10) },
-      { id: 't11', name: 'Academic Clean',       tag: 'Clean',        previewThumbnail: 'https://via.placeholder.com/300x400/1e3a5f/FFFFFF?text=Academic+Clean',      render: d => buildCanonicalResumeHTML(d, _CSS_T11) },
-      { id: 't12', name: 'Timeline Light',       tag: 'Modern',       previewThumbnail: 'https://via.placeholder.com/300x400/065f46/FFFFFF?text=Timeline+Light',      render: d => buildCanonicalResumeHTML(d, _CSS_T12) }
+      { id: 't01', name: 'Classic ATS',         tag: 'Classic',       render: d => buildCanonicalResumeHTML(d, _CSS_T01) },
+      { id: 't02', name: 'Modern Minimal',       tag: 'Modern',        render: d => buildCanonicalResumeHTML(d, _CSS_T02) },
+      { id: 't03', name: 'Executive Serif',      tag: 'Premium',       render: d => buildCanonicalResumeHTML(d, _CSS_T03) },
+      { id: 't04', name: 'Compact Professional', tag: 'Professional',  render: d => buildCanonicalResumeHTML(d, _CSS_T04) },
+      { id: 't05', name: 'Divider Sections',     tag: 'Clean',         render: d => buildCanonicalResumeHTML(d, _CSS_T05) },
+      { id: 't06', name: 'Left Accent Line',     tag: 'Modern',        render: d => buildCanonicalResumeHTML(d, _CSS_T06) },
+      { id: 't07', name: 'Bold Header Bar',      tag: 'Premium',       render: d => buildCanonicalResumeHTML(d, _CSS_T07) },
+      { id: 't08', name: 'Clean Two-Column',     tag: 'Professional',  render: d => buildCanonicalResumeHTML(d, _CSS_T08) },
+      { id: 't09', name: 'Skills-First',         tag: 'Modern',        render: d => buildCanonicalResumeHTML(d, _CSS_T09) },
+      { id: 't10', name: 'Experience-First',     tag: 'Classic',       render: d => buildCanonicalResumeHTML(d, _CSS_T10) },
+      { id: 't11', name: 'Academic Clean',       tag: 'Clean',         render: d => buildCanonicalResumeHTML(d, _CSS_T11) },
+      { id: 't12', name: 'Timeline Light',       tag: 'Modern',        render: d => buildCanonicalResumeHTML(d, _CSS_T12) }
     ];
     let currentStep = 1;
     let completedSteps = new Set();
@@ -3398,7 +3415,6 @@
     function confirmTemplateSelection() {
       const template = TEMPLATES.find(t => t.id === selectedTemplate) || TEMPLATES[0];
       if (!template) { closeTemplateDrawer(); return; }
-      document.getElementById('selectedTemplatePreview').src = template.previewThumbnail;
       document.getElementById('selectedTemplateName').textContent = template.name;
       markStepCompleted(4);
       closeTemplateDrawer();
@@ -3720,11 +3736,17 @@
       grid.innerHTML = TEMPLATES.map(template => `
         <div class="jdm-template-card ${selectedTemplate === template.id ? 'selected' : ''}" onclick="selectTemplate('${template.id}')">
           <div class="jdm-template-checkmark">✔</div>
-          <div class="jdm-template-preview loading">
-            <img src="${template.previewThumbnail}" 
-                 alt="${template.name}" 
-                 onload="this.parentElement.classList.remove('loading')"
-                 onerror="this.parentElement.classList.add('error'); this.parentElement.innerHTML='<div style=\\'text-align:center;color:var(--muted2);font-size:11px;\\'>Preview unavailable</div>'"/>
+          <div class="jdm-template-preview">
+            <div class="tpl-thumb-fallback" role="img" aria-label="${template.name} preview">
+              <div class="tpl-thumb-lines">
+                <span class="line w-80"></span>
+                <span class="line w-60"></span>
+                <span class="line w-90"></span>
+                <span class="line w-70"></span>
+                <span class="line w-50"></span>
+              </div>
+              <div class="tpl-thumb-tag">${template.name}</div>
+            </div>
           </div>
           <div class="jdm-template-name">${template.name}</div>
           <span class="jdm-template-tag">${template.tag}</span>
@@ -3746,11 +3768,17 @@
       grid.innerHTML = filtered.map(template => `
         <div class="jdm-template-card ${selectedTemplate === template.id ? 'selected' : ''}" onclick="selectTemplate('${template.id}')">
           <div class="jdm-template-checkmark">✔</div>
-          <div class="jdm-template-preview loading">
-            <img src="${template.previewThumbnail}" 
-                 alt="${template.name}" 
-                 onload="this.parentElement.classList.remove('loading')"
-                 onerror="this.parentElement.classList.add('error'); this.parentElement.innerHTML='<div style=\\'text-align:center;color:var(--muted2);font-size:11px;\\'>Preview unavailable</div>'"/>
+          <div class="jdm-template-preview">
+            <div class="tpl-thumb-fallback" role="img" aria-label="${template.name} preview">
+              <div class="tpl-thumb-lines">
+                <span class="line w-80"></span>
+                <span class="line w-60"></span>
+                <span class="line w-90"></span>
+                <span class="line w-70"></span>
+                <span class="line w-50"></span>
+              </div>
+              <div class="tpl-thumb-tag">${template.name}</div>
+            </div>
           </div>
           <div class="jdm-template-name">${template.name}</div>
           <span class="jdm-template-tag">${template.tag}</span>
@@ -3764,7 +3792,6 @@
       if (!found) return;
       selectedTemplate = found.id;
       localStorage.setItem(getStorageKey('selected_template'), found.id);
-      document.getElementById('selectedTemplatePreview').src = found.previewThumbnail;
       document.getElementById('selectedTemplateName').textContent = found.name;
       renderTemplatesGrid();
       showToast(`${found.name} selected!`, 'success');
@@ -4435,7 +4462,6 @@
       const template = TEMPLATES.find(t => t.id === selectedTemplate) || TEMPLATES[0];
       if (template) {
         selectedTemplate = template.id;
-        document.getElementById('selectedTemplatePreview').src = template.previewThumbnail;
         document.getElementById('selectedTemplateName').textContent = template.name;
       }
 
