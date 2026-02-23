@@ -2716,6 +2716,7 @@
     let currentGeneration = null;
     let baseResumeText = '';
     let selectedTemplate = 't02';
+    let highlightedTemplate = 't02';
 
     // ========================
     // RESUME TEMPLATE ENGINE
@@ -3402,6 +3403,7 @@
     // TEMPLATE DRAWER
     // ========================
     function openTemplateDrawer() {
+      highlightedTemplate = selectedTemplate;
       document.getElementById('drawerOverlay').classList.add('active');
       document.getElementById('templateDrawer').classList.add('active');
       renderTemplatesGrid();
@@ -3413,10 +3415,13 @@
     }
 
     function confirmTemplateSelection() {
-      const template = TEMPLATES.find(t => t.id === selectedTemplate) || TEMPLATES[0];
+      const template = TEMPLATES.find(t => t.id === highlightedTemplate) || TEMPLATES[0];
       if (!template) { closeTemplateDrawer(); return; }
+      selectedTemplate = template.id;
+      localStorage.setItem(getStorageKey('selected_template'), template.id);
       document.getElementById('selectedTemplateName').textContent = template.name;
       renderSelectedTemplatePreview();
+      updateSidebar();
       markStepCompleted(4);
       closeTemplateDrawer();
       showToast(`Template selected: ${template.name}`, 'success');
@@ -3732,10 +3737,10 @@
     // ========================
     // TEMPLATES
     // ========================
-    function renderSelectedTemplatePreview() {
+    function renderSelectedTemplatePreview(tplId) {
       const el = document.getElementById('selectedTemplatePreview');
       if (!el) return;
-      const tpl = TEMPLATES.find(t => t.id === selectedTemplate) || TEMPLATES[0];
+      const tpl = TEMPLATES.find(t => t.id === (tplId || selectedTemplate)) || TEMPLATES[0];
       if (!tpl) return;
       const _w1s = ['w-80','w-70','w-60','w-90','w-80','w-70','w-50','w-90','w-80','w-60','w-70','w-80'];
       const _idx = TEMPLATES.indexOf(tpl);
@@ -3746,7 +3751,7 @@
     function renderTemplatesGrid() {
       const grid = document.getElementById('templatesGrid');
       grid.innerHTML = TEMPLATES.map(template => `
-        <div class="jdm-template-card ${selectedTemplate === template.id ? 'selected' : ''}" onclick="selectTemplate('${template.id}')">
+        <div class="jdm-template-card ${highlightedTemplate === template.id ? 'selected' : ''}" onclick="selectTemplate('${template.id}')">
           <div class="jdm-template-checkmark">✔</div>
           <div class="jdm-template-preview">
             <div class="tpl-thumb-fallback" role="img" aria-label="${template.name} preview">
@@ -3762,7 +3767,7 @@
           </div>
           <div class="jdm-template-name">${template.name}</div>
           <span class="jdm-template-tag">${template.tag}</span>
-          <button type="button" class="jdm-template-select-btn">${selectedTemplate === template.id ? '✔ Selected' : 'Select'}</button>
+          <button type="button" class="jdm-template-select-btn">${highlightedTemplate === template.id ? '✔ Selected' : 'Select'}</button>
         </div>
       `).join('');
     }
@@ -3778,7 +3783,7 @@
       }
 
       grid.innerHTML = filtered.map(template => `
-        <div class="jdm-template-card ${selectedTemplate === template.id ? 'selected' : ''}" onclick="selectTemplate('${template.id}')">
+        <div class="jdm-template-card ${highlightedTemplate === template.id ? 'selected' : ''}" onclick="selectTemplate('${template.id}')">
           <div class="jdm-template-checkmark">✔</div>
           <div class="jdm-template-preview">
             <div class="tpl-thumb-fallback" role="img" aria-label="${template.name} preview">
@@ -3794,7 +3799,7 @@
           </div>
           <div class="jdm-template-name">${template.name}</div>
           <span class="jdm-template-tag">${template.tag}</span>
-          <button type="button" class="jdm-template-select-btn">${selectedTemplate === template.id ? '✔ Selected' : 'Select'}</button>
+          <button type="button" class="jdm-template-select-btn">${highlightedTemplate === template.id ? '✔ Selected' : 'Select'}</button>
         </div>
       `).join('');
     }
@@ -3802,13 +3807,10 @@
     function selectTemplate(templateId) {
       const found = TEMPLATES.find(t => t.id === templateId) || TEMPLATES[0];
       if (!found) return;
-      selectedTemplate = found.id;
-      localStorage.setItem(getStorageKey('selected_template'), found.id);
-      document.getElementById('selectedTemplateName').textContent = found.name;
-      renderSelectedTemplatePreview();
+      highlightedTemplate = found.id;
+      renderSelectedTemplatePreview(found.id);
       renderTemplatesGrid();
       showToast(`${found.name} selected!`, 'success');
-      updateSidebar();
     }
 
     // ========================
@@ -4075,6 +4077,7 @@
       localStorage.removeItem(getStorageKey('resume_history'));
       baseResumeText = '';
       selectedTemplate = TEMPLATES[0]?.id || 't02';
+      highlightedTemplate = selectedTemplate;
       document.getElementById('baseResumePaste').value = '';
       document.getElementById('skillsInput').value = '';
       renderTemplatesGrid();
@@ -4459,6 +4462,7 @@
         localStorage.setItem(getStorageKey('selected_template'), _migratedTpl);
       }
       selectedTemplate = (_migratedTpl && TEMPLATES.find(t => t.id === _migratedTpl)) ? _migratedTpl : (TEMPLATES[0]?.id || 't02');
+      highlightedTemplate = selectedTemplate;
       jobApplications = JSON.parse(localStorage.getItem(getStorageKey('job_tracker')) || '[]');
 
       // Initialize new features
@@ -4476,6 +4480,7 @@
       const template = TEMPLATES.find(t => t.id === selectedTemplate) || TEMPLATES[0];
       if (template) {
         selectedTemplate = template.id;
+        highlightedTemplate = template.id;
         document.getElementById('selectedTemplateName').textContent = template.name;
         renderSelectedTemplatePreview();
       }
