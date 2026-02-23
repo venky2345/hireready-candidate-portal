@@ -9,6 +9,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
   <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js"></script>
@@ -2124,6 +2127,7 @@
       <button class="jdm-back-btn" onclick="goBack()">&#8592; Back to Portal</button>
       <h1 class="jdm-title">JD Match Resume Generator</h1>
       <button class="jdm-back-btn" onclick="openShortcuts()" title="Keyboard Shortcuts" style="font-size:16px;">&#x2328;&#xfe0f; Shortcuts</button>
+      <button class="jdm-back-btn" onclick="openHowItWorks()" title="How it works" style="font-size:16px;">&#x2753; How it works</button>
     </div>
 
     <!-- HERO SECTION -->
@@ -2511,6 +2515,109 @@
       </div>
     </div>
 
+    <!-- HOW IT WORKS MODAL -->
+    <div class="jdm-shortcuts-modal" id="howItWorksModal" onclick="if(event.target===this)closeHowItWorks()">
+      <div class="jdm-shortcuts-box" style="max-width:660px;max-height:85vh;overflow-y:auto;">
+        <div class="jdm-shortcuts-title">
+          <span>&#x2753; How it works</span>
+          <button onclick="closeHowItWorks()" style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:18px;">&#x2715;</button>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px;padding-top:4px;">
+
+          <div style="background:rgba(182,156,255,0.07);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">&#x1F4C4; Base Resume — Upload OR Paste</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">Add your existing resume either by uploading a <strong>TXT, DOCX, or PDF</strong> file, or by pasting plain text. Both options produce the same result — the AI uses whichever text is available. <em>Example: drag a PDF from your desktop and the text is auto-extracted.</em></div>
+          </div>
+
+          <div style="background:rgba(182,156,255,0.07);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">&#x2714; Admin-Approved Data Mode</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">Switch to <em>Use Admin-Approved Data</em> to generate a resume using the profile data pre-loaded by your recruiter or admin — no upload needed. The data badge shows when it is ready.</div>
+          </div>
+
+          <div style="background:rgba(182,156,255,0.07);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">&#x1F3AF; ATS Strictness — Auto vs Manual</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;"><strong>Auto</strong> targets 90–95% keyword match automatically. <strong>Manual</strong> lets you pick any value from 5–100% using the slider. Higher values force more keyword alignment; lower values allow more creative rewrites. <em>Example: set 80% for a creative role, 95% for a corporate role.</em></div>
+          </div>
+
+          <div style="background:rgba(182,156,255,0.07);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">&#x1F522; Skill Frequency</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">Add a skill and use the <strong>+/−</strong> stepper to set how many times it should appear in the resume. The AI tries to weave the skill naturally at that frequency. <em>Example: set React ×3 to ensure it appears in summary, skills, and experience.</em></div>
+          </div>
+
+          <div style="background:rgba(182,156,255,0.07);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">&#x2705; Must Include Skills</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">Enter comma-separated skills that must be present in the generated resume, regardless of the base resume. <em>Example: <code>TypeScript, AWS, Agile</code> ensures these appear even if your original resume omits them.</em></div>
+          </div>
+
+          <div style="background:rgba(182,156,255,0.07);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">&#x1F6AB; Keyword Blacklist</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">Type a word and press <kbd style="background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:4px;">Enter</kbd> to add it to the blacklist. The AI will never include blacklisted words. <em>Example: blacklist <code>junior</code> or <code>intern</code> to avoid those labels.</em></div>
+          </div>
+
+          <div style="background:rgba(182,156,255,0.07);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">&#x1F5E3; Rewrite Tone</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;"><strong>Conservative</strong> keeps your original language with minimal edits. <strong>Balanced</strong> smartly rewrites bullet points for impact. <strong>Aggressive</strong> fully restructures the content for maximum ATS score. <em>Choose Conservative for niche roles where originality matters.</em></div>
+          </div>
+
+          <div style="background:rgba(182,156,255,0.07);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">&#x1F50D; Keyword Gap Analysis</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">After you paste a job description, click <em>Analyze Gaps</em> to see which JD keywords are <span style="color:#ef4444;">missing</span> from your resume (red) and which are already <span style="color:#22c55e;">present</span> (green). <strong>Click any red keyword</strong> to add it to Must Include Skills instantly.</div>
+          </div>
+
+          <div style="background:rgba(182,156,255,0.07);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">&#x1F5BC; Template Picker</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">Click the template thumbnail to open the template drawer with 12 designs. Each template applies a different visual layout to the same resume content. <em>Tip: choose a clean single-column template for ATS-heavy applicant tracking systems.</em></div>
+          </div>
+
+          <div style="background:rgba(182,156,255,0.07);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">&#x1F680; Generate + Metrics</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">Click <strong>Generate Matched Resume</strong> to produce the AI-tailored version. After generation, four key metrics appear: <em>JD Match</em> (how well keywords align), <em>ATS Score</em> (machine readability), <em>Keyword Coverage</em>, and <em>Clarity Score</em>. A JD Match above 85% is generally strong.</div>
+          </div>
+
+          <div style="background:rgba(182,156,255,0.07);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">&#x270F; Resume Editor</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">After generating, click <strong>Edit Resume Content</strong> to adjust the Summary, Skills, Employment, and Education sections manually. Hit <em>Regenerate</em> to re-run generation with your edits applied.</div>
+          </div>
+
+          <div style="background:rgba(182,156,255,0.07);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">&#x2709; Cover Letter Generator</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">Pick a tone (Professional / Enthusiastic / Concise) and click Generate to produce a matching cover letter based on your resume and the job description. Copy or download the result from the action buttons below.</div>
+          </div>
+
+          <div style="background:rgba(182,156,255,0.07);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">&#x1F504; Before vs After Diff</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">Click <em>Show Diff View</em> to see a side-by-side comparison of your original resume (left) and the generated version (right). Useful to verify what the AI changed and ensure nothing important was removed.</div>
+          </div>
+
+          <div style="background:rgba(182,156,255,0.07);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">&#x1F4CB; Job Tracker</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">Click <strong>+ Add Job Application</strong> to log each position you apply to with company name, role, and status (Applied / Interview / Offer / Rejected). Entries are stored in your browser and persist across sessions.</div>
+          </div>
+
+          <div style="background:rgba(182,156,255,0.07);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">&#x1F4BE; Auto-Save Window</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">All fields are auto-saved to your browser every 1.5 seconds as you type. If you refresh or close the tab, your data is restored automatically within a 1-hour session window. An <em>✓ Auto-saved</em> indicator appears at the bottom-left when data is saved.</div>
+          </div>
+
+          <div style="background:rgba(182,156,255,0.07);border-radius:10px;padding:14px 16px;">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px;">&#x2328; Keyboard Shortcuts Reference</div>
+            <div style="font-size:12px;color:var(--muted);line-height:1.6;">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-top:6px;">
+                <span>Generate Resume</span><kbd style="background:rgba(255,255,255,0.1);padding:1px 6px;border-radius:4px;font-size:11px;">Ctrl + G</kbd>
+                <span>Save Draft</span><kbd style="background:rgba(255,255,255,0.1);padding:1px 6px;border-radius:4px;font-size:11px;">Ctrl + S</kbd>
+                <span>Open Template</span><kbd style="background:rgba(255,255,255,0.1);padding:1px 6px;border-radius:4px;font-size:11px;">Ctrl + T</kbd>
+                <span>Preview Resume</span><kbd style="background:rgba(255,255,255,0.1);padding:1px 6px;border-radius:4px;font-size:11px;">Ctrl + P</kbd>
+                <span>Clear All Fields</span><kbd style="background:rgba(255,255,255,0.1);padding:1px 6px;border-radius:4px;font-size:11px;">Ctrl+Shift+X</kbd>
+                <span>Show Shortcuts</span><kbd style="background:rgba(255,255,255,0.1);padding:1px 6px;border-radius:4px;font-size:11px;">?</kbd>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
     <!-- PHASED PROGRESS OVERLAY -->
     <div class="jdm-progress-overlay" id="progressOverlay">
       <div class="jdm-progress-container">
@@ -2752,22 +2859,16 @@
         </div>
       `;
 
-      // Read file content if TXT
-      if (file.name.endsWith('.txt')) {
-        try {
-          const text = await file.text();
-          document.getElementById('baseResumePaste').value = text;
-          baseResumeText = text;
-          localStorage.setItem(getStorageKey('base_resume'), text);
-          
-          fileStatusContainer.innerHTML = '<div class="jdm-file-status"><span>✔</span> File uploaded successfully! Resume saved.</div>';
-          markStepCompleted(1);
-          showToast('Resume uploaded and saved!', 'success');
-        } catch (error) {
-          fileStatusContainer.innerHTML = '<div class="jdm-file-status loading"><span>⚠️</span> Could not read file. Please paste text manually.</div>';
-        }
+      // Branch by file type and extract text
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (ext === 'txt') {
+        extractTXT(file, fileStatusContainer);
+      } else if (ext === 'docx' || ext === 'doc') {
+        extractDOCX(file, fileStatusContainer);
+      } else if (ext === 'pdf') {
+        extractPDF(file, fileStatusContainer);
       } else {
-        fileStatusContainer.innerHTML = '<div class="jdm-file-status"><span>✔</span> File attached. Conversion support limited - paste text if needed.</div>';
+        fileStatusContainer.innerHTML = '<div class="jdm-file-status"><span>✔</span> Resume added. Upload a file or paste text — either works.</div>';
         markStepCompleted(1);
       }
     }
@@ -2784,6 +2885,78 @@
       document.getElementById('baseResumeFile').value = '';
       document.getElementById('baseResumePaste').value = '';
       showToast('File removed', 'success');
+    }
+
+    // ========================
+    // FILE TEXT EXTRACTION
+    // ========================
+    function setExtractedResumeText(text, statusEl) {
+      document.getElementById('baseResumePaste').value = text;
+      baseResumeText = text;
+      localStorage.setItem(getStorageKey('base_resume'), text);
+      statusEl.innerHTML = '<div class="jdm-file-status"><span>✔</span> Resume text extracted successfully!</div>';
+      markStepCompleted(1);
+      showToast('Resume text extracted!', 'success');
+    }
+
+    async function extractTXT(file, statusEl) {
+      try {
+        const text = await file.text();
+        if (!text || text.trim().length < 5) {
+          statusEl.innerHTML = '<div class="jdm-file-status loading"><span>⚠️</span> TXT file appears empty. Please paste text manually.</div>';
+          return;
+        }
+        setExtractedResumeText(text, statusEl);
+      } catch (e) {
+        statusEl.innerHTML = '<div class="jdm-file-status loading"><span>⚠️</span> Could not read TXT file. Please paste text manually.</div>';
+      }
+    }
+
+    async function extractDOCX(file, statusEl) {
+      try {
+        statusEl.innerHTML = '<div class="jdm-file-status loading"><span>📄</span> Extracting text from DOCX...</div>';
+        if (typeof mammoth === 'undefined') {
+          statusEl.innerHTML = '<div class="jdm-file-status loading"><span>⚠️</span> DOCX reader not loaded. Please paste text manually.</div>';
+          return;
+        }
+        const arrayBuffer = await file.arrayBuffer();
+        const result = await mammoth.extractRawText({ arrayBuffer });
+        const text = result.value || '';
+        if (!text || text.trim().length < 50) {
+          statusEl.innerHTML = '<div class="jdm-file-status loading"><span>⚠️</span> Could not extract text from DOCX. Please paste text manually.</div>';
+          return;
+        }
+        setExtractedResumeText(text, statusEl);
+      } catch (e) {
+        statusEl.innerHTML = '<div class="jdm-file-status loading"><span>⚠️</span> Could not read DOCX file. Please paste text manually.</div>';
+      }
+    }
+
+    async function extractPDF(file, statusEl) {
+      try {
+        statusEl.innerHTML = '<div class="jdm-file-status loading"><span>📄</span> Extracting text from PDF...</div>';
+        if (typeof pdfjsLib === 'undefined') {
+          statusEl.innerHTML = '<div class="jdm-file-status loading"><span>⚠️</span> PDF reader not loaded. Please paste text manually.</div>';
+          return;
+        }
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        let fullText = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const pageText = content.items.map(item => item.str).join(' ');
+          fullText += pageText + '\n';
+        }
+        if (!fullText || fullText.trim().length < 50) {
+          statusEl.innerHTML = '<div class="jdm-file-status loading"><span>⚠️</span> This PDF has no selectable text. Please paste your resume text.</div>';
+          showToast('Could not extract text from this PDF (it may be scanned). Please paste your resume text.', 'error');
+          return;
+        }
+        setExtractedResumeText(fullText, statusEl);
+      } catch (e) {
+        statusEl.innerHTML = '<div class="jdm-file-status loading"><span>⚠️</span> Could not read PDF file. Please paste text manually.</div>';
+      }
     }
 
     // ========================
@@ -3225,9 +3398,13 @@
       const companyName = document.getElementById('companyName').value.trim();
       const jobDescription = document.getElementById('jobDescription').value.trim();
 
-      // Check if we have resume data (either uploaded or admin mode)
-      if (inputMode === 'upload' && !baseResumeText && !uploadedFile) {
-        showToast('Please upload or paste your base resume', 'error');
+      // Determine effective resume text — either file extraction OR manual paste
+      const pasteText = document.getElementById('baseResumePaste').value.trim();
+      const effectiveResumeText = baseResumeText || pasteText;
+
+      // Check if we have resume data (either uploaded, extracted, pasted, or admin mode)
+      if (inputMode === 'upload' && !effectiveResumeText) {
+        showToast('Please upload a resume file or paste your resume text', 'error');
         goToStep(1);
         return;
       }
@@ -3272,7 +3449,7 @@
             targetMatchValue: parseInt(strictness),
             mustIncludeSkills: skillsArray,
             templateId: selectedTemplate,
-            baseResumeText: baseResumeText
+            baseResumeText: effectiveResumeText
           })
         });
 
@@ -4075,12 +4252,21 @@
       document.getElementById('shortcutsModal').classList.remove('active');
     }
 
+    function openHowItWorks() {
+      document.getElementById('howItWorksModal').classList.add('active');
+    }
+
+    function closeHowItWorks() {
+      document.getElementById('howItWorksModal').classList.remove('active');
+    }
+
     function initKeyboardShortcuts() {
       document.addEventListener('keydown', (e) => {
         // Don't fire in inputs/textareas unless it's Ctrl+something
         const inInput = ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName);
         
         if (e.key === '?' && !inInput) { openShortcuts(); return; }
+        if (e.key === 'Escape') { closeShortcuts(); closeHowItWorks(); return; }
         if (!e.ctrlKey) return;
 
         switch(e.key.toLowerCase()) {
