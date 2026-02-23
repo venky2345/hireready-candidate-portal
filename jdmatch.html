@@ -4409,8 +4409,15 @@
     document.addEventListener('DOMContentLoaded', () => {
       currentCandidateId = getCandidateId();
       baseResumeText = localStorage.getItem(getStorageKey('base_resume')) || '';
-      const _storedTpl = localStorage.getItem(getStorageKey('selected_template'));
-      selectedTemplate = (_storedTpl && TEMPLATES.find(t => t.id === _storedTpl)) ? _storedTpl : (TEMPLATES[0]?.id || 't02');
+      const _storedTplRaw = localStorage.getItem(getStorageKey('selected_template'));
+      let _migratedTpl = _storedTplRaw;
+      // Migration: old IDs (template_01..template_12) → new IDs (t01..t12)
+      if (_storedTplRaw && _storedTplRaw.startsWith('template_')) {
+        const _num = _storedTplRaw.replace('template_', '');
+        _migratedTpl = 't' + _num.padStart(2, '0');
+        localStorage.setItem(getStorageKey('selected_template'), _migratedTpl);
+      }
+      selectedTemplate = (_migratedTpl && TEMPLATES.find(t => t.id === _migratedTpl)) ? _migratedTpl : (TEMPLATES[0]?.id || 't02');
       jobApplications = JSON.parse(localStorage.getItem(getStorageKey('job_tracker')) || '[]');
 
       // Initialize new features
