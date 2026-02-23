@@ -1447,6 +1447,9 @@
     .tpl-thumb-lines .line { display:block; height:8px; border-radius:999px; background: rgba(255,255,255,.10); }
     .tpl-thumb-lines .w-90 { width:90%; } .tpl-thumb-lines .w-80 { width:80%; } .tpl-thumb-lines .w-70 { width:70%; } .tpl-thumb-lines .w-60 { width:60%; } .tpl-thumb-lines .w-50 { width:50%; }
     .tpl-thumb-tag { position:absolute; right:10px; bottom:10px; font-size:11px; padding:4px 8px; border-radius:999px; background: rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.10); color: rgba(255,255,255,.85); white-space:nowrap; max-width:80%; overflow:hidden; text-overflow:ellipsis; z-index:2; }
+    .tpl-mini-wrap { position:relative; width:100%; height:120px; border-radius:8px; overflow:hidden; background:rgba(255,255,255,0.03); }
+    .tpl-mini-iframe { position:absolute; top:0; left:0; width:900px; height:1200px; border:0; pointer-events:none; transform-origin:top left; transform:scale(0.133); }
+    .tpl-mini-wrap .tpl-thumb-tag { z-index:5; }
 
     .jdm-template-name {
       font-weight: 600;
@@ -3790,6 +3793,34 @@
 
     function renderSelectedTemplatePreview(tplId) { renderSelectedTemplateLivePreview(tplId || selectedTemplate); }
 
+    function buildTemplatePreviewSrcdoc(tplId) {
+      const tpl = TEMPLATES.find(t => t.id === tplId);
+      if (!tpl || typeof tpl.render !== 'function') return '';
+      let html = '';
+      try { html = tpl.render(getTemplatePreviewData()); } catch(e) { return ''; }
+      if (!html || String(html).trim().length < 50) return '';
+      const isFullDoc = /<html[\s>]/i.test(html);
+      return isFullDoc ? html : ('<!doctype html><html><head><meta charset="utf-8"><style>html,body{height:100%;margin:0;padding:0;background:#fff;}</style></head><body>' + html + '</body></html>');
+    }
+
+    function hydrateTemplateMiniPreviews() {
+      document.querySelectorAll('.tpl-mini-wrap[data-mini-preview]').forEach(wrap => {
+        if (wrap.querySelector('iframe')) return;
+        const tplId = wrap.getAttribute('data-mini-preview');
+        const srcdoc = buildTemplatePreviewSrcdoc(tplId);
+        if (!srcdoc) return;
+        const frame = document.createElement('iframe');
+        frame.className = 'tpl-mini-iframe';
+        frame.setAttribute('title', 'Template preview ' + tplId);
+        frame.setAttribute('loading', 'lazy');
+        frame.setAttribute('tabindex', '-1');
+        frame.setAttribute('aria-hidden', 'true');
+        frame.setAttribute('sandbox', 'allow-same-origin');
+        frame.srcdoc = srcdoc;
+        wrap.insertBefore(frame, wrap.firstChild);
+      });
+    }
+
     function debugTemplateState() {
       console.debug('[tpl] selectedTemplate:', selectedTemplate, '| highlightedTemplate:', highlightedTemplate, '| TEMPLATES.length:', TEMPLATES.length, '| tpl found:', !!(TEMPLATES.find(t => t.id === selectedTemplate)));
     }
@@ -3800,14 +3831,7 @@
         <div class="jdm-template-card ${highlightedTemplate === template.id ? 'selected' : ''}" onclick="selectTemplate('${template.id}')">
           <div class="jdm-template-checkmark">✔</div>
           <div class="jdm-template-preview">
-            <div class="tpl-thumb-fallback" role="img" aria-label="${template.name} preview">
-              <div class="tpl-thumb-lines">
-                <span class="line w-80"></span>
-                <span class="line w-60"></span>
-                <span class="line w-90"></span>
-                <span class="line w-70"></span>
-                <span class="line w-50"></span>
-              </div>
+            <div class="tpl-mini-wrap" data-mini-preview="${template.id}">
               <div class="tpl-thumb-tag">${template.name}</div>
             </div>
           </div>
@@ -3816,6 +3840,7 @@
           <button type="button" class="jdm-template-select-btn">${highlightedTemplate === template.id ? '✔ Selected' : 'Select'}</button>
         </div>
       `).join('');
+      hydrateTemplateMiniPreviews();
     }
 
     function filterTemplates() {
@@ -3832,14 +3857,7 @@
         <div class="jdm-template-card ${highlightedTemplate === template.id ? 'selected' : ''}" onclick="selectTemplate('${template.id}')">
           <div class="jdm-template-checkmark">✔</div>
           <div class="jdm-template-preview">
-            <div class="tpl-thumb-fallback" role="img" aria-label="${template.name} preview">
-              <div class="tpl-thumb-lines">
-                <span class="line w-80"></span>
-                <span class="line w-60"></span>
-                <span class="line w-90"></span>
-                <span class="line w-70"></span>
-                <span class="line w-50"></span>
-              </div>
+            <div class="tpl-mini-wrap" data-mini-preview="${template.id}">
               <div class="tpl-thumb-tag">${template.name}</div>
             </div>
           </div>
@@ -3848,6 +3866,7 @@
           <button type="button" class="jdm-template-select-btn">${highlightedTemplate === template.id ? '✔ Selected' : 'Select'}</button>
         </div>
       `).join('');
+      hydrateTemplateMiniPreviews();
     }
 
     function selectTemplate(templateId) {
