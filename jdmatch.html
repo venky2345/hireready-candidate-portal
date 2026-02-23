@@ -2056,8 +2056,29 @@
                 <span class="jdm-strictness-label">Match Target</span>
                 <span class="jdm-strictness-value" id="strictnessDisplay">92%</span>
               </div>
+              
+              <!-- Auto/Manual Mode Toggle -->
+              <div class="jdm-radio-group" style="margin-bottom: 12px;">
+                <div class="jdm-radio-option">
+                  <input type="radio" id="autoMode" name="targetMode" value="auto" checked onchange="toggleSlider()">
+                  <label for="autoMode">Auto (90-95%)</label>
+                </div>
+                <div class="jdm-radio-option">
+                  <input type="radio" id="manualMode" name="targetMode" value="manual" onchange="toggleSlider()">
+                  <label for="manualMode">Manual</label>
+                </div>
+              </div>
+              
+              <div id="sliderGroup" class="jdm-slider-group">
+                <div class="jdm-slider-wrapper">
+                  <input type="range" id="targetSlider" class="jdm-slider" min="90" max="99" value="92" oninput="updateSliderValue(this.value)">
+                  <input type="number" id="targetInput" class="jdm-slider-input" min="90" max="99" value="92" oninput="updateSliderValue(this.value)">
+                  <div class="jdm-slider-value-display" id="sliderDisplay">92%</div>
+                </div>
+              </div>
+              
               <div class="jdm-slider-container">
-                <input type="range" id="strictnessSlider" class="jdm-slider-enhanced" min="70" max="100" value="92" oninput="updateStrictnessValue(this.value)">
+                <input type="range" id="strictnessSlider" class="jdm-slider-enhanced" min="70" max="100" value="92" oninput="updateStrictnessValue(this.value)" style="display: none;">
                 <div class="jdm-slider-marks">
                   <span>70% Relaxed</span>
                   <span>85% Balanced</span>
