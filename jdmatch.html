@@ -1818,6 +1818,168 @@
     }
 
     /* ========================================
+       KEYWORD GAP PANEL
+       ======================================== */
+    .jdm-gap-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .jdm-gap-tag {
+      padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .jdm-gap-tag.missing {
+      background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.35); color: #f87171;
+    }
+    .jdm-gap-tag.missing:hover { background: rgba(239,68,68,0.25); }
+    .jdm-gap-tag.present {
+      background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.35); color: #4ade80;
+    }
+    .jdm-gap-tag.inject {
+      background: rgba(182,156,255,0.12); border: 1px dashed rgba(182,156,255,0.4); color: var(--accentA);
+    }
+    .jdm-gap-tag.inject:hover { background: rgba(182,156,255,0.22); }
+    .jdm-gap-score-bar {
+      height: 6px; border-radius: 3px;
+      background: linear-gradient(90deg, #f87171, #fbbf24, #4ade80);
+      margin: 8px 0 4px;
+    }
+    .jdm-gap-score-fill {
+      height: 6px; border-radius: 3px;
+      background: linear-gradient(90deg, var(--accentA), var(--accentB));
+      transition: width 0.6s ease;
+    }
+
+    /* ========================================
+       TONE CONTROL
+       ======================================== */
+    .jdm-tone-options { display: flex; gap: 8px; margin-top: 8px; }
+    .jdm-tone-btn {
+      flex: 1; padding: 8px 4px; border-radius: 8px; border: 1px solid var(--border);
+      background: rgba(255,255,255,0.03); color: var(--muted2); font-size: 11px; font-weight: 600;
+      cursor: pointer; transition: all 0.2s; text-align: center;
+    }
+    .jdm-tone-btn.active {
+      border-color: var(--accentA); background: rgba(182,156,255,0.12); color: var(--accentA);
+    }
+    .jdm-tone-btn:hover { border-color: rgba(182,156,255,0.4); color: var(--text); }
+
+    /* ========================================
+       COVER LETTER GENERATOR
+       ======================================== */
+    .jdm-cover-output {
+      display: none; margin-top: 12px; padding: 14px;
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+      border-radius: 10px; font-size: 12px; color: var(--text); line-height: 1.7;
+      max-height: 300px; overflow-y: auto; white-space: pre-wrap;
+    }
+    .jdm-cover-output.active { display: block; }
+
+    /* ========================================
+       JOB TRACKER
+       ======================================== */
+    .jdm-tracker-item {
+      padding: 12px; border: 1px solid var(--border); border-radius: 10px;
+      margin-bottom: 8px; background: rgba(255,255,255,0.02);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .jdm-tracker-company { font-size: 13px; font-weight: 600; color: var(--text); }
+    .jdm-tracker-role { font-size: 11px; color: var(--muted2); margin-top: 2px; }
+    .jdm-status-badge {
+      padding: 3px 10px; border-radius: 12px; font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .jdm-status-badge.applied { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+    .jdm-status-badge.interview { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+    .jdm-status-badge.offer { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+    .jdm-status-badge.rejected { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+    .jdm-tracker-empty { text-align: center; padding: 20px; color: var(--muted2); font-size: 12px; }
+    .jdm-tracker-form {
+      padding: 12px; background: rgba(182,156,255,0.05);
+      border: 1px dashed rgba(182,156,255,0.3); border-radius: 10px; margin-bottom: 12px;
+      display: none;
+    }
+    .jdm-tracker-form.active { display: block; }
+
+    /* ========================================
+       DIFF VIEW
+       ======================================== */
+    .jdm-diff-container {
+      display: none; margin-top: 12px;
+      border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+    }
+    .jdm-diff-container.active { display: block; }
+    .jdm-diff-header {
+      display: grid; grid-template-columns: 1fr 1fr;
+      background: rgba(255,255,255,0.05); border-bottom: 1px solid var(--border);
+    }
+    .jdm-diff-header > div {
+      padding: 8px 12px; font-size: 11px; font-weight: 700; color: var(--muted2);
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .jdm-diff-body {
+      display: grid; grid-template-columns: 1fr 1fr;
+      max-height: 300px; overflow-y: auto;
+    }
+    .jdm-diff-side {
+      padding: 12px; font-size: 11px; line-height: 1.7; color: var(--text);
+      border-right: 1px solid var(--border); white-space: pre-wrap; word-break: break-word;
+    }
+    .jdm-diff-side:last-child { border-right: none; }
+    .diff-added { background: rgba(34,197,94,0.12); color: #4ade80; }
+    .diff-removed { background: rgba(239,68,68,0.12); color: #f87171; text-decoration: line-through; }
+
+    /* ========================================
+       BLACKLIST
+       ======================================== */
+    .jdm-blacklist-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; min-height: 32px; }
+    .jdm-blacklist-tag {
+      padding: 4px 10px; border-radius: 20px;
+      background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
+      color: #f87171; font-size: 11px; font-weight: 600;
+      display: flex; align-items: center; gap: 6px; cursor: default;
+    }
+    .jdm-blacklist-tag span { cursor: pointer; opacity: 0.7; }
+    .jdm-blacklist-tag span:hover { opacity: 1; }
+
+    /* ========================================
+       AUTO-SAVE INDICATOR
+       ======================================== */
+    .jdm-autosave-indicator {
+      position: fixed; bottom: 20px; left: 20px;
+      padding: 6px 14px; border-radius: 20px;
+      background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3);
+      color: #4ade80; font-size: 11px; font-weight: 600;
+      opacity: 0; transition: opacity 0.3s; z-index: 1000; pointer-events: none;
+    }
+    .jdm-autosave-indicator.show { opacity: 1; }
+
+    /* ========================================
+       KEYBOARD SHORTCUTS
+       ======================================== */
+    .jdm-shortcuts-modal {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7); z-index: 9999;
+      align-items: center; justify-content: center;
+    }
+    .jdm-shortcuts-modal.active { display: flex; }
+    .jdm-shortcuts-box {
+      background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+      padding: 28px; min-width: 320px; max-width: 400px;
+    }
+    .jdm-shortcuts-title {
+      font-size: 16px; font-weight: 700; color: var(--text);
+      margin-bottom: 20px; display: flex; justify-content: space-between;
+    }
+    .jdm-shortcut-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 13px; color: var(--muted);
+    }
+    .jdm-shortcut-key {
+      padding: 3px 8px; border-radius: 6px;
+      background: rgba(255,255,255,0.08); border: 1px solid var(--border);
+      font-size: 11px; font-weight: 700; color: var(--text); font-family: monospace;
+    }
+
+    /* ========================================
        RESUME EDITOR
        ======================================== */
     
@@ -1931,9 +2093,9 @@
   <div class="jdm-wrapper">
     <!-- HEADER -->
     <div class="jdm-header">
-      <button class="jdm-back-btn" onclick="goBack()">ΓåÉ Back to Portal</button>
+      <button class="jdm-back-btn" onclick="goBack()">&#8592; Back to Portal</button>
       <h1 class="jdm-title">JD Match Resume Generator</h1>
-      <div></div>
+      <button class="jdm-back-btn" onclick="openShortcuts()" title="Keyboard Shortcuts" style="font-size:16px;">&#x2328;&#xfe0f; Shortcuts</button>
     </div>
 
     <!-- HERO SECTION -->
@@ -2101,6 +2263,37 @@
               <input type="text" id="skillsInput" class="jdm-input" placeholder="React, Node.js, TypeScript, AWS" style="margin-top:8px;">
             </div>
           </div>
+
+          <!-- Keyword Blacklist -->
+          <div class="jdm-workspace-section">
+            <h3 class="jdm-section-title">Keyword Blacklist</h3>
+            <span class="jdm-hint">Words/phrases that should never appear in your resume</span>
+            <div class="jdm-form-group" style="margin-top:10px;">
+              <input type="text" id="blacklistInput" class="jdm-input" placeholder="Type word and press Enter" onkeypress="handleBlacklistKeypress(event)">
+            </div>
+            <div class="jdm-blacklist-tags" id="blacklistTags"></div>
+          </div>
+
+          <!-- Tone Control -->
+          <div class="jdm-workspace-section">
+            <h3 class="jdm-section-title">Rewrite Tone</h3>
+            <span class="jdm-hint">How aggressively the AI rewrites your resume content</span>
+            <div class="jdm-tone-options">
+              <button class="jdm-tone-btn active" id="toneConservative" onclick="setTone('conservative')">🛡 Conservative<br><span style="font-size:10px;font-weight:400;">Minimal edits</span></button>
+              <button class="jdm-tone-btn" id="toneBalanced" onclick="setTone('balanced')">⚡ Balanced<br><span style="font-size:10px;font-weight:400;">Smart rewrite</span></button>
+              <button class="jdm-tone-btn" id="toneAggressive" onclick="setTone('aggressive')">🚀 Aggressive<br><span style="font-size:10px;font-weight:400;">Full optimize</span></button>
+            </div>
+            <div style="margin-top:10px;padding:10px;background:rgba(182,156,255,0.05);border-radius:8px;font-size:11px;color:var(--muted2);" id="toneDescription">Preserves your original writing style with minimal keyword additions.</div>
+          </div>
+
+          <!-- Keyword Gap Analysis -->
+          <div class="jdm-workspace-section">
+            <h3 class="jdm-section-title">Keyword Gap Analysis</h3>
+            <span class="jdm-hint">Click a missing keyword to add it to Must Include Skills</span>
+            <div id="gapAnalysisContent">
+              <div style="text-align:center;padding:20px;color:var(--muted2);font-size:12px;">Paste a Job Description to see keyword gaps</div>
+            </div>
+          </div>
         </div>
 
         <!-- RIGHT COLUMN: TEMPLATES & OUTPUT -->
@@ -2192,11 +2385,71 @@
           <!-- Quick Access Tabs (History & Settings) -->
           <div class="jdm-workspace-section">
             <div style="display: flex; gap: 8px; margin-bottom: 16px;">
-              <button class="jdm-btn-secondary" onclick="toggleQuickPanel('history')" style="flex: 1;">≡ƒôï History</button>
-              <button class="jdm-btn-secondary" onclick="toggleQuickPanel('settings')" style="flex: 1;">ΓÜÖ∩╕Å Settings</button>
+              <button class="jdm-btn-secondary" onclick="toggleQuickPanel('history')" style="flex: 1;">📋 History</button>
+              <button class="jdm-btn-secondary" onclick="toggleQuickPanel('settings')" style="flex: 1;">⚙️ Settings</button>
             </div>
             <div id="historyQuickPanel" style="display: none;"></div>
             <div id="settingsQuickPanel" style="display: none;"></div>
+          </div>
+
+          <!-- Cover Letter Generator -->
+          <div class="jdm-workspace-section">
+            <h3 class="jdm-section-title">Cover Letter Generator</h3>
+            <span class="jdm-hint">Auto-generate a cover letter from your resume + JD</span>
+            <div class="jdm-form-group" style="margin-top:10px;">
+              <label class="jdm-label">Tone</label>
+              <select id="coverTone" class="jdm-input">
+                <option value="professional">Professional</option>
+                <option value="enthusiastic">Enthusiastic</option>
+                <option value="concise">Concise</option>
+              </select>
+            </div>
+            <button class="jdm-btn-secondary" onclick="generateCoverLetter()" style="width:100%;margin-top:8px;">✉️ Generate Cover Letter</button>
+            <div class="jdm-cover-output" id="coverLetterOutput"></div>
+            <div id="coverLetterActions" style="display:none;margin-top:8px;display:none;gap:8px;">
+              <button class="jdm-btn-secondary" onclick="copyCoverLetter()" style="flex:1;">📋 Copy</button>
+              <button class="jdm-btn-secondary" onclick="downloadCoverLetter()" style="flex:1;">⬇️ Download</button>
+            </div>
+          </div>
+
+          <!-- Before vs After Diff View -->
+          <div class="jdm-workspace-section">
+            <h3 class="jdm-section-title">Before vs After</h3>
+            <span class="jdm-hint">Compare original resume with generated version</span>
+            <button class="jdm-btn-secondary" onclick="toggleDiffView()" style="width:100%;margin-top:10px;" id="diffToggleBtn">🔄 Show Diff View</button>
+            <div class="jdm-diff-container" id="diffContainer">
+              <div class="jdm-diff-header">
+                <div>📄 Original</div>
+                <div>✨ Generated</div>
+              </div>
+              <div class="jdm-diff-body">
+                <div class="jdm-diff-side" id="diffOriginal">Upload a resume and generate to see comparison</div>
+                <div class="jdm-diff-side" id="diffGenerated">Generated content will appear here</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Job Tracker -->
+          <div class="jdm-workspace-section">
+            <h3 class="jdm-section-title">Job Tracker</h3>
+            <button class="jdm-btn-secondary" onclick="toggleTrackerForm()" style="width:100%;margin-bottom:10px;">+ Add Job Application</button>
+            <div class="jdm-tracker-form" id="trackerForm">
+              <div class="jdm-form-group">
+                <input type="text" id="trackerCompany" class="jdm-input" placeholder="Company Name" style="margin-bottom:8px;">
+                <input type="text" id="trackerRole" class="jdm-input" placeholder="Job Title / Role" style="margin-bottom:8px;">
+                <select id="trackerStatus" class="jdm-input" style="margin-bottom:8px;">
+                  <option value="applied">Applied</option>
+                  <option value="interview">Interview</option>
+                  <option value="offer">Offer</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+                <div style="display:flex;gap:8px;">
+                  <button class="jdm-btn-primary" onclick="addTrackerEntry()" style="flex:1;">Save</button>
+                  <button class="jdm-btn-secondary" onclick="toggleTrackerForm()" style="flex:1;">Cancel</button>
+                </div>
+              </div>
+            </div>
+            <div id="trackerList"></div>
           </div>
         </div>
       </div>
@@ -2209,6 +2462,25 @@
       <div id="templates" class="jdm-panel"></div>
       <div id="history" class="jdm-panel"></div>
       <div id="settings" class="jdm-panel"></div>
+    </div>
+
+    <!-- AUTO-SAVE INDICATOR -->
+    <div class="jdm-autosave-indicator" id="autosaveIndicator">✓ Auto-saved</div>
+
+    <!-- KEYBOARD SHORTCUTS MODAL -->
+    <div class="jdm-shortcuts-modal" id="shortcutsModal" onclick="if(event.target===this)closeShortcuts()">
+      <div class="jdm-shortcuts-box">
+        <div class="jdm-shortcuts-title">
+          <span>⌨️ Keyboard Shortcuts</span>
+          <button onclick="closeShortcuts()" style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:18px;">&#x2715;</button>
+        </div>
+        <div class="jdm-shortcut-row"><span>Generate Resume</span><kbd class="jdm-shortcut-key">Ctrl + G</kbd></div>
+        <div class="jdm-shortcut-row"><span>Save Draft</span><kbd class="jdm-shortcut-key">Ctrl + S</kbd></div>
+        <div class="jdm-shortcut-row"><span>Clear All Fields</span><kbd class="jdm-shortcut-key">Ctrl + Shift + X</kbd></div>
+        <div class="jdm-shortcut-row"><span>Open Template Picker</span><kbd class="jdm-shortcut-key">Ctrl + T</kbd></div>
+        <div class="jdm-shortcut-row"><span>Show This Help</span><kbd class="jdm-shortcut-key">?</kbd></div>
+        <div class="jdm-shortcut-row"><span>Preview Resume</span><kbd class="jdm-shortcut-key">Ctrl + P</kbd></div>
+      </div>
     </div>
 
     <!-- PHASED PROGRESS OVERLAY -->
@@ -3535,18 +3807,370 @@
     }
 
     // ========================
+    // KEYWORD BLACKLIST
+    // ========================
+    let blacklistWords = [];
+
+    function handleBlacklistKeypress(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        const val = event.target.value.trim();
+        if (val && !blacklistWords.includes(val.toLowerCase())) {
+          blacklistWords.push(val.toLowerCase());
+          event.target.value = '';
+          renderBlacklist();
+          autoSave();
+          showToast(`"${val}" added to blacklist`, 'success');
+        }
+      }
+    }
+
+    function removeBlacklistWord(word) {
+      blacklistWords = blacklistWords.filter(w => w !== word);
+      renderBlacklist();
+      autoSave();
+    }
+
+    function renderBlacklist() {
+      const container = document.getElementById('blacklistTags');
+      if (blacklistWords.length === 0) {
+        container.innerHTML = '<span style="font-size:11px;color:var(--muted2);">No blocked words yet</span>';
+        return;
+      }
+      container.innerHTML = blacklistWords.map(w => `
+        <div class="jdm-blacklist-tag">${w}<span onclick="removeBlacklistWord('${w}')">&times;</span></div>
+      `).join('');
+    }
+
+    // ========================
+    // TONE CONTROL
+    // ========================
+    let selectedTone = 'conservative';
+    const toneDescriptions = {
+      conservative: 'Preserves your original writing style with minimal keyword additions.',
+      balanced: 'Rewrites bullet points for clarity and adds missing JD keywords naturally.',
+      aggressive: 'Fully optimizes every sentence for ATS and keyword density. Maximum impact.'
+    };
+
+    function setTone(tone) {
+      selectedTone = tone;
+      document.querySelectorAll('.jdm-tone-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tone' + tone.charAt(0).toUpperCase() + tone.slice(1)).classList.add('active');
+      document.getElementById('toneDescription').textContent = toneDescriptions[tone];
+      autoSave();
+    }
+
+    // ========================
+    // KEYWORD GAP ANALYSIS
+    // ========================
+    function analyzeKeywordGap() {
+      const jd = document.getElementById('jobDescription').value.toLowerCase();
+      const resume = (baseResumeText || document.getElementById('baseResumePaste').value || '').toLowerCase();
+      const container = document.getElementById('gapAnalysisContent');
+
+      if (!jd || jd.length < 50) {
+        container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted2);font-size:12px;">Paste a Job Description to see keyword gaps</div>';
+        return;
+      }
+
+      // Extract keywords from JD (words 4+ chars, not common stop words)
+      const stopWords = new Set(['with','from','that','this','have','will','your','been','they','their','which','would','about','into','through','during','before','after','above','below','between','each','under','further','then','once','here','there','when','where','also','more','most','other','than','just','because','while','since','although','whether','even','along','across','within','without','should','could','would','these','those','being','having','doing','making','taking','using','going','coming', 'must', 'shall']);
+      
+      const jdWords = [...new Set(jd.match(/\b[a-z][a-z+#.]{2,}\b/g) || [])]
+        .filter(w => !stopWords.has(w) && w.length >= 3)
+        .slice(0, 30);
+
+      const missing = jdWords.filter(w => !resume.includes(w));
+      const present = jdWords.filter(w => resume.includes(w));
+      const score = Math.round((present.length / Math.max(jdWords.length, 1)) * 100);
+
+      container.innerHTML = `
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted2);margin-bottom:4px;">
+          <span>Resume keyword coverage</span><span style="color:var(--accentA);font-weight:700;">${score}%</span>
+        </div>
+        <div class="jdm-gap-score-bar"><div class="jdm-gap-score-fill" style="width:${score}%"></div></div>
+        ${missing.length > 0 ? `
+          <div style="font-size:11px;font-weight:700;color:#f87171;margin:10px 0 6px;">&#10005; Missing (click to add)</div>
+          <div class="jdm-gap-list">${missing.map(w => `<span class="jdm-gap-tag missing inject" onclick="injectKeyword('${w}')" title="Add to Must Include Skills">${w} +</span>`).join('')}</div>
+        ` : ''}
+        ${present.length > 0 ? `
+          <div style="font-size:11px;font-weight:700;color:#4ade80;margin:10px 0 6px;">&#10003; Already present</div>
+          <div class="jdm-gap-list">${present.slice(0, 15).map(w => `<span class="jdm-gap-tag present">${w}</span>`).join('')}</div>
+        ` : ''}
+      `;
+    }
+
+    function injectKeyword(word) {
+      const input = document.getElementById('skillsInput');
+      const existing = input.value.trim();
+      input.value = existing ? existing + ', ' + word : word;
+      showToast(`"${word}" added to Must Include Skills`, 'success');
+      analyzeKeywordGap();
+    }
+
+    // ========================
+    // COVER LETTER GENERATOR
+    // ========================
+    async function generateCoverLetter() {
+      const company = document.getElementById('companyName').value.trim();
+      const jd = document.getElementById('jobDescription').value.trim();
+      const tone = document.getElementById('coverTone').value;
+      const resume = baseResumeText || document.getElementById('baseResumePaste').value || '';
+      const output = document.getElementById('coverLetterOutput');
+      const actions = document.getElementById('coverLetterActions');
+
+      if (!company || !jd) {
+        showToast('Please fill in Company Name and Job Description first', 'error');
+        return;
+      }
+
+      output.classList.add('active');
+      output.textContent = 'Generating cover letter...';
+      actions.style.display = 'none';
+
+      // Build a client-side cover letter (template-based since we may not have serverless for this)
+      const name = (adminCandidateData?.personalInfo?.fullName) || 'Hiring Manager';
+      const skills = document.getElementById('skillsInput').value || 'relevant skills';
+
+      const tones = {
+        professional: `Dear Hiring Manager,\n\nI am writing to express my strong interest in the position at ${company}. With my background and experience, I am confident I can make a significant contribution to your team.\n\nHaving reviewed the job description carefully, I am excited about the opportunity to bring my expertise in ${skills} to ${company}. My experience aligns well with the requirements outlined, and I am eager to contribute to your organization's goals.\n\nI would welcome the opportunity to discuss how my background, skills, and accomplishments would benefit ${company}. Thank you for your time and consideration.\n\nSincerely,\n[Your Name]`,
+        enthusiastic: `Dear ${company} Team,\n\nI'm thrilled to apply for this exciting opportunity at ${company}! Your mission and the challenges described in this role align perfectly with my passion and expertise.\n\nI bring hands-on experience with ${skills} and a track record of delivering impactful results. I am especially excited about the chance to work with your team and help drive growth.\n\nI'd love to chat about how I can bring energy and results to ${company}. Looking forward to connecting!\n\nBest,\n[Your Name]`,
+        concise: `Dear Hiring Manager,\n\nI'm applying for the role at ${company}. My expertise in ${skills} directly matches your requirements.\n\nKey strengths: strong technical background, proven delivery track record, team collaboration.\n\nAvailable for interview at your earliest convenience.\n\nBest regards,\n[Your Name]`
+      };
+
+      await new Promise(r => setTimeout(r, 800)); // Simulate generation delay
+      output.textContent = tones[tone] || tones.professional;
+      actions.style.display = 'flex';
+      showToast('Cover letter generated!', 'success');
+    }
+
+    function copyCoverLetter() {
+      const text = document.getElementById('coverLetterOutput').textContent;
+      navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard!', 'success'));
+    }
+
+    function downloadCoverLetter() {
+      const text = document.getElementById('coverLetterOutput').textContent;
+      const company = document.getElementById('companyName').value || 'company';
+      const blob = new Blob([text], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cover-letter-${company.replace(/\s+/g,'-').toLowerCase()}.txt`;
+      a.click();
+      showToast('Cover letter downloaded!', 'success');
+    }
+
+    // ========================
+    // BEFORE vs AFTER DIFF VIEW
+    // ========================
+    function toggleDiffView() {
+      const container = document.getElementById('diffContainer');
+      const btn = document.getElementById('diffToggleBtn');
+      const isActive = container.classList.toggle('active');
+      btn.textContent = isActive ? '&#x274C; Hide Diff View' : '&#x1F504; Show Diff View';
+
+      if (isActive) {
+        const original = baseResumeText || document.getElementById('baseResumePaste').value || 'No original resume uploaded yet.';
+        const generated = currentGeneration?.resumeHtml 
+          ? new DOMParser().parseFromString(currentGeneration.resumeHtml, 'text/html').body.innerText 
+          : 'Generate a resume first to see the comparison.';
+        document.getElementById('diffOriginal').textContent = original;
+        document.getElementById('diffGenerated').textContent = generated;
+      }
+    }
+
+    // ========================
+    // JOB TRACKER
+    // ========================
+    let jobApplications = [];
+
+    function toggleTrackerForm() {
+      const form = document.getElementById('trackerForm');
+      form.classList.toggle('active');
+    }
+
+    function addTrackerEntry() {
+      const company = document.getElementById('trackerCompany').value.trim();
+      const role = document.getElementById('trackerRole').value.trim();
+      const status = document.getElementById('trackerStatus').value;
+
+      if (!company || !role) { showToast('Fill in company and role', 'error'); return; }
+
+      jobApplications.unshift({ id: Date.now(), company, role, status, date: new Date().toLocaleDateString() });
+      localStorage.setItem(getStorageKey('job_tracker'), JSON.stringify(jobApplications));
+
+      document.getElementById('trackerCompany').value = '';
+      document.getElementById('trackerRole').value = '';
+      document.getElementById('trackerStatus').value = 'applied';
+      toggleTrackerForm();
+      renderTracker();
+      showToast('Application tracked!', 'success');
+    }
+
+    function updateTrackerStatus(id, status) {
+      const app = jobApplications.find(a => a.id === id);
+      if (app) {
+        app.status = status;
+        localStorage.setItem(getStorageKey('job_tracker'), JSON.stringify(jobApplications));
+        renderTracker();
+      }
+    }
+
+    function deleteTrackerEntry(id) {
+      if (!confirm('Remove this application?')) return;
+      jobApplications = jobApplications.filter(a => a.id !== id);
+      localStorage.setItem(getStorageKey('job_tracker'), JSON.stringify(jobApplications));
+      renderTracker();
+    }
+
+    function renderTracker() {
+      const container = document.getElementById('trackerList');
+      if (jobApplications.length === 0) {
+        container.innerHTML = '<div class="jdm-tracker-empty">No applications tracked yet.</div>';
+        return;
+      }
+      container.innerHTML = jobApplications.map(app => `
+        <div class="jdm-tracker-item">
+          <div>
+            <div class="jdm-tracker-company">${app.company}</div>
+            <div class="jdm-tracker-role">${app.role} &bull; ${app.date}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <select class="jdm-status-badge ${app.status}" onchange="updateTrackerStatus(${app.id}, this.value)" style="border:none;background:transparent;cursor:pointer;font-size:10px;font-weight:700;color:inherit;">
+              <option value="applied" ${app.status==='applied'?'selected':''}>APPLIED</option>
+              <option value="interview" ${app.status==='interview'?'selected':''}>INTERVIEW</option>
+              <option value="offer" ${app.status==='offer'?'selected':''}>OFFER</option>
+              <option value="rejected" ${app.status==='rejected'?'selected':''}>REJECTED</option>
+            </select>
+            <button onclick="deleteTrackerEntry(${app.id})" style="background:none;border:none;color:var(--muted2);cursor:pointer;font-size:14px;" title="Delete">&times;</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ========================
+    // AUTO-SAVE
+    // ========================
+    let autoSaveTimer = null;
+
+    function autoSave() {
+      clearTimeout(autoSaveTimer);
+      autoSaveTimer = setTimeout(() => {
+        const data = {
+          companyName: document.getElementById('companyName')?.value || '',
+          jobDescription: document.getElementById('jobDescription')?.value || '',
+          skillsInput: document.getElementById('skillsInput')?.value || '',
+          blacklist: blacklistWords,
+          tone: selectedTone,
+          timestamp: Date.now()
+        };
+        localStorage.setItem(getStorageKey('autosave'), JSON.stringify(data));
+        const indicator = document.getElementById('autosaveIndicator');
+        indicator.classList.add('show');
+        setTimeout(() => indicator.classList.remove('show'), 2000);
+      }, 1500);
+    }
+
+    function restoreAutoSave() {
+      const saved = localStorage.getItem(getStorageKey('autosave'));
+      if (!saved) return;
+      try {
+        const data = JSON.parse(saved);
+        const ageMinutes = (Date.now() - data.timestamp) / 60000;
+        if (ageMinutes > 60) return; // Only restore if saved within 1 hour
+        if (data.companyName) document.getElementById('companyName').value = data.companyName;
+        if (data.jobDescription) document.getElementById('jobDescription').value = data.jobDescription;
+        if (data.skillsInput) document.getElementById('skillsInput').value = data.skillsInput;
+        if (data.blacklist) { blacklistWords = data.blacklist; renderBlacklist(); }
+        if (data.tone) setTone(data.tone);
+        if (data.companyName || data.jobDescription) {
+          showToast('Draft restored from auto-save', 'info');
+          analyzeKeywordGap();
+        }
+      } catch(e) {}
+    }
+
+    // ========================
+    // KEYBOARD SHORTCUTS
+    // ========================
+    function openShortcuts() {
+      document.getElementById('shortcutsModal').classList.add('active');
+    }
+
+    function closeShortcuts() {
+      document.getElementById('shortcutsModal').classList.remove('active');
+    }
+
+    function initKeyboardShortcuts() {
+      document.addEventListener('keydown', (e) => {
+        // Don't fire in inputs/textareas unless it's Ctrl+something
+        const inInput = ['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName);
+        
+        if (e.key === '?' && !inInput) { openShortcuts(); return; }
+        if (!e.ctrlKey) return;
+
+        switch(e.key.toLowerCase()) {
+          case 'g':
+            e.preventDefault();
+            handleGenerate();
+            break;
+          case 's':
+            e.preventDefault();
+            saveDraft();
+            showToast('Draft saved!', 'success');
+            break;
+          case 't':
+            e.preventDefault();
+            openTemplateDrawer();
+            break;
+          case 'p':
+            e.preventDefault();
+            if (currentGeneration) previewResume();
+            break;
+        }
+        if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'x') {
+          e.preventDefault();
+          clearAllData();
+        }
+      });
+    }
+
+    // ========================
+    // AUTO-ANALYZE ON JD CHANGE
+    // ========================
+    function initJDAutoAnalyze() {
+      const jdInput = document.getElementById('jobDescription');
+      if (!jdInput) return;
+      let jdTimer = null;
+      jdInput.addEventListener('input', () => {
+        autoSave();
+        clearTimeout(jdTimer);
+        jdTimer = setTimeout(analyzeKeywordGap, 800);
+      });
+      document.getElementById('companyName')?.addEventListener('input', autoSave);
+      document.getElementById('skillsInput')?.addEventListener('input', autoSave);
+    }
+
+    // ========================
     // INIT
     // ========================
     document.addEventListener('DOMContentLoaded', () => {
       currentCandidateId = getCandidateId();
       baseResumeText = localStorage.getItem(getStorageKey('base_resume')) || '';
       selectedTemplate = localStorage.getItem(getStorageKey('selected_template')) || 'template_01';
+      jobApplications = JSON.parse(localStorage.getItem(getStorageKey('job_tracker')) || '[]');
 
       // Initialize new features
       initDragDrop();
       renderSkills();
       renderTemplatesGrid();
       updateWizardUI();
+      renderBlacklist();
+      renderTracker();
+      initKeyboardShortcuts();
+      initJDAutoAnalyze();
+      restoreAutoSave();
 
       // Update template preview
       const template = TEMPLATES.find(t => t.id === selectedTemplate);
