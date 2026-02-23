@@ -1442,7 +1442,7 @@
     .tpl-thumb-lines { padding:14px; display:flex; flex-direction:column; gap:8px; opacity:.85; }
     .tpl-thumb-lines .line { display:block; height:8px; border-radius:999px; background: rgba(255,255,255,.10); }
     .tpl-thumb-lines .w-90 { width:90%; } .tpl-thumb-lines .w-80 { width:80%; } .tpl-thumb-lines .w-70 { width:70%; } .tpl-thumb-lines .w-60 { width:60%; } .tpl-thumb-lines .w-50 { width:50%; }
-    .tpl-thumb-tag { position:absolute; right:10px; bottom:10px; font-size:11px; padding:4px 8px; border-radius:999px; background: rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.10); color: rgba(255,255,255,.85); white-space:nowrap; max-width:80%; overflow:hidden; text-overflow:ellipsis; }
+    .tpl-thumb-tag { position:absolute; right:10px; bottom:10px; font-size:11px; padding:4px 8px; border-radius:999px; background: rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.10); color: rgba(255,255,255,.85); white-space:nowrap; max-width:80%; overflow:hidden; text-overflow:ellipsis; z-index:2; }
 
     .jdm-template-name {
       font-weight: 600;
@@ -2343,17 +2343,7 @@
             <h3 class="jdm-section-title">Resume Template</h3>
             <div id="templateQuickView" style="cursor: pointer;" onclick="openTemplateDrawer()">
               <div style="aspect-ratio: 8.5/11; border: 2px solid var(--border); border-radius: 12px; overflow: hidden; background: linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.01)); margin-bottom: 12px;">
-                <div id="selectedTemplatePreview" style="width:100%;height:100%;">
-                  <div class="tpl-thumb-fallback fill" role="img" aria-label="Selected template preview" style="height:100%;">
-                    <div class="tpl-thumb-lines">
-                      <span class="line w-80"></span>
-                      <span class="line w-60"></span>
-                      <span class="line w-90"></span>
-                      <span class="line w-70"></span>
-                      <span class="line w-50"></span>
-                    </div>
-                  </div>
-                </div>
+                <div id="selectedTemplatePreview" style="width:100%;height:100%;"></div>
               </div>
               <div style="text-align: center; padding: 12px; background: rgba(182, 156, 255, 0.1); border-radius: 8px;">
                 <div style="font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px;" id="selectedTemplateName">Template 01</div>
@@ -3421,7 +3411,7 @@
       selectedTemplate = template.id;
       localStorage.setItem(getStorageKey('selected_template'), template.id);
       document.getElementById('selectedTemplateName').textContent = template.name;
-      renderSelectedTemplatePreview();
+      renderSelectedTemplatePreview(template.id);
       updateSidebar();
       markStepCompleted(4);
       closeTemplateDrawer();
