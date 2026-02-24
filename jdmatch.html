@@ -3288,7 +3288,7 @@
       if (!el) return;
       const cfg = getJDMatchAdminConfig();
       if (cfg.updatedAt) {
-        const tpl = TEMPLATES.find(t => t.id === cfg.defaultTemplateId);
+        const tpl = getAllTemplates().find(t => t.id === cfg.defaultTemplateId);
         el.textContent = 'saved ' + new Date(cfg.updatedAt).toLocaleString() +
           (tpl ? ' | default: ' + tpl.name : '');
       } else {
@@ -3395,7 +3395,7 @@
       const cfg = getJDMatchAdminConfig();
       // Only set default template if user has no stored preference
       if (cfg.defaultTemplateId) {
-        const exists = TEMPLATES.find(t => t.id === cfg.defaultTemplateId);
+        const exists = getAllTemplates().find(t => t.id === cfg.defaultTemplateId);
         const stored = localStorage.getItem(getStorageKey('selected_template'));
         if (exists && !stored) {
           selectedTemplate = cfg.defaultTemplateId;
@@ -4012,7 +4012,7 @@
     }
 
     function confirmTemplateSelection() {
-      const template = TEMPLATES.find(t => t.id === highlightedTemplate) || TEMPLATES[0];
+      const template = getAllTemplates().find(t => t.id === highlightedTemplate) || getAllTemplates()[0];
       if (!template) { closeTemplateDrawer(); return; }
       selectedTemplate = template.id;
       localStorage.setItem(getStorageKey('selected_template'), template.id);
@@ -4257,7 +4257,7 @@
     }
 
     function updateSidebar() {
-      document.getElementById('sidebarTemplate').textContent = TEMPLATES.find(t => t.id === selectedTemplate)?.name || 'Template 01';
+      document.getElementById('sidebarTemplate').textContent = getAllTemplates().find(t => t.id === selectedTemplate)?.name || 'Template 01';
       const targetMode = document.querySelector('input[name="targetMode"]:checked').value;
       if (targetMode === 'manual') {
         const value = document.getElementById('targetSlider').value;
@@ -4366,7 +4366,7 @@
       const fallback = document.getElementById('selectedTemplatePreviewFallback');
       if (!frame) return;
       const id = tplId || selectedTemplate;
-      const tpl = TEMPLATES.find(t => t.id === id) || TEMPLATES[0];
+      const tpl = getAllTemplates().find(t => t.id === id) || getAllTemplates()[0];
       if (!tpl) return;
       let html = '';
       try {
@@ -4390,7 +4390,7 @@
     function renderSelectedTemplatePreview(tplId) { renderSelectedTemplateLivePreview(tplId || selectedTemplate); }
 
     function buildTemplatePreviewSrcdoc(tplId) {
-      const tpl = TEMPLATES.find(t => t.id === tplId);
+      const tpl = getAllTemplates().find(t => t.id === tplId);
       if (!tpl || typeof tpl.render !== 'function') {
         console.warn('[tpl-mini] no render fn for', tplId);
         return '';
@@ -4418,7 +4418,7 @@
         if (!srcdoc) {
           // Guaranteed fallback: CSS skeleton when render fails — never blank
           console.log('[tpl-mini] no srcdoc for', tplId, '— injecting CSS fallback');
-          const tpl = TEMPLATES.find(t => t.id === tplId);
+          const tpl = getAllTemplates().find(t => t.id === tplId);
           const fb = document.createElement('div');
           fb.className = 'tpl-mini-fallback';
           fb.innerHTML = '<div class="tpl-thumb-lines"><span class="line w-80"></span><span class="line w-60"></span><span class="line w-90"></span><span class="line w-70"></span><span class="line w-50"></span></div><div class="tpl-thumb-tag">' + (tpl && tpl.name || tplId) + '</div>';
@@ -4479,7 +4479,7 @@
     // Show CSS skeleton fallback when an iframe preview fails, times out, or has invalid scale
     function showMiniIframeFallback(wrap, tplId, reason) {
       if (!wrap || wrap.querySelector('.tpl-mini-fallback')) return; // already showing
-      const tpl = TEMPLATES.find(t => t.id === tplId);
+      const tpl = getAllTemplates().find(t => t.id === tplId);
       const frame = wrap.querySelector('.tpl-mini-iframe');
       if (frame) frame.style.display = 'none';
       const fb = document.createElement('div');
@@ -4538,7 +4538,7 @@
     }
 
     function selectTemplate(templateId) {
-      const found = TEMPLATES.find(t => t.id === templateId) || TEMPLATES[0];
+      const found = getAllTemplates().find(t => t.id === templateId) || getAllTemplates()[0];
       if (!found) return;
       highlightedTemplate = found.id;
       renderSelectedTemplatePreview(found.id);
@@ -4726,7 +4726,7 @@
           <div class="jdm-history-header" onclick="toggleHistoryItem(${idx})">
             <div>
               <div class="jdm-history-title">${item.companyName}</div>
-              <div class="jdm-history-meta">${new Date(item.createdAt).toLocaleDateString()} • ${TEMPLATES.find(t => t.id === item.templateId)?.name || 'Template'}</div>
+              <div class="jdm-history-meta">${new Date(item.createdAt).toLocaleDateString()} • ${getAllTemplates().find(t => t.id === item.templateId)?.name || 'Template'}</div>
             </div>
             <div class="jdm-history-expand-icon">▼</div>
           </div>
@@ -4800,7 +4800,7 @@
     function updateSettings() {
       const info = baseResumeText ? `Saved (${baseResumeText.length} chars)` : 'Not saved';
       document.getElementById('baseResumeInfo').textContent = info;
-      document.getElementById('currentTemplateInfo').textContent = TEMPLATES.find(t => t.id === selectedTemplate)?.name || 'Template 01';
+      document.getElementById('currentTemplateInfo').textContent = getAllTemplates().find(t => t.id === selectedTemplate)?.name || 'Template 01';
     }
 
     function clearAllData() {
@@ -5196,7 +5196,7 @@
         _migratedTpl = 't' + _num.padStart(2, '0');
         localStorage.setItem(getStorageKey('selected_template'), _migratedTpl);
       }
-      selectedTemplate = (_migratedTpl && TEMPLATES.find(t => t.id === _migratedTpl)) ? _migratedTpl : (TEMPLATES[0]?.id || 't02');
+      selectedTemplate = (_migratedTpl && getAllTemplates().find(t => t.id === _migratedTpl)) ? _migratedTpl : (getAllTemplates()[0]?.id || 't02');
       highlightedTemplate = selectedTemplate;
       jobApplications = JSON.parse(localStorage.getItem(getStorageKey('job_tracker')) || '[]');
 
@@ -5210,10 +5210,18 @@
       initKeyboardShortcuts();
       initJDAutoAnalyze();
       window.addEventListener('resize', layoutTemplateMiniPreviews);
+      // Cross-tab sync: when admin saves a template in another tab, refresh the grid here
+      window.addEventListener('storage', e => {
+        if (e.key === _TPL_STORAGE_KEY) {
+          console.log('[tpl-sync] cross-tab template store updated — refreshing grid');
+          renderTemplatesGrid();
+          _refreshAdminTemplateSelects();
+        }
+      });
       restoreAutoSave();
 
       // Update template preview
-      const template = TEMPLATES.find(t => t.id === selectedTemplate) || TEMPLATES[0];
+      const template = getAllTemplates().find(t => t.id === selectedTemplate) || getAllTemplates()[0];
       if (template) {
         selectedTemplate = template.id;
         highlightedTemplate = template.id;
