@@ -3237,6 +3237,57 @@
     }
 
     // ========================
+    // TEMPLATE FIRESTORE SYNC
+    // Admin templates are persisted to Firestore so they are visible across ALL users/devices.
+    // localStorage acts as a device-local cache that is seeded from Firestore on every page load.
+    // ========================
+    function _ensureFirebaseInit() {
+      if (window.db) return window.db;
+      const firebaseConfig = {
+        apiKey: "AIzaSyBl4Mjn-X8hXq_kpVu7YkOjFhQPqh6YFFs",
+        authDomain: "hireready-405212.firebaseapp.com",
+        projectId: "hireready-405212",
+        storageBucket: "hireready-405212.appspot.com",
+        messagingSenderId: "966687008821",
+        appId: "1:966687008821:web:3c21f43e0ce3e6d5b8e6c7"
+      };
+      try { firebase.initializeApp(firebaseConfig); } catch(e) { /* already initialised */ }
+      window.db = firebase.firestore();
+      return window.db;
+    }
+
+    async function _saveAdminTemplateToFirestore(record) {
+      try {
+        const db = _ensureFirebaseInit();
+        await db.collection('jdmatch_templates').doc(record.id).set(record);
+        console.log('[tpl-firestore] saved to Firestore:', record.id);
+      } catch(e) {
+        console.error('[tpl-firestore] save failed — template is local-only until resolved:', e);
+      }
+    }
+
+    // Fetches all admin templates from Firestore and upserts them into the local cache.
+    // Called on every page load so users always see the latest admin-published templates.
+    async function _syncAdminTemplatesFromFirestore() {
+      try {
+        const db = _ensureFirebaseInit();
+        const snap = await db.collection('jdmatch_templates').where('sourceType', '==', 'admin').get();
+        if (snap.empty) { console.log('[tpl-firestore] no admin templates in Firestore'); return; }
+        const fetched = snap.docs.map(d => d.data());
+        const stored = _loadStoredTemplates();
+        // Upsert — Firestore is the source of truth for admin templates
+        fetched.forEach(t => {
+          const idx = stored.findIndex(s => s.id === t.id);
+          if (idx >= 0) stored[idx] = t; else stored.push(t);
+        });
+        _saveStoredTemplates(stored);
+        console.log('[tpl-firestore] synced', fetched.length, 'admin templates into local cache');
+      } catch(e) {
+        console.error('[tpl-firestore] sync failed — local cache may be stale:', e);
+      }
+    }
+
+    // ========================
     // ROLE-BASED MODE — Phase 1
     // Detects admin vs user mode from URL ?mode=admin param.
     // Safe default: user mode if param is missing or invalid.
@@ -3375,6 +3426,9 @@
       statusEl.textContent = '';
       showToast('Template "' + name + '" saved and visible to users.', 'success');
       console.log('[admin-tpl] added template:', newId, name);
+
+      // Persist to Firestore so the template is visible on ALL devices/browsers, not just this one
+      _saveAdminTemplateToFirestore(record);
 
       // Clear form
       document.getElementById('adminTplName').value = '';
@@ -5183,7 +5237,7 @@
     // ========================
     // INIT
     // ========================
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       seedSystemTemplatesIfMissing(); // Phase 1: validate system templates on startup
       applyJDMatchMode();             // Role mode: admin vs user
       currentCandidateId = getCandidateId();
@@ -5203,6 +5257,8 @@
       // Initialize new features
       initDragDrop();
       renderSkills();
+      // Sync admin templates from Firestore before rendering so new templates are visible
+      await _syncAdminTemplatesFromFirestore();
       renderTemplatesGrid();
       updateWizardUI();
       renderBlacklist();

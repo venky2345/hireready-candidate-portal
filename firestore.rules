@@ -74,6 +74,17 @@ service cloud.firestore {
     }
 
     // ============================================================
+    // JDMATCH TEMPLATES COLLECTION
+    // Admin-authored resume templates shared across all users/devices.
+    // Read is public (users load templates on page init).
+    // Write is open — access is enforced at app level via ?mode=admin URL guard.
+    // ============================================================
+    match /jdmatch_templates/{tplId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // ============================================================
     // DEFAULT DENY
     // ============================================================
     match /{document=**} {
