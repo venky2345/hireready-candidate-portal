@@ -2291,8 +2291,8 @@
       <div class="jdm-admin-add-form" id="adminAddTplForm">
         <div style="font-size:12px;font-weight:700;color:#f87171;margin-bottom:4px;">Add HTML Resume Template</div>
         <div class="jdm-admin-add-form-row">
-          <label>Name *</label>
-          <input type="text" id="adminTplName" placeholder="e.g. Company Branded" />
+          <label>Name <span style="font-size:10px;color:var(--muted2);font-weight:400;">(auto-generated if blank)</span></label>
+          <input type="text" id="adminTplName" placeholder="Leave blank to auto-generate" />
         </div>
         <div class="jdm-admin-add-form-row">
           <label>Tag</label>
@@ -2306,7 +2306,7 @@
         </div>
         <div class="jdm-admin-add-form-row" style="flex-direction:column;align-items:flex-start;">
           <label>HTML Code * (full &lt;!DOCTYPE html&gt; doc recommended; or partial body HTML)</label>
-          <textarea id="adminTplHtml" rows="7" placeholder="&lt;!DOCTYPE html&gt;&lt;html&gt;...&lt;/html&gt;"></textarea>
+          <textarea id="adminTplHtml" rows="7" placeholder="&lt;!DOCTYPE html&gt;&lt;html&gt;...&lt;/html&gt;" onblur="adminTplAutoFillName()"></textarea>
         </div>
         <div class="jdm-admin-add-status" id="adminAddTplStatus"></div>
         <div class="jdm-admin-add-form-row">
@@ -3374,6 +3374,92 @@
       ).join('');
     }
 
+    // ========================
+    // TEMPLATE META INFERENCE
+    // Auto-generates a professional name + category from pasted HTML/CSS.
+    // ========================
+    function inferTemplateMetaFromHtml(htmlCode, cssCode) {
+      const src = ((htmlCode || '') + ' ' + (cssCode || '')).toLowerCase();
+      let name = '';
+      let category = 'custom';
+      let layout = 'single-column';
+      let reason = '';
+
+      // Layout detection
+      const hasTwoCol = /grid-template-columns|display\s*:\s*grid|flex.*row|two.?col|sidebar|column.*left|left.*column|float\s*:\s*left/.test(src);
+      const hasSidebar = /sidebar|aside|side.?bar|left.?panel|right.?panel/.test(src);
+      if (hasSidebar) { layout = 'sidebar'; reason = 'sidebar'; }
+      else if (hasTwoCol) { layout = 'two-column'; reason = 'two-column'; }
+
+      // Font/style cues
+      const hasSerif = /georgia|times|palatino|garamond|merriweather|playfair|serif/.test(src);
+      const hasSansSerif = /arial|helvetica|roboto|inter|lato|open.?sans|montserrat|sans-serif/.test(src);
+      const hasBoldHeader = /font-size\s*:\s*[23456][0-9]px|font-weight\s*:\s*[789]00|font-weight\s*:\s*bold/.test(src);
+      const hasAccentBorder = /border-left\s*:|border-right\s*:|accent|border.*solid.*#[0-9a-f]{3,6}/.test(src);
+      const hasDividers = /border-bottom|border-top|hr\s|<hr|divider/.test(src);
+      const hasCompact = /font-size\s*:\s*1[01]px|margin\s*:\s*[01234]px|padding\s*:\s*[01234]px|compact/.test(src);
+      const hasTimeline = /timeline|::before|content\s*:\s*["']"|border-radius.*50%/.test(src);
+      const hasSkillsFirst = src.indexOf('skill') < src.indexOf('experience') && src.indexOf('skill') > -1 && src.indexOf('experience') > -1;
+      const hasAcademic = /education|university|thesis|gpa|academic|publications/.test(src);
+      const hasExecutive = /executive|director|vp |vice.?president|c-suite|leadership/i.test(src + htmlCode);
+      const hasMinimal = /minimal|clean|simple|white.*space|light.*gray/.test(src);
+      const hasBanner = /background.*#[0-9a-f]{3,6}|background-color.*[^w]|header.*height\s*:\s*[6-9][0-9]px|header.*height\s*:\s*1[0-9]{2}px/.test(src);
+
+      // Name resolution — ordered by specificity
+      if (hasSidebar && hasSerif) { name = 'Executive Sidebar'; category = 'executive'; }
+      else if (hasSidebar) { name = 'Clean Two-Column'; category = 'modern'; }
+      else if (layout === 'two-column' && hasBoldHeader) { name = 'Bold Two-Column'; category = 'modern'; }
+      else if (layout === 'two-column') { name = 'Modern Two-Column'; category = 'modern'; }
+      else if (hasExecutive && hasSerif) { name = 'Executive Serif'; category = 'executive'; }
+      else if (hasExecutive) { name = 'Executive Professional'; category = 'executive'; }
+      else if (hasAcademic) { name = 'Academic Clean'; category = 'academic'; }
+      else if (hasTimeline) { name = 'Timeline Light'; category = 'modern'; }
+      else if (hasAccentBorder && !hasSerif) { name = 'Left Accent Line'; category = 'modern'; }
+      else if (hasAccentBorder && hasSerif) { name = 'Accent Serif'; category = 'classic'; }
+      else if (hasBanner && hasBoldHeader) { name = 'Bold Header Bar'; category = 'modern'; }
+      else if (hasBanner) { name = 'Banner Header'; category = 'modern'; }
+      else if (hasSkillsFirst) { name = 'Skills-First'; category = 'modern'; }
+      else if (hasDividers && hasSerif) { name = 'Classic Divider'; category = 'classic'; }
+      else if (hasDividers) { name = 'Divider Sections'; category = 'classic'; }
+      else if (hasCompact && hasSansSerif) { name = 'Compact Professional'; category = 'compact'; }
+      else if (hasCompact) { name = 'Compact Classic'; category = 'compact'; }
+      else if (hasSerif) { name = 'Classic ATS'; category = 'classic'; }
+      else if (hasMinimal) { name = 'Modern Minimal'; category = 'modern'; }
+      else if (hasBoldHeader) { name = 'Bold Professional'; category = 'modern'; }
+      else if (hasSansSerif) { name = 'Clean Professional'; category = 'modern'; }
+      else { name = 'Custom Professional'; category = 'custom'; reason = 'fallback'; }
+
+      console.log('[tpl-meta] inferred:', name, '| category:', category, '| layout:', layout, reason ? '| reason: ' + reason : '');
+      return { suggestedName: name, suggestedCategory: category, layoutType: layout };
+    }
+
+    // Make name unique — append numeric suffix if name already taken
+    function _makeTemplateNameUnique(baseName) {
+      const existing = new Set(getAllTemplates().map(t => t.name.toLowerCase()));
+      if (!existing.has(baseName.toLowerCase())) return baseName;
+      let i = 2;
+      while (existing.has((baseName + ' ' + i).toLowerCase())) i++;
+      console.log('[tpl-meta] duplicate resolved:', baseName, '->', baseName + ' ' + i);
+      return baseName + ' ' + i;
+    }
+
+    // Auto-fill name input when admin leaves HTML textarea
+    function adminTplAutoFillName() {
+      const nameEl = document.getElementById('adminTplName');
+      const htmlEl = document.getElementById('adminTplHtml');
+      const cssEl  = document.getElementById('adminTplCss');
+      if (!nameEl || nameEl.value.trim()) return; // skip if admin already typed a name
+      const html = (htmlEl?.value || '').trim();
+      if (!html || html.length < 10) return;
+      const meta = inferTemplateMetaFromHtml(html, cssEl?.value || '');
+      const uniqueName = _makeTemplateNameUnique(meta.suggestedName);
+      nameEl.value = uniqueName;
+      // Also fill tag if blank
+      const tagEl = document.getElementById('adminTplTag');
+      if (tagEl && !tagEl.value.trim()) tagEl.value = meta.suggestedCategory.charAt(0).toUpperCase() + meta.suggestedCategory.slice(1);
+      console.log('[tpl-meta] auto-filled name field:', uniqueName);
+    }
+
     // Toggle the add-template form open/closed
     function adminToggleAddForm() {
       if (jdMatchMode !== 'admin') return;
@@ -3391,16 +3477,31 @@
     function adminAddTemplateSubmit() {
       if (jdMatchMode !== 'admin') return; // guard: admin only
       const statusEl = document.getElementById('adminAddTplStatus');
-      const name = (document.getElementById('adminTplName')?.value || '').trim();
-      const tag  = (document.getElementById('adminTplTag')?.value  || '').trim() || 'Custom';
       const html = (document.getElementById('adminTplHtml')?.value || '').trim();
       const css  = (document.getElementById('adminTplCss')?.value  || '').trim();
       const publish = document.getElementById('adminTplPublish')?.checked !== false;
 
-      // Validation
-      if (!name) { statusEl.textContent = 'Error: Template name is required.'; return; }
-      if (!html)  { statusEl.textContent = 'Error: HTML code is required.';     return; }
+      // HTML is the only required field
+      if (!html)  { statusEl.textContent = 'Error: HTML code is required.'; return; }
       if (html.length < 10) { statusEl.textContent = 'Error: HTML code is too short.'; return; }
+
+      // Name: use manual input if provided, otherwise auto-generate
+      let nameRaw = (document.getElementById('adminTplName')?.value || '').trim();
+      if (!nameRaw) {
+        console.log('[tpl-meta] inference started (no manual name)');
+        const meta = inferTemplateMetaFromHtml(html, css);
+        nameRaw = meta.suggestedName;
+        console.log('[tpl-meta] inferred name:', nameRaw, '| category:', meta.suggestedCategory);
+      }
+      const name = _makeTemplateNameUnique(nameRaw);
+      console.log('[tpl-meta] final saved template name:', name);
+
+      // Tag: use manual input if provided, otherwise derive from inference
+      let tag = (document.getElementById('adminTplTag')?.value || '').trim();
+      if (!tag) {
+        const meta = inferTemplateMetaFromHtml(html, css);
+        tag = meta.suggestedCategory.charAt(0).toUpperCase() + meta.suggestedCategory.slice(1);
+      }
 
       // Generate a unique id
       const newId = 'atpl_' + Date.now().toString(36);
