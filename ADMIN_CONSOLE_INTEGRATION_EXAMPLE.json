@@ -1,0 +1,529 @@
+{
+  "adminConsoleExport": {
+    "candidateDetails": {
+      "recordInfo": {
+        "candidateId": "CAND_AJITH_405770",
+        "status": "Create",
+        "lastUpdated": "2024-03-08 9:14:01 AM",
+        "createdDate": "2024-01-15"
+      },
+      "personalInformation": {
+        "fullName": "Ajith Kumar",
+        "preferredName": "Ajith",
+        "gender": "Male",
+        "dateOfBirth": "1990-05-20",
+        "age": 34,
+        "bloodGroup": "O+",
+        "maritalStatus": "Married",
+        "phoneNumber": "+91-9876543210",
+        "whatsappNumber": "+91-9876543210",
+        "simNumber": "9876543210",
+        "professionalEmail": "ajith.kumar@hireready.com",
+        "personalEmail": "ajith@gmail.com"
+      },
+      "identification": {
+        "aadharNumber": "1234 5678 9012",
+        "panNumber": "ABCDE1234F",
+        "passportNumber": "N12345678",
+        "uanNumber": "100123456789"
+      },
+      "addressInformation": {
+        "permanentAddress": {
+          "address": "123 Main Street, Bangalore",
+          "city": "Bangalore",
+          "state": "Karnataka",
+          "pincode": "560001",
+          "country": "India"
+        },
+        "currentAddress": {
+          "address": "456 Tech Park, Whitefield",
+          "city": "Bangalore",
+          "state": "Karnataka",
+          "pincode": "560066",
+          "country": "India"
+        }
+      },
+      "bankingInformation": {
+        "bankAccountNumber": "0123456789123456",
+        "ifscCode": "SBIN0001234",
+        "bankName": "State Bank of India",
+        "accountHolderName": "Ajith Kumar"
+      },
+      "employmentHistory": {
+        "totalExperience": {
+          "years": 5,
+          "months": 0
+        },
+        "currentCompany": {
+          "companyName": "Tech Solutions Pvt Ltd",
+          "designation": "Senior IT Support Engineer",
+          "relevantExperience": {
+            "years": 4,
+            "months": 11
+          },
+          "payrollCompany": {
+            "years": 4,
+            "months": 0
+          },
+          "joiningDate": "2019-10-14",
+          "ctc": 500000,
+          "inHandSalary": 35000,
+          "monthlyGross": 41666,
+          "remarks": "Good performer, SLA compliant",
+          "skills": [
+            "Windows 10",
+            "Windows 11",
+            "Active Directory",
+            "ServiceNow",
+            "Remote Desktop",
+            "Network Troubleshooting",
+            "DNS",
+            "DHCP",
+            "VPN",
+            "Task Manager"
+          ],
+          "tools": [
+            "ServiceNow",
+            "Remote Desktop",
+            "Task Manager",
+            "Event Viewer",
+            "Device Manager",
+            "Active Directory Users & Computers"
+          ]
+        },
+        "previousCompany1": {
+          "companyName": "ABC IT Services",
+          "designation": "IT Support Technician",
+          "experience": {
+            "years": 1,
+            "months": 0
+          },
+          "joiningDate": "2018-10-14",
+          "lastWorkingDate": "2019-10-13",
+          "ctc": 250000,
+          "inHandSalary": 20000,
+          "monthlyGross": 20833,
+          "remarks": "Joined Tech Solutions"
+        }
+      },
+      "educationHistory": {
+        "highestGraduation": {
+          "degree": "Bachelor of Technology",
+          "fieldOfStudy": "Computer Science",
+          "college": "Indian Institute of Technology",
+          "university": "Anna University",
+          "collegeAddress": "Chennai, TN",
+          "universityAddress": "Chennai, TN",
+          "percentage": 75.5,
+          "cgpa": 7.55,
+          "duration": "4 Years",
+          "completionDelay": 0,
+          "yearOfCompletion": 2018
+        },
+        "intermediate": {
+          "type": "Senior Secondary",
+          "board": "CBSE",
+          "school": "Central Public School",
+          "schoolAddress": "Bangalore, KA",
+          "boardAddress": "New Delhi",
+          "percentage": 85.0,
+          "duration": "2 Years",
+          "yearOfCompletion": 2014
+        },
+        "10thStandard": {
+          "board": "CBSE",
+          "school": "Central Public School",
+          "schoolAddress": "Bangalore, KA",
+          "percentage": 82.5,
+          "yearOfCompletion": 2012
+        }
+      },
+      "certifications": [
+        {
+          "name": "CompTIA A+",
+          "provider": "CompTIA",
+          "issuedDate": "2019-06-15",
+          "expiryDate": "2025-06-14",
+          "status": "Active"
+        },
+        {
+          "name": "Microsoft AZ-900",
+          "provider": "Microsoft",
+          "issuedDate": "2020-12-20",
+          "expiryDate": "2024-12-20",
+          "status": "Expired"
+        },
+        {
+          "name": "ITIL Foundation",
+          "provider": "AXELOS",
+          "issuedDate": "2021-03-10",
+          "expiryDate": "2024-03-10",
+          "status": "Expired"
+        }
+      ],
+      "familyDetails": {
+        "father": {
+          "name": "Kumar Reddy",
+          "dateOfBirth": "1960-03-15",
+          "age": 64
+        },
+        "mother": {
+          "name": "Lakshmi Devi",
+          "dateOfBirth": "1965-07-22",
+          "age": 59
+        }
+      }
+    },
+    "resume": {
+      "fileName": "Ajith_Kumar_Resume.pdf",
+      "extractedText": "AJITH KUMAR\n+91-9876543210 | ajith.kumar@hireready.com | Bangalore\n\nPROFESSIONAL SUMMARY\n5 years of IT Support experience with strong background in Windows desktop support, network troubleshooting, and ServiceNow ticketing. Proven track record of improving FCR by 17% and reducing MTTR by 25%. Strong customer service skills combined with technical expertise.\n\nTECHNICAL SKILLS\n• Operating Systems: Windows 10 (Expert), Windows 11 (Intermediate), macOS (Beginner)\n• Networking: TCP/IP, DNS, DHCP, VPN, Active Directory, LAN/WiFi\n• Support Software: ServiceNow (Intermediate), Remote Desktop (Expert), AnyDesk (Intermediate)\n• Troubleshooting Tools: Task Manager, Event Viewer, Device Manager, Performance Monitor\n• Certifications: CompTIA A+, Microsoft AZ-900 (Expired), ITIL Foundation (Expired)\n\nWORK EXPERIENCE\nSenior IT Support Engineer | Tech Solutions Pvt Ltd (Oct 2019 - Present)\n• Support 200+ users across multiple departments in a fast-paced environment\n• Manage ServiceNow tickets with 92% FCR rate and SLA compliance\n• Reduced average resolution time from 120 minutes to 85 minutes\n• Led Windows 11 migration project for 150 users with zero data loss\n• Troubleshoot complex network and system issues independently\n• Managed printer fleet - reduced printer-related tickets by 90%\n• Provided remote support via Remote Desktop and AnyDesk\n• Active Directory user and group management\n• Mentored 3 L1 support staff\n\nIT Support Technician | ABC IT Services (Oct 2018 - Oct 2019)\n• Provided first-line and second-line technical support\n• Resolved hardware and software issues\n• Maintained 95% resolution accuracy\n• Handled 50+ support tickets daily\n\nKEY ACHIEVEMENTS\n• Improved First Call Resolution (FCR) from 65% to 82% through systematic documentation\n• Reduced Mean Time To Repair (MTTR) from 120 to 85 minutes\n• Successfully managed Windows 11 migration for 150 users\n• 92% SLA compliance rate maintained consistently\n• Zero critical incidents escalated due to improper handling\n\nSOFT SKILLS\n• Excellent customer service and communication\n• Root cause analysis and systematic problem-solving\n• Time management under SLA constraints\n• Escalation management and prioritization\n• Documentation and knowledge base contribution\n• Team collaboration and mentoring\n\nCARTIFICATIONS\n• CompTIA A+ (June 2019 - June 2025) - ACTIVE\n• Microsoft AZ-900 (December 2020 - December 2024) - EXPIRED\n• ITIL Foundation (March 2021 - March 2024) - EXPIRED\n\nLANGUAGES\nEnglish (Fluent), Tamil (Fluent), Hindi (Basic), Kannada (Conversational)\n"
+    }
+  },
+  "extractedCandidateConfig": {
+    "candidate": {
+      "personalInfo": {
+        "candidateId": "CAND_AJITH_405770",
+        "firstName": "Ajith",
+        "lastName": "Kumar",
+        "email": "ajith.kumar@hireready.com",
+        "phone": "+91-9876543210",
+        "title": "Senior IT Support Engineer",
+        "yearsOfExperience": 5
+      },
+      "targetRole": {
+        "title": "Senior IT Support Engineer",
+        "domain": "IT Support",
+        "level": "intermediate-advanced",
+        "description": "Desktop support, network troubleshooting, SLA management, team mentoring"
+      },
+      "experienceLevel": {
+        "beginner": false,
+        "intermediate": true,
+        "advanced": true,
+        "certifications": [
+          "CompTIA A+ (Active)",
+          "Microsoft AZ-900 (Expired)",
+          "ITIL Foundation (Expired)"
+        ]
+      },
+      "technicalSkills": [
+        {
+          "category": "Operating Systems",
+          "skills": [
+            {
+              "name": "Windows 10",
+              "proficiency": "expert",
+              "yearsOfExperience": 5
+            },
+            {
+              "name": "Windows 11",
+              "proficiency": "intermediate",
+              "yearsOfExperience": 2
+            },
+            {
+              "name": "macOS",
+              "proficiency": "beginner",
+              "yearsOfExperience": 0.5
+            }
+          ]
+        },
+        {
+          "category": "Networking",
+          "skills": [
+            {
+              "name": "TCP/IP",
+              "proficiency": "intermediate",
+              "yearsOfExperience": 4
+            },
+            {
+              "name": "DNS",
+              "proficiency": "intermediate",
+              "yearsOfExperience": 3
+            },
+            {
+              "name": "DHCP",
+              "proficiency": "intermediate",
+              "yearsOfExperience": 3
+            },
+            {
+              "name": "VPN",
+              "proficiency": "beginner",
+              "yearsOfExperience": 1
+            },
+            {
+              "name": "Active Directory",
+              "proficiency": "intermediate",
+              "yearsOfExperience": 4
+            }
+          ]
+        },
+        {
+          "category": "Support Software",
+          "skills": [
+            {
+              "name": "ServiceNow",
+              "proficiency": "intermediate",
+              "yearsOfExperience": 5
+            },
+            {
+              "name": "Remote Desktop",
+              "proficiency": "expert",
+              "yearsOfExperience": 5
+            },
+            {
+              "name": "AnyDesk",
+              "proficiency": "intermediate",
+              "yearsOfExperience": 2
+            }
+          ]
+        },
+        {
+          "category": "Troubleshooting Tools",
+          "skills": [
+            {
+              "name": "Task Manager",
+              "proficiency": "expert",
+              "yearsOfExperience": 5
+            },
+            {
+              "name": "Event Viewer",
+              "proficiency": "intermediate",
+              "yearsOfExperience": 4
+            },
+            {
+              "name": "Device Manager",
+              "proficiency": "expert",
+              "yearsOfExperience": 5
+            },
+            {
+              "name": "Performance Monitor",
+              "proficiency": "intermediate",
+              "yearsOfExperience": 3
+            }
+          ]
+        }
+      ],
+      "softSkills": [
+        {
+          "skill": "Customer Communication",
+          "proficiency": "advanced",
+          "description": "Excellent communication with non-technical users, 92% FCR rate"
+        },
+        {
+          "skill": "Problem Solving",
+          "proficiency": "advanced",
+          "description": "Root cause analysis and systematic troubleshooting, 85-minute MTTR"
+        },
+        {
+          "skill": "Time Management",
+          "proficiency": "advanced",
+          "description": "SLA compliance, working under pressure, prioritization"
+        },
+        {
+          "skill": "Escalation Management",
+          "proficiency": "intermediate",
+          "description": "Knowing when and how to escalate, zero critical incidents"
+        },
+        {
+          "skill": "Mentoring & Training",
+          "proficiency": "intermediate",
+          "description": "Mentored 3 L1 support staff successfully"
+        }
+      ],
+      "workExperience": [
+        {
+          "company": "Tech Solutions Pvt Ltd",
+          "position": "Senior IT Support Engineer",
+          "duration": {
+            "from": "2019-10-14",
+            "to": "present"
+          },
+          "yearsInRole": 5,
+          "keyResponsibilities": [
+            "Support 200+ users across multiple departments",
+            "Manage ServiceNow tickets with SLA compliance",
+            "Windows 11 migration project management",
+            "Network troubleshooting and diagnostics",
+            "Active Directory user and group management",
+            "Printer fleet management",
+            "Remote support via Remote Desktop and AnyDesk",
+            "Mentoring L1 support staff"
+          ],
+          "toolsUsed": [
+            "Windows 10",
+            "Windows 11",
+            "ServiceNow",
+            "Remote Desktop",
+            "Active Directory",
+            "Task Manager",
+            "Event Viewer"
+          ],
+          "achievementHighlights": [
+            "Improved FCR (First Call Resolution) from 65% to 82%",
+            "Reduced MTTR (Mean Time To Repair) from 120 to 85 minutes",
+            "Successfully managed Windows 11 migration for 150 users with zero data loss",
+            "Maintained 92% SLA compliance rate consistently",
+            "Reduced printer-related tickets by 90%",
+            "Mentored 3 L1 support staff"
+          ],
+          "ctc": 500000,
+          "inHandSalary": 35000
+        },
+        {
+          "company": "ABC IT Services",
+          "position": "IT Support Technician",
+          "duration": {
+            "from": "2018-10-14",
+            "to": "2019-10-13"
+          },
+          "yearsInRole": 1,
+          "keyResponsibilities": [
+            "First-line and second-line technical support",
+            "Hardware and software issue resolution",
+            "Daily ticket management (50+ tickets)"
+          ],
+          "toolsUsed": [
+            "Windows 10",
+            "Email support",
+            "Basic networking"
+          ],
+          "achievementHighlights": [
+            "Maintained 95% resolution accuracy"
+          ]
+        }
+      ],
+      "projectExperience": [
+        {
+          "title": "Windows 11 Migration Project",
+          "duration": "6 months",
+          "role": "Senior Support Engineer",
+          "description": "Led migration of 150 users from Windows 10 to Windows 11 with comprehensive support",
+          "skillsUsed": [
+            "Windows 10",
+            "Windows 11",
+            "Active Directory",
+            "Group Policy",
+            "Remote Desktop"
+          ],
+          "outcome": "100% successful migration with zero data loss"
+        },
+        {
+          "title": "Printer Fleet Optimization",
+          "duration": "Ongoing",
+          "role": "Primary Support",
+          "description": "Manages all network printer issues, driver problems, and print queue management",
+          "skillsUsed": [
+            "Device Manager",
+            "Network troubleshooting",
+            "Printer drivers"
+          ],
+          "outcome": "90% reduction in printer-related tickets"
+        },
+        {
+          "title": "Active Directory Management",
+          "duration": "5 years",
+          "role": "Administrator",
+          "description": "User and group management, security policy implementation, group policy management",
+          "skillsUsed": [
+            "Active Directory",
+            "Group Policy Object (GPO)",
+            "User security management"
+          ],
+          "outcome": "Secure and efficient user management for 200+ users"
+        }
+      ],
+      "strengths": [
+        "Expert Windows 10/11 troubleshooting",
+        "Strong ServiceNow ticketing experience with high FCR",
+        "Active Directory administration expertise",
+        "Excellent customer service and communication skills",
+        "Proven mentoring and leadership capabilities",
+        "Consistent SLA compliance (92%+)",
+        "Proactive approach to continuous improvement"
+      ],
+      "weaknesses": [
+        "VPN knowledge needs deepening",
+        "Limited macOS experience",
+        "Certifications need renewal (AZ-900, ITIL expired)",
+        "Need to develop PowerShell scripting skills",
+        "Cloud infrastructure knowledge limited"
+      ],
+      "careerGoals": {
+        "shortTerm": "Maintain senior role, renew expired certifications, develop automation skills",
+        "longTerm": "Transition to IT Infrastructure or Systems Administration role",
+        "focusAreas": [
+          "PowerShell scripting and automation",
+          "Advanced Azure and cloud infrastructure",
+          "SCCM and software deployment",
+          "IT architecture and planning"
+        ]
+      },
+      "customQuestionFilters": {
+        "includeTopics": [
+          "windows-support",
+          "windows-updates",
+          "drivers",
+          "performance",
+          "login-profile",
+          "lan-wifi",
+          "dns",
+          "dhcp",
+          "active-directory",
+          "servicenow",
+          "sla",
+          "escalation",
+          "communication",
+          "itil"
+        ],
+        "excludeTopics": [
+          "macOS",
+          "linux",
+          "programming",
+          "sales",
+          "hr"
+        ],
+        "emphasizeAreas": [
+          "Advanced troubleshooting",
+          "SLA and escalation management",
+          "Team mentoring and leadership",
+          "ServiceNow advanced features",
+          "Active Directory administration"
+        ],
+        "difficultyDistribution": {
+          "beginner": 5,
+          "intermediate": 50,
+          "expert": 45
+        }
+      }
+    },
+    "generatedHTML": {
+      "title": "Senior IT Support Engineer Preparation - Ajith Kumar",
+      "subtitle": "Personalized Interview & Professional Development",
+      "sections": {
+        "01_welcome": {
+          "headline": "Welcome, Ajith!",
+          "customContent": "Your personalized learning path for Senior IT Support Engineer role focusing on team leadership, advanced troubleshooting, and SLA management. 5 years of experience with proven track record of 92% FCR and continuous improvement."
+        },
+        "02_domain_specific": {
+          "title": "Your Domain: IT Support (Senior Level)",
+          "focusAreas": [
+            "Advanced Desktop & Network Support",
+            "Leadership and Team Mentoring",
+            "SLA Management and Escalation",
+            "ServiceNow Ticketing at Scale"
+          ],
+          "questions": 40,
+          "description": "Based on your 5 years with Windows 10/11, Active Directory, and ServiceNow expertise"
+        }
+      }
+    }
+  },
+  "metadata": {
+    "sourceSystem": "HireReady Services Admin Console",
+    "exportedDate": "2024-03-08",
+    "extractionMethod": "Admin Console Export + Resume Parsing",
+    "candidateId": "CAND_AJITH_405770",
+    "version": "2.0",
+    "notes": "This config combines data from Admin Console candidate details form and extracted resume content"
+  }
+}
