@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -2804,20 +2804,247 @@
 
     const _CSS_T12 = _CSS_BASE + `body{font-family:Arial,sans-serif;font-size:10pt;color:#111827;line-height:1.5;background:#fff;}h1.r-name{font-size:18pt;color:#065f46;font-weight:700;margin-bottom:3px;}.r-contact{font-size:9pt;color:#047857;margin-bottom:14px;}.section{margin-bottom:13px;}h2.sec-title{font-size:10pt;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:1px;border-bottom:1.5px solid #a7f3d0;padding-bottom:3px;margin-bottom:7px;}.summary-p{color:#111827;}.grid-3{display:flex;flex-wrap:wrap;gap:3px 14px;}.cap-card{font-size:9.5pt;}.cap-card::before{content:"◉ ";color:#059669;font-size:7pt;vertical-align:middle;}.skills-row{display:flex;flex-wrap:wrap;gap:3px 14px;}.skill-item{font-size:9.5pt;}.skill-item::before{content:"◉ ";color:#059669;font-size:7pt;vertical-align:middle;}.section.exp-sec .role-block{position:relative;padding-left:18px;margin-bottom:11px;}.section.exp-sec .role-block::before{content:"";position:absolute;left:4px;top:5px;width:8px;height:8px;border-radius:50%;background:#059669;}.section.exp-sec .role-block::after{content:"";position:absolute;left:7.5px;top:13px;bottom:-5px;width:1px;background:#a7f3d0;}.section.exp-sec .role-block:last-child::after{display:none;}.role-title{font-weight:700;font-size:10.5pt;color:#065f46;}.role-dates{font-size:9pt;color:#6b7280;}.role-co{font-size:10pt;color:#047857;margin-bottom:3px;}.r-bullets{padding-left:14px;}.r-bullets li{font-size:10pt;margin-bottom:2px;}.edu-deg{font-weight:700;font-size:10pt;}.edu-dt{font-size:9pt;color:#6b7280;}.edu-sch{font-size:10pt;color:#047857;}.cert-list{font-size:10pt;}@media print{.section.exp-sec .role-block{padding-left:0!important;position:static!important;}.section.exp-sec .role-block::before,.section.exp-sec .role-block::after{display:none!important;}}`;
 
-    const TEMPLATES = [
-      { id: 't01', name: 'Classic ATS',         tag: 'Classic',       render: d => buildCanonicalResumeHTML(d, _CSS_T01) },
-      { id: 't02', name: 'Modern Minimal',       tag: 'Modern',        render: d => buildCanonicalResumeHTML(d, _CSS_T02) },
-      { id: 't03', name: 'Executive Serif',      tag: 'Premium',       render: d => buildCanonicalResumeHTML(d, _CSS_T03) },
-      { id: 't04', name: 'Compact Professional', tag: 'Professional',  render: d => buildCanonicalResumeHTML(d, _CSS_T04) },
-      { id: 't05', name: 'Divider Sections',     tag: 'Clean',         render: d => buildCanonicalResumeHTML(d, _CSS_T05) },
-      { id: 't06', name: 'Left Accent Line',     tag: 'Modern',        render: d => buildCanonicalResumeHTML(d, _CSS_T06) },
-      { id: 't07', name: 'Bold Header Bar',      tag: 'Premium',       render: d => buildCanonicalResumeHTML(d, _CSS_T07) },
-      { id: 't08', name: 'Clean Two-Column',     tag: 'Professional',  render: d => buildCanonicalResumeHTML(d, _CSS_T08) },
-      { id: 't09', name: 'Skills-First',         tag: 'Modern',        render: d => buildCanonicalResumeHTML(d, _CSS_T09) },
-      { id: 't10', name: 'Experience-First',     tag: 'Classic',       render: d => buildCanonicalResumeHTML(d, _CSS_T10) },
-      { id: 't11', name: 'Academic Clean',       tag: 'Clean',         render: d => buildCanonicalResumeHTML(d, _CSS_T11) },
-      { id: 't12', name: 'Timeline Light',       tag: 'Modern',        render: d => buildCanonicalResumeHTML(d, _CSS_T12) }
+    // ========================
+    // TEMPLATE SCHEMA — Phase 1
+    // Shared editable-sections metadata (foundation for Phase 3 user editor)
+    // ========================
+    const _TPL_EDITABLE_SECTIONS = [
+      { key: 'summary',        label: 'Professional Summary',          enabledByDefault: true,  repeatable: false, itemType: 'text' },
+      { key: 'competencies',   label: 'Core Professional Competencies',enabledByDefault: true,  repeatable: false, itemType: 'list' },
+      { key: 'skills',         label: 'Technical Skills and Tools',    enabledByDefault: true,  repeatable: false, itemType: 'list' },
+      { key: 'experience',     label: 'Professional Experience',       enabledByDefault: true,  repeatable: true,  itemType: 'role' },
+      { key: 'projects',       label: 'Projects',                      enabledByDefault: true,  repeatable: true,  itemType: 'project' },
+      { key: 'education',      label: 'Education',                     enabledByDefault: true,  repeatable: true,  itemType: 'edu' },
+      { key: 'certifications', label: 'Certifications and Trainings',  enabledByDefault: true,  repeatable: true,  itemType: 'cert' },
+      { key: 'monitoring',     label: 'Monitoring Performance',        enabledByDefault: false, repeatable: false, itemType: 'text' },
+      { key: 'compliance',     label: 'Compliance and Process',        enabledByDefault: false, repeatable: false, itemType: 'text' },
+      { key: 'additionalInfo', label: 'Additional Information',        enabledByDefault: false, repeatable: false, itemType: 'text' }
     ];
+
+    // Full template registry — 12 ATS-friendly system templates.
+    // Schema fields: id, name, tag, sourceType, isPublished, category, ownerUserId,
+    //   designTokens, editableSections, createdAt, updatedAt, render
+    const TEMPLATES = [
+      {
+        id: 't01', name: 'Classic ATS', tag: 'Classic',
+        sourceType: 'system', isPublished: true, category: 'classic', ownerUserId: null,
+        createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-01T00:00:00.000Z',
+        designTokens: { fontFamily: 'Arial, Helvetica, sans-serif', accentColor: '#003366', backgroundColor: '#fff', layoutType: 'single-column', headerStyle: 'simple-navy' },
+        editableSections: _TPL_EDITABLE_SECTIONS,
+        render: d => buildCanonicalResumeHTML(d, _CSS_T01)
+      },
+      {
+        id: 't02', name: 'Modern Minimal', tag: 'Modern',
+        sourceType: 'system', isPublished: true, category: 'modern', ownerUserId: null,
+        createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-01T00:00:00.000Z',
+        designTokens: { fontFamily: "'Segoe UI', Arial, sans-serif", accentColor: '#64748b', backgroundColor: '#fff', layoutType: 'single-column', headerStyle: 'light-minimal' },
+        editableSections: _TPL_EDITABLE_SECTIONS,
+        render: d => buildCanonicalResumeHTML(d, _CSS_T02)
+      },
+      {
+        id: 't03', name: 'Executive Serif', tag: 'Premium',
+        sourceType: 'system', isPublished: true, category: 'premium', ownerUserId: null,
+        createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-01T00:00:00.000Z',
+        designTokens: { fontFamily: "Georgia, 'Times New Roman', serif", accentColor: '#7c5c2e', backgroundColor: '#fff', layoutType: 'single-column', headerStyle: 'centered-double-border' },
+        editableSections: _TPL_EDITABLE_SECTIONS,
+        render: d => buildCanonicalResumeHTML(d, _CSS_T03)
+      },
+      {
+        id: 't04', name: 'Compact Professional', tag: 'Professional',
+        sourceType: 'system', isPublished: true, category: 'professional', ownerUserId: null,
+        createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-01T00:00:00.000Z',
+        designTokens: { fontFamily: "'Calibri', Arial, sans-serif", accentColor: '#1a3a5c', backgroundColor: '#fff', layoutType: 'single-column', headerStyle: 'side-by-side' },
+        editableSections: _TPL_EDITABLE_SECTIONS,
+        render: d => buildCanonicalResumeHTML(d, _CSS_T04)
+      },
+      {
+        id: 't05', name: 'Divider Sections', tag: 'Clean',
+        sourceType: 'system', isPublished: true, category: 'clean', ownerUserId: null,
+        createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-01T00:00:00.000Z',
+        designTokens: { fontFamily: 'Verdana, Arial, sans-serif', accentColor: '#0d7a6e', backgroundColor: '#fff', layoutType: 'single-column', headerStyle: 'teal-ruled-dividers' },
+        editableSections: _TPL_EDITABLE_SECTIONS,
+        render: d => buildCanonicalResumeHTML(d, _CSS_T05)
+      },
+      {
+        id: 't06', name: 'Left Accent Line', tag: 'Modern',
+        sourceType: 'system', isPublished: true, category: 'modern', ownerUserId: null,
+        createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-01T00:00:00.000Z',
+        designTokens: { fontFamily: "'Trebuchet MS', Arial, sans-serif", accentColor: '#4f46e5', backgroundColor: '#fff', layoutType: 'single-column', headerStyle: 'left-indigo-border' },
+        editableSections: _TPL_EDITABLE_SECTIONS,
+        render: d => buildCanonicalResumeHTML(d, _CSS_T06)
+      },
+      {
+        id: 't07', name: 'Bold Header Bar', tag: 'Premium',
+        sourceType: 'system', isPublished: true, category: 'premium', ownerUserId: null,
+        createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-01T00:00:00.000Z',
+        designTokens: { fontFamily: 'Arial, sans-serif', accentColor: '#0f172a', backgroundColor: '#0f172a', layoutType: 'single-column', headerStyle: 'dark-header-bar' },
+        editableSections: _TPL_EDITABLE_SECTIONS,
+        render: d => buildCanonicalResumeHTML(d, _CSS_T07)
+      },
+      {
+        id: 't08', name: 'Clean Two-Column', tag: 'Professional',
+        sourceType: 'system', isPublished: true, category: 'professional', ownerUserId: null,
+        createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-01T00:00:00.000Z',
+        designTokens: { fontFamily: "'Segoe UI', Arial, sans-serif", accentColor: '#2d6a4f', backgroundColor: '#f0f4f8', layoutType: 'two-column', headerStyle: 'green-header-sidebar' },
+        editableSections: _TPL_EDITABLE_SECTIONS,
+        render: d => buildCanonicalResumeHTML(d, _CSS_T08)
+      },
+      {
+        id: 't09', name: 'Skills-First', tag: 'Modern',
+        sourceType: 'system', isPublished: true, category: 'modern', ownerUserId: null,
+        createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-01T00:00:00.000Z',
+        designTokens: { fontFamily: 'Arial, Helvetica, sans-serif', accentColor: '#7c3aed', backgroundColor: '#fff', layoutType: 'single-column', headerStyle: 'purple-skills-highlight' },
+        editableSections: _TPL_EDITABLE_SECTIONS,
+        render: d => buildCanonicalResumeHTML(d, _CSS_T09)
+      },
+      {
+        id: 't10', name: 'Experience-First', tag: 'Classic',
+        sourceType: 'system', isPublished: true, category: 'classic', ownerUserId: null,
+        createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-01T00:00:00.000Z',
+        designTokens: { fontFamily: "'Segoe UI', Arial, sans-serif", accentColor: '#b45309', backgroundColor: '#fff', layoutType: 'single-column', headerStyle: 'amber-left-rule' },
+        editableSections: _TPL_EDITABLE_SECTIONS,
+        render: d => buildCanonicalResumeHTML(d, _CSS_T10)
+      },
+      {
+        id: 't11', name: 'Academic Clean', tag: 'Clean',
+        sourceType: 'system', isPublished: true, category: 'clean', ownerUserId: null,
+        createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-01T00:00:00.000Z',
+        designTokens: { fontFamily: "'Palatino Linotype', Palatino, Georgia, serif", accentColor: '#1e3a5f', backgroundColor: '#fff', layoutType: 'single-column', headerStyle: 'centered-serif' },
+        editableSections: _TPL_EDITABLE_SECTIONS,
+        render: d => buildCanonicalResumeHTML(d, _CSS_T11)
+      },
+      {
+        id: 't12', name: 'Timeline Light', tag: 'Modern',
+        sourceType: 'system', isPublished: true, category: 'modern', ownerUserId: null,
+        createdAt: '2025-01-01T00:00:00.000Z', updatedAt: '2025-01-01T00:00:00.000Z',
+        designTokens: { fontFamily: 'Arial, sans-serif', accentColor: '#065f46', backgroundColor: '#fff', layoutType: 'single-column', headerStyle: 'green-dot-timeline' },
+        editableSections: _TPL_EDITABLE_SECTIONS,
+        render: d => buildCanonicalResumeHTML(d, _CSS_T12)
+      }
+    ];
+
+    // ========================
+    // TEMPLATE REGISTRY SERVICE — Phase 1
+    // localStorage persistence for admin/user templates; system templates stay in-memory
+    // ========================
+    const _TPL_STORAGE_KEY = 'hireready_templates_v1';
+
+    // Basic validation — returns array of error strings, or [] if valid
+    function _validateTemplateRecord(tpl) {
+      const errs = [];
+      if (!tpl || typeof tpl !== 'object') return ['Template must be an object'];
+      if (!tpl.id || typeof tpl.id !== 'string')   errs.push('id is required (string)');
+      if (!tpl.name || typeof tpl.name !== 'string') errs.push('name is required (string)');
+      if (!['system','admin','user'].includes(tpl.sourceType)) errs.push("sourceType must be 'system'|'admin'|'user'");
+      return errs;
+    }
+
+    // Load stored (admin/user) templates from localStorage — never returns system templates
+    function _loadStoredTemplates() {
+      try {
+        const raw = localStorage.getItem(_TPL_STORAGE_KEY);
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        return Array.isArray(arr) ? arr.filter(t => t && t.id && t.sourceType !== 'system') : [];
+      } catch(e) {
+        console.warn('[tpl-svc] failed to parse stored templates:', e);
+        return [];
+      }
+    }
+
+    function _saveStoredTemplates(arr) {
+      try { localStorage.setItem(_TPL_STORAGE_KEY, JSON.stringify(arr)); }
+      catch(e) { console.error('[tpl-svc] failed to persist templates:', e); }
+    }
+
+    // Returns all templates: system (in-memory TEMPLATES) + stored admin/user
+    function getAllTemplates() {
+      const stored = _loadStoredTemplates();
+      const systemIds = new Set(TEMPLATES.map(t => t.id));
+      return [...TEMPLATES, ...stored.filter(t => !systemIds.has(t.id))];
+    }
+
+    // Returns templates visible to userId: published system/admin + user's own private templates
+    function getPublishedTemplatesForUser(userId) {
+      return getAllTemplates().filter(t => {
+        if (t.sourceType === 'system') return t.isPublished !== false;
+        if (t.sourceType === 'admin')  return t.isPublished === true;
+        if (t.sourceType === 'user')   return !userId || t.ownerUserId === userId;
+        return false;
+      });
+    }
+
+    // Lookup by id across system + stored templates
+    function getTemplateById(id) {
+      return getAllTemplates().find(t => t.id === id) || null;
+    }
+
+    // Persist a new or updated admin-created template
+    function saveAdminTemplate(template) {
+      const tpl = { ...template, sourceType: 'admin', updatedAt: new Date().toISOString() };
+      if (!tpl.createdAt) tpl.createdAt = tpl.updatedAt;
+      const errs = _validateTemplateRecord(tpl);
+      if (errs.length) { console.error('[tpl-svc] saveAdminTemplate failed:', errs); return { ok: false, errors: errs }; }
+      const stored = _loadStoredTemplates();
+      const idx = stored.findIndex(t => t.id === tpl.id);
+      if (idx >= 0) stored[idx] = tpl; else stored.push(tpl);
+      _saveStoredTemplates(stored);
+      console.log('[tpl-svc] admin template saved:', tpl.id);
+      return { ok: true, template: tpl };
+    }
+
+    // Persist a new or updated user-created template
+    function saveUserTemplate(template) {
+      const tpl = { ...template, sourceType: 'user', isPublished: false, updatedAt: new Date().toISOString() };
+      if (!tpl.createdAt) tpl.createdAt = tpl.updatedAt;
+      const errs = _validateTemplateRecord(tpl);
+      if (errs.length) { console.error('[tpl-svc] saveUserTemplate failed:', errs); return { ok: false, errors: errs }; }
+      if (!tpl.ownerUserId) return { ok: false, errors: ['ownerUserId is required for user templates'] };
+      const stored = _loadStoredTemplates();
+      const idx = stored.findIndex(t => t.id === tpl.id);
+      if (idx >= 0) stored[idx] = tpl; else stored.push(tpl);
+      _saveStoredTemplates(stored);
+      console.log('[tpl-svc] user template saved:', tpl.id);
+      return { ok: true, template: tpl };
+    }
+
+    // Patch any stored non-system template
+    function updateTemplate(templateId, patch) {
+      const systemIds = new Set(TEMPLATES.map(t => t.id));
+      if (systemIds.has(templateId)) return { ok: false, errors: ['System templates are read-only'] };
+      const stored = _loadStoredTemplates();
+      const idx = stored.findIndex(t => t.id === templateId);
+      if (idx < 0) return { ok: false, errors: ['Template not found: ' + templateId] };
+      stored[idx] = { ...stored[idx], ...patch, updatedAt: new Date().toISOString() };
+      _saveStoredTemplates(stored);
+      return { ok: true, template: stored[idx] };
+    }
+
+    // Delete a stored non-system template
+    function deleteTemplate(templateId) {
+      const systemIds = new Set(TEMPLATES.map(t => t.id));
+      if (systemIds.has(templateId)) return { ok: false, errors: ['System templates cannot be deleted'] };
+      const stored = _loadStoredTemplates();
+      const next = stored.filter(t => t.id !== templateId);
+      if (next.length === stored.length) return { ok: false, errors: ['Template not found: ' + templateId] };
+      _saveStoredTemplates(next);
+      console.log('[tpl-svc] template deleted:', templateId);
+      return { ok: true };
+    }
+
+    // Called on init — validates system templates are intact (they live in TEMPLATES, not localStorage)
+    function seedSystemTemplatesIfMissing() {
+      const seen = new Set(); let valid = 0, invalid = 0;
+      TEMPLATES.forEach(t => {
+        if (seen.has(t.id)) { console.error('[tpl-svc] duplicate id:', t.id); invalid++; return; }
+        seen.add(t.id);
+        const errs = _validateTemplateRecord(t);
+        if (errs.length) { console.error('[tpl-svc] invalid system template', t.id, errs); invalid++; }
+        else valid++;
+      });
+      if (invalid === 0) console.log('[tpl-svc] seed check OK —', valid, 'system templates ready');
+    }
+
     let currentStep = 1;
     let completedSteps = new Set();
     let skillsMap = new Map(); // {skill: frequency}
@@ -3908,7 +4135,7 @@
 
     function renderTemplatesGrid() {
       const grid = document.getElementById('templatesGrid');
-      grid.innerHTML = TEMPLATES.map(template => `
+      grid.innerHTML = getAllTemplates().map(template => `
         <div class="jdm-template-card ${highlightedTemplate === template.id ? 'selected' : ''}" onclick="selectTemplate('${template.id}')">
           <div class="jdm-template-checkmark">✔</div>
           <div class="jdm-template-preview">
@@ -3929,7 +4156,7 @@
       const sort = document.getElementById('templateSort').value;
       const grid = document.getElementById('templatesGrid');
       
-      let filtered = TEMPLATES.filter(t => t.name.toLowerCase().includes(search) || t.tag.toLowerCase().includes(search));
+      let filtered = getAllTemplates().filter(t => t.name.toLowerCase().includes(search) || t.tag.toLowerCase().includes(search));
       if (sort !== 'default') {
         filtered = filtered.filter(t => t.tag.toLowerCase() === sort.toLowerCase());
       }
@@ -4597,6 +4824,7 @@
     // INIT
     // ========================
     document.addEventListener('DOMContentLoaded', () => {
+      seedSystemTemplatesIfMissing(); // Phase 1: validate system templates on startup
       currentCandidateId = getCandidateId();
       baseResumeText = localStorage.getItem(getStorageKey('base_resume')) || '';
       const _storedTplRaw = localStorage.getItem(getStorageKey('selected_template'));
