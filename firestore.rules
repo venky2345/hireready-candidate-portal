@@ -1,92 +1,97 @@
-// Firestore Security Rules - HireReady Services (Admin Only)
-// Version: 3.0
-// Last Updated: February 17, 2026
+// Firestore Security Rules - HireReady Services
+// Version: 4.0
+// Last Updated: February 24, 2026
 
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ============================================================
-    // HELPER FUNCTIONS
-    // ============================================================
-
     function isSignedIn() {
       return request.auth != null;
     }
 
-    function isAdmin() {
-      // For development: Allow any authenticated user
-      // TODO: Set up custom claims (role=admin) or ensure admin uids exist in /admins collection
-      return request.auth != null;
+    function isAdminEmail() {
+      return isSignedIn()
+        && request.auth.token.email != null
+        && request.auth.token.email == "ducktales048@gmail.com";
     }
 
-    // ============================================================
-    // CANDIDATES COLLECTION
-    // ============================================================
+    // ----------------------------
+    // CANDIDATE MASTER DOCS
+    // ----------------------------
+
     match /candidates/{candidateId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow get: if isSignedIn();
+      allow list: if isAdminEmail();
+      allow create, update, delete: if isAdminEmail();
     }
 
-    // ============================================================
-    // CANDIDATE COLLECTION (NEW PATH)
-    // ============================================================
-    match /candidate/{cid} {
-      match /subscription/{subDoc} {
-        allow read: if isSignedIn();
-        allow write: if isAdmin();
-      }
+    match /candidate/{candidateId} {
+      allow get: if isSignedIn();
+      allow list: if isAdminEmail();
+      allow create, update, delete: if isAdminEmail();
     }
 
-    // ============================================================
-    // RESUME HISTORY
-    // ============================================================
-    match /candidates/{candidateId}/resume_history/{historyId} {
-      allow get, list, create: if isSignedIn();
-      allow update, delete: if isAdmin();
-    }
-
-    // ============================================================
-    // CANDIDATE_SERVICES COLLECTION
-    // ============================================================
     match /candidate_services/{candidateId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
+      allow get: if isSignedIn();
+      allow list: if isAdminEmail();
+      allow create, update, delete: if isAdminEmail();
     }
 
-    // SERVICES CATALOG (READABLE BY SIGNED-IN USERS)
-    match /services_catalog/{docId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
+    // ----------------------------
+    // SUBSCRIPTION DOCS
+    // ----------------------------
+
+    match /candidates/{candidateId}/subscription/{docId} {
+      allow get: if isSignedIn();
+      allow list: if isAdminEmail();
+      allow create, update, delete: if isAdminEmail();
     }
 
-    match /admins/{uid} {
-      allow read: if request.auth != null && request.auth.uid == uid;
-      allow write: if false;
+    match /candidates/{candidateId}/subscriptions/{docId} {
+      allow get: if isSignedIn();
+      allow list: if isAdminEmail();
+      allow create, update, delete: if isAdminEmail();
     }
 
-    // ============================================================
-    // USERPROFILES COLLECTION
-    // ============================================================
-    match /userProfiles/{uid} {
-      allow read: if isSignedIn() && request.auth.uid == uid;
-      allow read, write: if isAdmin();
+    match /candidate/{candidateId}/subscription/{docId} {
+      allow get: if isSignedIn();
+      allow list: if isAdminEmail();
+      allow create, update, delete: if isAdminEmail();
     }
 
-    // ============================================================
-    // JDMATCH TEMPLATES COLLECTION
-    // Admin-authored resume templates shared across all users/devices.
-    // Read is public (users load templates on page init).
-    // Write is open — access is enforced at app level via ?mode=admin URL guard.
-    // ============================================================
+    match /candidate/{candidateId}/subscriptions/{docId} {
+      allow get: if isSignedIn();
+      allow list: if isAdminEmail();
+      allow create, update, delete: if isAdminEmail();
+    }
+
+    match /candidate_services/{candidateId}/subscription/{docId} {
+      allow get: if isSignedIn();
+      allow list: if isAdminEmail();
+      allow create, update, delete: if isAdminEmail();
+    }
+
+    match /candidate_services/{candidateId}/subscriptions/{docId} {
+      allow get: if isSignedIn();
+      allow list: if isAdminEmail();
+      allow create, update, delete: if isAdminEmail();
+    }
+
+    // ----------------------------
+    // JDMATCH TEMPLATES
+    // Admin-created resume templates shared across all users/devices.
+    // Anyone can read (users load templates on page init).
+    // Only admin can write.
+    // ----------------------------
     match /jdmatch_templates/{tplId} {
       allow read: if true;
-      allow write: if true;
+      allow write: if isAdminEmail();
     }
 
-    // ============================================================
+    // ----------------------------
     // DEFAULT DENY
-    // ============================================================
+    // ----------------------------
     match /{document=**} {
       allow read, write: if false;
     }
