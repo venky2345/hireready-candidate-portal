@@ -243,6 +243,7 @@ input[type="checkbox"]{width:auto;margin:0}
           <button class="btn gray" onclick="backToList()">Close</button>
           <button class="btn primary" onclick="saveData()">Save Changes</button>
           <button class="btn success" onclick="openHireReadyServices()">HireReady Services</button>
+          <button class="btn danger" onclick="openJDMatchAdmin()" title="Open JD Match in admin mode for this candidate">JD Match (Admin)</button>
           <button class="btn primary" onclick="saveData(); openRegistrationFormModal()">Registration Form</button>
           <button class="btn primary" onclick="exportPdf()">Export PDF</button>
           <button class="btn danger" onclick="deleteCandidate()">Delete Record</button>
@@ -3872,6 +3873,16 @@ async function openHireReadyServices() {
   console.log('OPENING_CANDIDATE_PORTAL', { cid });
 
   window.open(`user.html?cid=${encodeURIComponent(cid)}`, "_blank");
+}
+
+// Open JD Match Resume in admin mode for current candidate
+function openJDMatchAdmin() {
+  const cid = document.getElementById("candidateId")?.value?.trim();
+  if (!cid) {
+    popupError("No candidate loaded. Please load a candidate first.");
+    return;
+  }
+  window.open(`jdmatch.html?mode=admin&cid=${encodeURIComponent(cid)}`, "_blank");
 }
 
 async function deleteAllCloud() {

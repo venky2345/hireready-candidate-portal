@@ -1746,7 +1746,7 @@
       // Redirect to dedicated JD Match page
       if (serviceKey === 'jdMatchResume') {
         const candidateId = document.getElementById('candidateIdDisplay').textContent || 'unknown';
-        window.location.href = `jdmatch.html?cid=${encodeURIComponent(candidateId)}`;
+        window.location.href = `jdmatch.html?cid=${encodeURIComponent(candidateId)}&mode=user`;
         return;
       }
 

@@ -1451,6 +1451,80 @@
     .tpl-mini-wrap::after { content:""; position:absolute; inset:0; background:linear-gradient(to top,rgba(9,10,22,0.14),rgba(9,10,22,0.03) 40%,transparent); pointer-events:none; z-index:2; }
     .tpl-mini-iframe { position:absolute; border:0; pointer-events:none; background:#fff; transform-origin:top left; box-shadow:0 0 0 1px rgba(0,0,0,0.03); }
     .tpl-mini-wrap .tpl-thumb-tag { position:absolute; right:8px; bottom:8px; z-index:5; max-width:calc(100% - 16px); padding:4px 10px; font-size:12px; line-height:1.2; border-radius:999px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; background:rgba(12,14,28,0.78); border:1px solid rgba(255,255,255,0.14); backdrop-filter:blur(6px); }
+
+    /* ========================
+       ROLE-BASED MODE STYLES
+       ======================== */
+    .jdm-admin-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: rgba(239,68,68,0.15);
+      border: 1px solid rgba(239,68,68,0.4);
+      border-radius: 999px;
+      color: #f87171;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .5px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .jdm-admin-panel {
+      display: none;
+      background: rgba(239,68,68,0.06);
+      border-bottom: 1px solid rgba(239,68,68,0.25);
+      padding: 10px 28px;
+      gap: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .jdm-admin-only { display: none !important; }
+    /* When body carries admin mode class, reveal admin-only elements */
+    body.jdm-mode-admin .jdm-admin-only   { display: block !important; }
+    body.jdm-mode-admin .jdm-admin-only.flex { display: flex  !important; }
+    body.jdm-mode-admin .jdm-admin-panel  { display: flex   !important; }
+    .jdm-admin-panel-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #f87171;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      white-space: nowrap;
+    }
+    .jdm-admin-cfg-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .jdm-admin-cfg-label {
+      font-size: 12px;
+      color: var(--muted2);
+      white-space: nowrap;
+    }
+    .jdm-admin-cfg-select {
+      padding: 5px 10px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .jdm-admin-cfg-btn {
+      padding: 5px 14px;
+      background: rgba(239,68,68,0.12);
+      border: 1px solid rgba(239,68,68,0.4);
+      border-radius: 6px;
+      color: #f87171;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .jdm-admin-cfg-btn:hover { background: rgba(239,68,68,0.22); }
+
     /* Fallback skeleton — shown when iframe preview cannot render */
     .tpl-mini-fallback { position:absolute; inset:0; display:flex; flex-direction:column; background:linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02)); z-index:1; }
     .tpl-mini-fallback .tpl-thumb-lines { flex:1; justify-content:center; }
@@ -2148,6 +2222,22 @@
       <h1 class="jdm-title">JD Match Resume Generator</h1>
       <button class="jdm-back-btn" onclick="openShortcuts()" title="Keyboard Shortcuts" style="font-size:16px;">&#x2328;&#xfe0f; Shortcuts</button>
       <button class="jdm-back-btn" onclick="openHowItWorks()" title="How it works" style="font-size:16px;">&#x2753; How it works</button>
+      <!-- Admin mode badge — only visible when ?mode=admin -->
+      <span id="jdmModeBadge" class="jdm-admin-badge" style="display:none;">&#x2699; ADMIN MODE</span>
+    </div>
+
+    <!-- ADMIN CONTROLS PANEL — hidden in user mode, shown in admin mode -->
+    <div class="jdm-admin-panel" id="jdmAdminPanel" aria-label="Admin Controls">
+      <span class="jdm-admin-panel-label">&#x2699; Admin Controls</span>
+      <div class="jdm-admin-cfg-row">
+        <span class="jdm-admin-cfg-label">Default template for users:</span>
+        <select id="adminDefaultTplSelect" class="jdm-admin-cfg-select" onchange="adminPreviewDefaultTpl()"></select>
+        <button class="jdm-admin-cfg-btn" onclick="adminSaveDefaultTemplate()">Save for All Users</button>
+      </div>
+      <div class="jdm-admin-cfg-row">
+        <span class="jdm-admin-cfg-label">Active admin config:</span>
+        <span id="adminCfgStatus" style="font-size:11px;color:var(--muted2);">not saved</span>
+      </div>
     </div>
 
     <!-- HERO SECTION -->
@@ -3043,6 +3133,99 @@
         else valid++;
       });
       if (invalid === 0) console.log('[tpl-svc] seed check OK —', valid, 'system templates ready');
+    }
+
+    // ========================
+    // ROLE-BASED MODE — Phase 1
+    // Detects admin vs user mode from URL ?mode=admin param.
+    // Safe default: user mode if param is missing or invalid.
+    // ========================
+    function getJDMatchMode() {
+      const param = new URLSearchParams(window.location.search).get('mode');
+      // Admin mode requires explicit ?mode=admin — never accidental
+      return param === 'admin' ? 'admin' : 'user';
+    }
+    const jdMatchMode = getJDMatchMode();
+    const _JDM_ADMIN_CFG_KEY = 'hr_jdmatch_admin_config_v1';
+
+    function getJDMatchAdminConfig() {
+      try { return JSON.parse(localStorage.getItem(_JDM_ADMIN_CFG_KEY) || '{}'); }
+      catch(e) { return {}; }
+    }
+    function setJDMatchAdminConfig(patch) {
+      const cfg = { ...getJDMatchAdminConfig(), ...patch, updatedAt: new Date().toISOString() };
+      localStorage.setItem(_JDM_ADMIN_CFG_KEY, JSON.stringify(cfg));
+      console.log('[jdm-cfg] admin config saved', cfg);
+      return cfg;
+    }
+
+    // Apply mode class to body, show/hide badge and panel
+    function applyJDMatchMode() {
+      document.body.classList.add('jdm-mode-' + jdMatchMode);
+      const badge = document.getElementById('jdmModeBadge');
+      if (badge) badge.style.display = jdMatchMode === 'admin' ? '' : 'none';
+      // Populate admin default-template select
+      if (jdMatchMode === 'admin') {
+        const sel = document.getElementById('adminDefaultTplSelect');
+        if (sel) {
+          const cfg = getJDMatchAdminConfig();
+          sel.innerHTML = getAllTemplates().map(t =>
+            `<option value="${t.id}" ${cfg.defaultTemplateId === t.id ? 'selected' : ''}>${t.name}</option>`
+          ).join('');
+        }
+        _refreshAdminCfgStatus();
+        console.log('[jdm-mode] admin mode active — admin controls unlocked');
+      } else {
+        // User mode: apply admin-configured defaults
+        applyJDMatchAdminConfigToUser();
+        console.log('[jdm-mode] user mode active');
+      }
+    }
+
+    function _refreshAdminCfgStatus() {
+      const el = document.getElementById('adminCfgStatus');
+      if (!el) return;
+      const cfg = getJDMatchAdminConfig();
+      if (cfg.updatedAt) {
+        const tpl = TEMPLATES.find(t => t.id === cfg.defaultTemplateId);
+        el.textContent = 'saved ' + new Date(cfg.updatedAt).toLocaleString() +
+          (tpl ? ' | default: ' + tpl.name : '');
+      } else {
+        el.textContent = 'not saved';
+      }
+    }
+
+    // Admin saves a default template id — this will be read by user mode on load
+    function adminSaveDefaultTemplate() {
+      const sel = document.getElementById('adminDefaultTplSelect');
+      if (!sel || jdMatchMode !== 'admin') return;
+      setJDMatchAdminConfig({ defaultTemplateId: sel.value });
+      _refreshAdminCfgStatus();
+      showToast('Default template saved for all users: ' + sel.options[sel.selectedIndex]?.text, 'success');
+    }
+
+    function adminPreviewDefaultTpl() {
+      const sel = document.getElementById('adminDefaultTplSelect');
+      if (sel && jdMatchMode === 'admin') {
+        highlightedTemplate = sel.value;
+        renderSelectedTemplatePreview(sel.value);
+      }
+    }
+
+    // User mode: read admin config and apply non-overriding defaults
+    function applyJDMatchAdminConfigToUser() {
+      if (jdMatchMode !== 'user') return;
+      const cfg = getJDMatchAdminConfig();
+      // Only set default template if user has no stored preference
+      if (cfg.defaultTemplateId) {
+        const exists = TEMPLATES.find(t => t.id === cfg.defaultTemplateId);
+        const stored = localStorage.getItem(getStorageKey('selected_template'));
+        if (exists && !stored) {
+          selectedTemplate = cfg.defaultTemplateId;
+          highlightedTemplate = cfg.defaultTemplateId;
+          console.log('[jdm-mode] applied admin default template:', cfg.defaultTemplateId);
+        }
+      }
     }
 
     let currentStep = 1;
@@ -4825,6 +5008,7 @@
     // ========================
     document.addEventListener('DOMContentLoaded', () => {
       seedSystemTemplatesIfMissing(); // Phase 1: validate system templates on startup
+      applyJDMatchMode();             // Role mode: admin vs user
       currentCandidateId = getCandidateId();
       baseResumeText = localStorage.getItem(getStorageKey('base_resume')) || '';
       const _storedTplRaw = localStorage.getItem(getStorageKey('selected_template'));
