@@ -1,6 +1,6 @@
 // Firestore Security Rules - HireReady Services (Admin Only)
-// Version: 3.1
-// Last Updated: February 24, 2026
+// Version: 3.0
+// Last Updated: February 17, 2026
 
 rules_version = '2';
 service cloud.firestore {
@@ -100,7 +100,7 @@ service cloud.firestore {
 // METHOD 1: Firebase Console (Web UI) - Easiest
 // ─────────────────────────────────────────────
 // 1. Go to https://console.firebase.google.com
-// 2. Select project: hirereadyservices-741cd
+// 2. Select project: hirereadyservices-9a8de
 // 3. Firestore Database → Rules tab (top)
 // 4. Copy content above this comment
 // 5. Paste into the editor
@@ -116,7 +116,7 @@ service cloud.firestore {
 //    firebase login
 //
 // 3. Set project:
-//    firebase use hirereadyservices-741cd
+//    firebase use hirereadyservices-9a8de
 //
 // 4. Deploy rules:
 //    firebase deploy --only firestore:rules
