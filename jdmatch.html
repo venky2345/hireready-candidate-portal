@@ -5491,10 +5491,20 @@
           })
         });
 
-        const data = await response.json();
+        // parse safely
+        const raw = await response.text();
+        let data;
+        try {
+          data = JSON.parse(raw);
+        } catch (parseErr) {
+          console.error('Non-JSON response from generateResume', response.status, response.headers.get('content-type'), raw.substring(0, 300));
+          showToast(`Server returned non-JSON response (status ${response.status}). Check Netlify Functions logs for generateResume.`, 'error');
+          throw new Error('non-json response');
+        }
 
-        if (!response.ok) {
-          throw new Error(data.error || 'Generation failed');
+        if (!response.ok || (data && data.ok === false)) {
+          const msg = data && data.error ? data.error : `Status ${response.status}`;
+          throw new Error(msg);
         }
 
         // Wait for progress animation to complete
@@ -5588,17 +5598,28 @@
     }
 
     function updateSidebar() {
-      document.getElementById('sidebarTemplate').textContent = getAllTemplates().find(t => t.id === selectedTemplate)?.name || 'Template 01';
-      const targetMode = document.querySelector('input[name="targetMode"]:checked').value;
+      const tplEl = document.getElementById('sidebarTemplate');
+      if (tplEl) tplEl.textContent = getAllTemplates().find(t => t.id === selectedTemplate)?.name || 'Template 01';
+      const modeEl = document.querySelector('input[name="targetMode"]:checked');
+      const targetMode = modeEl ? modeEl.value : 'auto';
+      const sidebarTarget = document.getElementById('sidebarTarget');
       if (targetMode === 'manual') {
-        const value = document.getElementById('targetSlider').value;
-        document.getElementById('sidebarTarget').textContent = `Manual (${value}%)`;
+        const slider = document.getElementById('targetSlider');
+        if (slider && sidebarTarget) {
+          const value = slider.value;
+          sidebarTarget.textContent = `Manual (${value}%)`;
+        }
       } else {
-        document.getElementById('sidebarTarget').textContent = 'Auto (90–95%)';
+        if (sidebarTarget) sidebarTarget.textContent = 'Auto (90–95%)';
       }
-      const skills = document.getElementById('skillsInput').value;
-      document.getElementById('sidebarSkills').textContent = skills ? skills.split(',').length + ' skills' : '–';
-      document.getElementById('sidebarResume').textContent = baseResumeText ? 'Saved' : 'Not saved';
+      const skillsInput = document.getElementById('skillsInput');
+      const sidebarSkills = document.getElementById('sidebarSkills');
+      if (sidebarSkills) {
+        const skills = skillsInput ? skillsInput.value : '';
+        sidebarSkills.textContent = skills ? skills.split(',').length + ' skills' : '–';
+      }
+      const sidebarResume = document.getElementById('sidebarResume');
+      if (sidebarResume) sidebarResume.textContent = baseResumeText ? 'Saved' : 'Not saved';
     }
 
     // ========================

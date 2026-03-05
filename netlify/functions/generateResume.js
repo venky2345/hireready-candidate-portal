@@ -59,7 +59,8 @@ exports.handler = async (event, context) => {
 
   const openaiKey = process.env.OPENAI_API_KEY;
   if (!openaiKey) {
-    return respond(500, { ok: false, error: 'OPENAI_API_KEY is not set' });
+    console.log('generateResume error: OPENAI_API_KEY missing');
+    return respond(500, { ok: false, error: 'OPENAI_API_KEY is not configured in Netlify environment variables' });
   }
 
   const targetMode = String(targetMatchMode).toLowerCase();
@@ -148,12 +149,19 @@ Requirements:
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    console.error('OpenAI API error:', error);
-    return respond(500, { ok: false, error: 'OpenAI API error: ' + (error.error?.message || 'Unknown error') });
+    let errorBody = '';
+    try { errorBody = await response.text(); } catch(e) {}
+    console.log('OpenAI API error status', response.status, errorBody);
+    return respond(500, { ok: false, error: 'OpenAI API error', details: `status ${response.status}` });
   }
 
-  const data = await response.json();
+  let data;
+  try {
+    data = await response.json();
+  } catch (e) {
+    console.log('OpenAI API returned non-JSON', e);
+    return respond(500, { ok: false, error: 'OpenAI API returned non-JSON response' });
+  }
   const content = data.choices?.[0]?.message?.content;
 
   if (!content) {
@@ -200,7 +208,7 @@ Requirements:
 
     return respond(200, responseBody);
   } catch (err) {
-    console.error('generateResume error', err);
+    console.log('generateResume error', err);
     return respond(500, { ok: false, error: 'Resume generation failed. Check Netlify function logs.' });
   }
 };

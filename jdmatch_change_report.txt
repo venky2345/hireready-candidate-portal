@@ -2648,6 +2648,71 @@ JDMATCH RUNTIME CRASH FIX + AI SAFE FALLBACK CHANGE REPORT (ROUND 17)
    AI: open Guided Editor, click ✦ AI on bullet/summary - if endpoint fails, fallback generates suggestion and shows "AI server not configured" toast.
 
 10) Rollback instructions
+   Revert updateSidebar guards and restore original element accesses.
+   Revert handleGenerate parsing to direct response.json() and remove toast/logging.
+   Revert showPhasedProgress/hidePhasedProgress to previous versions without null guards (if reintroduced accidentally).
+   Revert generateResume.js modifications (env var message, error handling, logging) to prior state.
+
+================================================================================
+JDMATCH NULL DOM & JSON/NETLIFY FUNCTION FIXES REPORT (ROUND 18)
+================================================================================
+
+1) Timestamp
+   2026-03-05
+
+2) Active file(s) edited
+   jdmatch.html
+   netlify/functions/generateResume.js
+
+3) Change request (Fix updateSidebar null, progress overlay classList null, JSON parsing, generateResume 500/JSON)
+   Resolve runtime console errors on Netlify:
+   - "Cannot set properties of null (setting 'textContent')" in updateSidebar
+   - "Cannot read properties of null (reading 'classList')" during generation
+   - Prevent UI crash when generateResume returns HTML by implementing safe JSON parsing
+   Also ensure generateResume function always returns JSON and logs failures clearly.
+
+4) Root cause (missing DOM nodes; response.json on HTML; function throwing/returning non-JSON)
+   updateSidebar assumed sidebar elements always exist; some flows lacked them causing null access. showPhasedProgress/hidePhasedProgress operated on elements that may be absent. handleGenerate called response.json() unconditionally, which threw when server returned Netlify error page (HTML). generateResume.js allowed uncaught errors and returned HTML/500 leading to client-side parse issues.
+
+5) Exact changes applied
+   - Added guards to all element lookups in updateSidebar; skip updates when missing.
+   - Enhancements to showPhasedProgress/hidePhasedProgress were already in place; confirmed null-safety.
+   - Rewrote handleGenerate fetch handling: read raw text, JSON.parse with try/catch, show informative toast on non-JSON, log details, then handle response.ok and data.ok checks.
+   - Updated netlify/functions/generateResume.js:
+     * Clearer env var error message and log.
+     * Added try/catch around OpenAI fetch response handling, logging non-JSON or HTTP status.
+     * Ensured all returns use respond() with JSON content-type.
+     * Added console.log lines for missing env, OpenAI errors, parse failures.
+
+6) Exact locations changed
+   - jdmatch.html:
+     * updateSidebar function (~line 5588) with guard logic.
+     * handleGenerate function (~line 5465-5498) replaced fetch/parse block.
+     * (existing show/hidePhasedProgress lines unchanged but verified null-safe earlier).
+   - netlify/functions/generateResume.js:
+     * ENV var check around line ~30 updated message and logging.
+     * OpenAI fetch error handling block around lines ~70-95 reworked.
+     * Final catch logging adjusted.
+
+7) Before snippet
+   updateSidebar: direct getElementById(...).textContent assignments without guards.
+   handleGenerate: `const data = await response.json(); if (!response.ok) { throw new Error(data.error||'Generation failed'); }`
+   generateResume.js: env var check returned 'OPENAI_API_KEY is not set'; OpenAI fetch unguarded parse; errors logged via console.error.
+
+8) After snippet
+   updateSidebar: obtains elements into variables, checks existence before modifying textContent; calculates targetMode safely.
+   handleGenerate: fetch response.text(); try JSON.parse; toast on non-JSON; logs; throw on bad status or data.ok false.
+   generateResume.js: logs missing env var; error message updated; OpenAI fetch non-ok returns errorBody; JSON.parse try/catch; logs additional info; catch logs using console.log.
+
+9) Runtime verification steps (Netlify + local)
+   LOCAL: python server, open jdmatch.html, trigger updateSidebar by toggling options that hide sidebar elements, call generate; verify no null DOM errors and handleGenerate shows friendly toast if server returns HTML. NETLIFY: after deploy, open URL, watch console while clicking Generate; confirm no classList errors and no "Unexpected token <". Also test generateResume.js directly via curl/POST to check JSON responses on error.
+
+10) Rollback instructions
+   As above in previous section; revert each change to original state if needed.
+
+================================================================================
+END OF REPORT
+================================================================================
    Revert showPhasedProgress to remove null checks and Promise.resolve() early return.
    Revert hidePhasedProgress to remove null checks and early return.
    Revert jdmGEAIGenerate catch to remove showToast line.
