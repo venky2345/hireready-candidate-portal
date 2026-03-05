@@ -2607,5 +2607,51 @@ JDMATCH FEATURES 1-10 IMPLEMENTATION AND ATS OPTIMIZATION SUITE (ROUND 16)
     - Persistent optimization snapshots in localStorage for historical tracking
 
 ================================================================================
+JDMATCH RUNTIME CRASH FIX + AI SAFE FALLBACK CHANGE REPORT (ROUND 17)
+================================================================================
+
+1) Timestamp
+   2026-03-05
+
+2) Active file edited
+   jdmatch.html
+
+3) Change request (Fix Generate Matched Resume crash + AI safe fallback)
+   Fix Netlify runtime crash when clicking "Generate Matched Resume" (null classList error). Make AI actions fail safely with fallback and clear toast message when Netlify Functions or API key not configured.
+
+4) Root cause (null DOM nodes in progress overlay; AI endpoint/env not configured)
+   showPhasedProgress() and hidePhasedProgress() accessed DOM elements without null checks, causing "Cannot read properties of null (reading 'classList')" on Netlify where progress overlay elements may be missing. AI fetch to /.netlify/functions/rewriteBlock failed silently without user feedback when endpoint not configured.
+
+5) Exact changes applied
+   - Added null checks in showPhasedProgress(): if overlay missing, return Promise.resolve(); if phaseElement missing, skip classList ops; cache progressBar/progressPercentage and check before setting style/textContent.
+   - Added null checks in hidePhasedProgress(): if overlay missing, return early; check progressBar/progressPercentage before setting.
+   - Added showToast in jdmGEAIGenerate catch: "AI server is not configured on this site. Using local rewrite fallback. Configure Netlify env var OPENAI_API_KEY for full AI." before calling _jdmGEAILocalRewrite.
+
+6) Exact locations changed
+   - showPhasedProgress function: lines ~5353-5409 (added if (!overlay) return Promise.resolve(); if (phaseElement) ...; const progressBar = ...; if (progressBar) ...; if (phaseElement) { ... })
+   - hidePhasedProgress function: lines ~5410-5425 (added if (!overlay) return; const progressBar = ...; if (progressBar) ...; const progressPercentage = ...; if (progressPercentage) ...)
+   - jdmGEAIGenerate catch: lines ~9125-9127 (added showToast('AI server is not configured...', 'warning'); before _jdmGEAISetSuggestion)
+
+7) Before snippet
+   showPhasedProgress: overlay.classList.add('active'); phaseElement.classList.add('active'); document.getElementById('progressBar').style.width = ...; document.getElementById('progressPercentage').textContent = ...; phaseElement.classList.remove('active'); phaseElement.classList.add('completed');
+   hidePhasedProgress: overlay.classList.remove('active'); document.getElementById('progressBar').style.width = '0%'; document.getElementById('progressPercentage').textContent = '0%';
+   AI catch: }).catch(function() { _jdmGEAISetSuggestion(_jdmGEAILocalRewrite(...), bl, sugEl); });
+
+8) After snippet
+   showPhasedProgress: if (!overlay) return Promise.resolve(); overlay.classList.add('active'); if (phaseElement) phaseElement.classList.add('active'); const progressBar = document.getElementById('progressBar'); if (progressBar) progressBar.style.width = ...; const progressPercentage = document.getElementById('progressPercentage'); if (progressPercentage) progressPercentage.textContent = ...; if (phaseElement) { phaseElement.classList.remove('active'); phaseElement.classList.add('completed'); }
+   hidePhasedProgress: if (!overlay) return; overlay.classList.remove('active'); const progressBar = document.getElementById('progressBar'); if (progressBar) progressBar.style.width = '0%'; const progressPercentage = document.getElementById('progressPercentage'); if (progressPercentage) progressPercentage.textContent = '0%';
+   AI catch: }).catch(function() { showToast('AI server is not configured on this site. Using local rewrite fallback. Configure Netlify env var OPENAI_API_KEY for full AI.', 'warning'); _jdmGEAISetSuggestion(_jdmGEAILocalRewrite(...), bl, sugEl); });
+
+9) Runtime verification steps (Netlify + local)
+   LOCAL: cd to folder, python -m http.server 8000, open http://localhost:8000/jdmatch.html, click "Generate Matched Resume" - no classList error, proceeds or shows clean toast if server fails.
+   NETLIFY: open https://aesthetic-heliotrope-ed1bb8.netlify.app/jdmatch.html, click "Generate Matched Resume" - no classList error, clean toast if server fails.
+   AI: open Guided Editor, click ✦ AI on bullet/summary - if endpoint fails, fallback generates suggestion and shows "AI server not configured" toast.
+
+10) Rollback instructions
+   Revert showPhasedProgress to remove null checks and Promise.resolve() early return.
+   Revert hidePhasedProgress to remove null checks and early return.
+   Revert jdmGEAIGenerate catch to remove showToast line.
+
+================================================================================
 END OF REPORT
 ================================================================================

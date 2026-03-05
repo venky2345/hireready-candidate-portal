@@ -5352,6 +5352,7 @@
     // ========================
     function showPhasedProgress() {
       const overlay = document.getElementById('progressOverlay');
+      if (!overlay) return Promise.resolve();
       overlay.classList.add('active');
       
       const phases = [
@@ -5371,7 +5372,7 @@
         }
 
         const phaseElement = document.querySelector(`.jdm-progress-phase[data-phase="${currentPhase + 1}"]`);
-        phaseElement.classList.add('active');
+        if (phaseElement) phaseElement.classList.add('active');
 
         const phaseProgress = 100 / phases.length;
         const startProgress = totalProgress;
@@ -5386,14 +5387,18 @@
             const progress = Math.min(elapsed / duration, 1);
             const currentProgress = startProgress + (phaseProgress * progress);
 
-            document.getElementById('progressBar').style.width = currentProgress + '%';
-            document.getElementById('progressPercentage').textContent = Math.round(currentProgress) + '%';
+            const progressBar = document.getElementById('progressBar');
+            if (progressBar) progressBar.style.width = currentProgress + '%';
+            const progressPercentage = document.getElementById('progressPercentage');
+            if (progressPercentage) progressPercentage.textContent = Math.round(currentProgress) + '%';
 
             if (progress < 1) {
               requestAnimationFrame(updateProgress);
             } else {
-              phaseElement.classList.remove('active');
-              phaseElement.classList.add('completed');
+              if (phaseElement) {
+                phaseElement.classList.remove('active');
+                phaseElement.classList.add('completed');
+              }
               totalProgress = endProgress;
               currentPhase++;
               resolve();
@@ -5409,14 +5414,17 @@
 
     function hidePhasedProgress() {
       const overlay = document.getElementById('progressOverlay');
+      if (!overlay) return;
       setTimeout(() => {
         overlay.classList.remove('active');
         // Reset phases
         document.querySelectorAll('.jdm-progress-phase').forEach(p => {
           p.classList.remove('active', 'completed');
         });
-        document.getElementById('progressBar').style.width = '0%';
-        document.getElementById('progressPercentage').textContent = '0%';
+        const progressBar = document.getElementById('progressBar');
+        if (progressBar) progressBar.style.width = '0%';
+        const progressPercentage = document.getElementById('progressPercentage');
+        if (progressPercentage) progressPercentage.textContent = '0%';
       }, 500);
     }
 
@@ -9130,6 +9138,7 @@
         if (!r) throw new Error('empty');
         _jdmGEAISetSuggestion(r, bl, sugEl);
       }).catch(function() {
+        showToast('AI server is not configured on this site. Using local rewrite fallback. Configure Netlify env var OPENAI_API_KEY for full AI.', 'warning');
         _jdmGEAISetSuggestion(_jdmGEAILocalRewrite(ai.original, ai.mode || 'balanced'), bl, sugEl);
       });
     }
