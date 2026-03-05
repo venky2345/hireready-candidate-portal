@@ -2720,3 +2720,51 @@ END OF REPORT
 ================================================================================
 END OF REPORT
 ================================================================================
+================================================================================
+JDMATCH NULL-DOM & SRCdoc SANITIZATION FIXES (ROUND 19)
+================================================================================
+
+1) Timestamp
+   2026-03-05
+
+2) Active file edited
+   jdmatch.html
+
+3) Change request (Fix classList null + remove about:srcdoc script-block errors)
+   Eliminate remaining "Cannot read properties of null (reading 'classList')" toast and
+   fix sandboxed iframe blocked script execution by stripping scripts/inline handlers
+   from every srcdoc assignment.
+
+4) Root cause
+   showPhasedProgress/hidePhasedProgress still used classList on elements that could
+   sometimes be null; certain iframe.srcdoc assignments did not run the stricter
+   sanitizer causing sandboxed previews to output <script> or inline event handlers.
+
+5) Exact changes applied
+   - Added helper functions _jdmSafeAddClass/_jdmSafeRemoveClass.
+   - Wrapped progress functions in try/catch and replaced classList calls with safe helpers.
+   - Added error handling wrapper in handleGenerate for showPhasedProgress().
+   - Implemented _jdmHardSanitizeSrcdoc and applied to all iframe.srcdoc assignments.
+   - Sanitized previewResume iframe assignment.
+
+6) Exact locations changed
+   - near lines 5340-5430: added helpers, hard sanitizer, reworked showPhasedProgress/hidePhasedProgress.
+   - handleGenerate call around line 5468.
+   - multiple srcdoc assignment sites around lines 5190-5223, 6695, 7035-7041, 7115-7138, 7465, 8874.
+
+7) Before snippet
+   showPhasedProgress body with direct classList calls; frame.srcdoc = _gS / _pStripped / srcdoc / wrappedForPreview; previewResume setting srcdoc directly.
+
+8) After snippet
+   showPhasedProgress wrapped try/catch and using safe helpers; frame.srcdoc assignments wrapped by _jdmHardSanitizeSrcdoc(...); previewResume sanitized.
+
+9) Runtime verification steps (Netlify + local)
+   - LOCAL: run server, open page, click generate multiple times; watch for toast and console errors; open different preview panels to see no blocked script warnings.
+   - NETLIFY: after deploy, hard refresh, trigger generation and open Console; confirm no classList toast and no "Blocked script execution in 'about:srcdoc'" messages.
+
+10) Rollback instructions
+   Revert the added helper functions and their usages; restore old srcdoc assignments; remove handleGenerate wrapper.
+
+================================================================================
+END OF REPORT
+================================================================================

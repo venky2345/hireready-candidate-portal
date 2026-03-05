@@ -5192,7 +5192,7 @@
         if (srcdoc) {
           var _gS = _stripAllScriptsFromHtml(srcdoc);
           console.log('[JDM-SRCdoc] scripts stripped:', srcdoc.length, '->', _gS.length);
-          frame.srcdoc = _gS;
+          frame.srcdoc = _jdmHardSanitizeSrcdoc(_gS);
           frame.addEventListener('load', () => _scaleTplGalleryFrame(frame, wrap));
           _scaleTplGalleryFrame(frame, wrap);
         } else {
@@ -5220,7 +5220,7 @@
           frame.addEventListener('load', () => _scaleTplGalleryFrame(frame, wrap));
           var _lS = _stripAllScriptsFromHtml(srcdoc);
           console.log('[JDM-SRCdoc] scripts stripped:', srcdoc.length, '->', _lS.length);
-          frame.srcdoc = _lS;
+          frame.srcdoc = _jdmHardSanitizeSrcdoc(_lS);
           wrap.appendChild(frame);
           _scaleTplGalleryFrame(frame, wrap);
         } else {
@@ -5347,85 +5347,109 @@
       debugTemplateState();
     }
 
+    // helper: safely add/remove classes without throwing
+    function _jdmSafeAddClass(el, cls) { if (el && el.classList && typeof el.classList.add === 'function') el.classList.add(cls); }
+    function _jdmSafeRemoveClass(el, cls) { if (el && el.classList && typeof el.classList.remove === 'function') el.classList.remove(cls); }
+
+    // hard sanitizer for iframe srcdoc; strips scripts, inline handlers, javascript: URLs
+    function _jdmHardSanitizeSrcdoc(html) {
+      if (!html || typeof html !== 'string') return html;
+      let out = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+                    .replace(/<script\b[^>]*\/>/gi, '');
+      out = out.replace(/\s+on\w+\s*=\s*(['"]).*?\1/gi, '');
+      out = out.replace(/(?:href|src|action|formaction|xlink:href)\s*=\s*(['"])\s*javascript:[^\1]*\1/gi, '');
+      return out;
+    }
+
     // ========================
     // PHASED PROGRESS ANIMATION
     // ========================
     function showPhasedProgress() {
-      const overlay = document.getElementById('progressOverlay');
-      if (!overlay) return Promise.resolve();
-      overlay.classList.add('active');
-      
-      const phases = [
-        { duration: 800, name: 'Parsing Base Resume' },
-        { duration: 1000, name: 'Understanding Job Description' },
-        { duration: 900, name: 'Optimizing Keywords' },
-        { duration: 1100, name: 'ATS Structuring' },
-        { duration: 700, name: 'Finalizing' }
-      ];
+      try {
+        const overlay = document.getElementById('progressOverlay');
+        if (!overlay) return Promise.resolve();
+        _jdmSafeAddClass(overlay, 'active');
+        
+        const phases = [
+          { duration: 800, name: 'Parsing Base Resume' },
+          { duration: 1000, name: 'Understanding Job Description' },
+          { duration: 900, name: 'Optimizing Keywords' },
+          { duration: 1100, name: 'ATS Structuring' },
+          { duration: 700, name: 'Finalizing' }
+        ];
 
-      let currentPhase = 0;
-      let totalProgress = 0;
+        let currentPhase = 0;
+        let totalProgress = 0;
 
-      function animatePhase() {
-        if (currentPhase >= phases.length) {
-          return Promise.resolve();
-        }
-
-        const phaseElement = document.querySelector(`.jdm-progress-phase[data-phase="${currentPhase + 1}"]`);
-        if (phaseElement) phaseElement.classList.add('active');
-
-        const phaseProgress = 100 / phases.length;
-        const startProgress = totalProgress;
-        const endProgress = totalProgress + phaseProgress;
-
-        return new Promise(resolve => {
-          const startTime = Date.now();
-          const duration = phases[currentPhase].duration;
-
-          function updateProgress() {
-            const elapsed = Date.now() - startTime;
-            const progress = Math.min(elapsed / duration, 1);
-            const currentProgress = startProgress + (phaseProgress * progress);
-
-            const progressBar = document.getElementById('progressBar');
-            if (progressBar) progressBar.style.width = currentProgress + '%';
-            const progressPercentage = document.getElementById('progressPercentage');
-            if (progressPercentage) progressPercentage.textContent = Math.round(currentProgress) + '%';
-
-            if (progress < 1) {
-              requestAnimationFrame(updateProgress);
-            } else {
-              if (phaseElement) {
-                phaseElement.classList.remove('active');
-                phaseElement.classList.add('completed');
-              }
-              totalProgress = endProgress;
-              currentPhase++;
-              resolve();
-            }
+        function animatePhase() {
+          if (currentPhase >= phases.length) {
+            return Promise.resolve();
           }
 
-          updateProgress();
-        }).then(() => animatePhase());
-      }
+          const phaseElement = document.querySelector(`.jdm-progress-phase[data-phase="${currentPhase + 1}"]`);
+          if (phaseElement) _jdmSafeAddClass(phaseElement, 'active');
 
-      return animatePhase();
+          const phaseProgress = 100 / phases.length;
+          const startProgress = totalProgress;
+          const endProgress = totalProgress + phaseProgress;
+
+          return new Promise(resolve => {
+            const startTime = Date.now();
+            const duration = phases[currentPhase].duration;
+
+            function updateProgress() {
+              const elapsed = Date.now() - startTime;
+              const progress = Math.min(elapsed / duration, 1);
+              const currentProgress = startProgress + (phaseProgress * progress);
+
+              const progressBar = document.getElementById('progressBar');
+              if (progressBar) progressBar.style.width = currentProgress + '%';
+              const progressPercentage = document.getElementById('progressPercentage');
+              if (progressPercentage) progressPercentage.textContent = Math.round(currentProgress) + '%';
+
+              if (progress < 1) {
+                requestAnimationFrame(updateProgress);
+              } else {
+                if (phaseElement) {
+                  _jdmSafeRemoveClass(phaseElement, 'active');
+                  _jdmSafeAddClass(phaseElement, 'completed');
+                }
+                totalProgress = endProgress;
+                currentPhase++;
+                resolve();
+              }
+            }
+
+            updateProgress();
+          }).then(() => animatePhase());
+        }
+
+        return animatePhase();
+      } catch (e) {
+        console.error('showPhasedProgress error', e);
+        return Promise.resolve();
+      }
     }
 
     function hidePhasedProgress() {
-      const overlay = document.getElementById('progressOverlay');
-      if (!overlay) return;
-      setTimeout(() => {
-        overlay.classList.remove('active');
-        // Reset phases
-        document.querySelectorAll('.jdm-progress-phase').forEach(p => {
-          p.classList.remove('active', 'completed');
-        });
-        const progressBar = document.getElementById('progressBar');
-        if (progressBar) progressBar.style.width = '0%';
-        const progressPercentage = document.getElementById('progressPercentage');
-        if (progressPercentage) progressPercentage.textContent = '0%';
-      }, 500);
+      try {
+        const overlay = document.getElementById('progressOverlay');
+        if (!overlay) return;
+        setTimeout(() => {
+          _jdmSafeRemoveClass(overlay, 'active');
+          // Reset phases
+          document.querySelectorAll('.jdm-progress-phase').forEach(p => {
+            _jdmSafeRemoveClass(p, 'active');
+            _jdmSafeRemoveClass(p, 'completed');
+          });
+          const progressBar = document.getElementById('progressBar');
+          if (progressBar) progressBar.style.width = '0%';
+          const progressPercentage = document.getElementById('progressPercentage');
+          if (progressPercentage) progressPercentage.textContent = '0%';
+        }, 500);
+      } catch (e) {
+        console.error('hidePhasedProgress error', e);
+      }
     }
 
     // ========================
@@ -5468,8 +5492,19 @@
       btn.innerHTML = '<span>⚙️ Generating...</span>';
 
       try {
-        // Show phased progress
-        showPhasedProgress();
+        // Show phased progress (safe)
+        try {
+          const p = showPhasedProgress();
+          if (p && typeof p.catch === 'function') {
+            p.catch(err => {
+              console.error('Progress overlay error', err);
+              showToast('Progress overlay error: missing DOM node. Please refresh and try again.', 'error');
+            });
+          }
+        } catch(err) {
+          console.error('Progress overlay error', err);
+          showToast('Progress overlay error: missing DOM node. Please refresh and try again.', 'error');
+        }
 
         const strictness = document.getElementById('strictnessSlider').value;
         const skillsArray = Array.from(skillsMap.entries()).map(([skill, freq]) => 
@@ -6692,7 +6727,7 @@
       console.log('[JDM-SRCdoc] scripts stripped+wrapped, length:', _pStripped.length);
       // Register onload BEFORE assigning srcdoc so it always fires even on fast renders
       frame.onload = function() { inferSelectedTemplateTitleSpec(id); jdmSyncPreviewIframeHeight(); };
-      frame.srcdoc = _pStripped;
+      frame.srcdoc = _jdmHardSanitizeSrcdoc(_pStripped);
       // Update editor section-title styles to match this template.
       inferSelectedTemplateTitleSpec(id);
       console.log('[JDM-PREVIEW] render inline src length:', html.length);
@@ -6997,13 +7032,13 @@
       const draftData = (id === selectedTemplate) ? getTemplatePreviewDataDraft() : getTemplatePreviewDataSample();
       const html = renderTemplateWithDraft(tpl, draftData);
       if (!html || String(html).trim().length < 50) {
-        frame.srcdoc = '<!doctype html><html><body style="margin:24px;font-family:sans-serif;color:#666;">No preview available for this template.</body></html>';
+        frame.srcdoc = _jdmHardSanitizeSrcdoc('<!doctype html><html><body style="margin:24px;font-family:sans-serif;color:#666;">No preview available for this template.</body></html>');
         console.log('[JDM-PREVIEW] render modal src length:', 0);
       } else {
         var _mStripped = _jdmWrapPdfViewer(_stripAllScriptsFromHtml(html));
         console.log('[JDM-SRCdoc] scripts stripped+wrapped, length:', _mStripped.length);
         frame.onload = function() { jdmSyncMaxPreviewIframeHeight(); };
-        frame.srcdoc = _mStripped;
+        frame.srcdoc = _jdmHardSanitizeSrcdoc(_mStripped);
         requestAnimationFrame(function() { requestAnimationFrame(function() { jdmSyncMaxPreviewIframeHeight(); }); });
         console.log('[JDM-PREVIEW] render modal src length:', html.length);
       }
@@ -7100,7 +7135,7 @@
           console.error('[tpl-mini] iframe error', tplId, '— showing fallback');
           showMiniIframeFallback(wrap, tplId, 'error');
         });
-        frame.srcdoc = srcdoc;
+        frame.srcdoc = _jdmHardSanitizeSrcdoc(srcdoc);
         wrap.insertBefore(frame, wrap.firstChild);
       });
       layoutTemplateMiniPreviews();
@@ -7427,7 +7462,8 @@
 
     function previewResume() {
       if (!currentGeneration) return;
-      document.getElementById('previewIframe').srcdoc = currentGeneration.resumeHtml;
+      var pi = document.getElementById('previewIframe');
+      if (pi) pi.srcdoc = _jdmHardSanitizeSrcdoc(currentGeneration.resumeHtml);
       document.getElementById('previewModal').style.display = 'block';
     }
 
@@ -8871,7 +8907,7 @@
           var wrappedForPreview = _jdmWrapPdfViewer(stripped);
           console.log('[JDM-GE] render | reason:', reason || 'render', '| tpl:', _jdmGECurrentTplId, '| rev:', (window._jdmGEWorkDraft._rev || 0), '| html:', wrappedForPreview.length);
           frame.onload = function() { _jdmGEScalePreview(); _jdmGESyncPreviewIframeHeight(); _jdmGEBindPreviewClick(frame); };
-          frame.srcdoc = wrappedForPreview;
+          frame.srcdoc = _jdmHardSanitizeSrcdoc(wrappedForPreview);
         } catch(renderErr) {
           console.warn('[JDM-GE:RENDER] uncaught render error (non-fatal):', renderErr.message);
         }
