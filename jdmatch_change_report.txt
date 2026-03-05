@@ -1,53 +1,137 @@
-﻿================================================================================
-JDMATCH GUIDED RESUME EDITOR - LIVE PREVIEW WIRING CHANGE REPORT (ROUND 2)
-================================================================================
+﻿1) Timestamp
+2026-03-05
 
-1) TIMESTAMP
-   2026-03-02 (second session)
+2) Active file edited
+netlify/functions/generateResume.js
+jdmatch.html
+jdmatch_change_report.txt
 
-2) ACTIVE FILE EDITED
-   C:\Users\HP\Downloads\New folder\jdmatch.html
-   No other files were modified.
+3) Change request (Fix Netlify 504 timeout + always JSON + generation success)
+Fix "Generate Matched Resume" failing on Netlify with 504 (Gateway Timeout) / "Inactivity Timeout" HTML response, non-JSON response handling, ensure the Netlify function returns JSON quickly and reliably, reduce OpenAI latency and payload size, keep existing workflow and UI behavior unchanged.
 
-================================================================================
+4) Root cause (Large prompt: template HTML + large JD/resume causing OpenAI latency and Netlify timeout)
+Netlify function generateResume is timing out (504) because it sends a very large prompt to OpenAI (full template HTML + large JD + large resume text), and the OpenAI call takes too long. Netlify returns an HTML timeout page, which the frontend then cannot parse as JSON.
 
-3) CHANGE REQUEST
-   Every edit in Guided Resume Editor must update the LIVE PREVIEW immediately for
-   any template (built-in and admin custom). Custom templates must behave identically
-   to built-in. Zero runtime errors from any GE action.
+5) Exact changes applied
+A1) ENV VAR COMPATIBILITY: Changed const openaiKey = process.env.OPENAI_API_KEY; to const openaiKey = process.env.OPENAI_API_KEY || process.env.API_KEY;
 
-================================================================================
+A2) REMOVE UNNECESSARY REQUIRED FIELD: Removed candidateId from required check, added const safeCandidateId = candidateId || `anon_${Date.now()}`;
 
-4) ROOT CAUSE
-   A) data-jdm-sec-id NOT INJECTED: Section containers in the GE preview iframe had
-      no stable identity marker. With only title-text lookup, patching was fragile:
-      if a user renamed a section and then edited its bullets, the annotation step
-      would fail to find the container on the next keystroke because the heading now
-      showed the new title and _origTitle search found nothing. The patch was silently
-      skipped. Adding a stable data attribute solves permanent mapping.
+A3) HARD LIMIT INPUT SIZE: Added const jdSafe = String(jobDescription || '').slice(0, 6000); const resumeSafe = String(baseResumeText || '').slice(0, 6000); and truncated mustIncludeSkills to 1200 chars or 60 items.
 
-   B) 'certs' AND 'project' TYPES EXCLUDED FROM NATIVE TEMPLATE PATH:
-      _jdmGEGetPreviewData only mapped 'summary', 'skills', 'competencies',
-      'experience', 'education' to native buildCanonicalResumeHTML fields. Sections
-      with type 'certs' (Certifications) and 'project' (Projects) were filtered into
-      the generic customSections array. The template's native .crt-sec and .prj-sec
-      sections (with their styling) were absent because d.certifications and d.projects
-      were never populated. Editing certifications or projects in GE would show them
-      as clone-injected custom sections, not as the template's native styled sections.
+A4) DO NOT SEND FULL TEMPLATE HTML: Extracted placeholderKeys from templateHtml using regex, changed systemPrompt to return "replacements" object, constructed resumeHtml server-side by replacing {{KEY}} with values from replacements, removed remaining placeholders.
 
-   C) NO RE-ENTRANT RENDER GUARD: If _jdmGERenderPreview was somehow called while
-      a RAF callback was already executing (e.g. via a nested event), a second render
-      could start before the first completed, causing unpredictable iframe srcdoc
-      assignments. No guard flag existed.
+A5) MAKE OPENAI CALL FASTER: Added AbortController with 18s timeout, reduced max_tokens from 2048 to 900, reduced temperature from 0.7 to 0.4, return 504 JSON on timeout.
 
-   D) PARAGRAPH FALLBACK USED found.titleEl FROM OUTER SCOPE: The paragraph-fallback
-      branch in _jdmGEApplyContentPatchesToHTML referenced found.titleEl from the old
-      outer scope variable 'found'. After refactoring to use separate 'container' and
-      'titleEl' variables (for the sec-id primary lookup path), 'found' was no longer
-      defined in the forEach callback, causing a ReferenceError when the paragraph
-      fallback was triggered for admin templates with <p>-per-bullet layout.
+A6) ALWAYS RETURN JSON: All error paths use respond() with JSON, including timeout and non-JSON responses.
 
-================================================================================
+A7) KEEP OUTPUT SCHEMA EXACTLY SAME: Return { ok:true, filename, resumeHtml, roleTitle, targetMatch, metrics, addedSkills, templateId }
+
+B1) SAFE response parsing in handleGenerate and handleGenerateSubmit: Check content-type includes application/json AND raw starts with { or [, parse only then, showToast on non-JSON with snippet in console only, handle 504 with specific message.
+
+B2) Ensure progress overlay functions cannot throw: Already implemented with null checks and try/catch.
+
+6) Exact locations changed
+netlify/functions/generateResume.js:
+- Line ~58: openaiKey fallback
+- Line ~53: Removed candidateId required check, added safeCandidateId
+- Line ~67-69: Added jdSafe and resumeSafe truncations
+- Line ~75-76: Truncated mustIncludeSkills
+- Line ~89: Extracted placeholderKeys
+- Line ~95-103: Updated systemPrompt for replacements
+- Line ~105-115: Updated userPrompt to send placeholderKeys instead of templateHtml
+- Line ~117-135: Added AbortController and timeout
+- Line ~137-143: Reduced max_tokens and temperature
+- Line ~170-185: Updated response parsing for replacements, constructed resumeHtml
+- Line ~187: Changed validation to check replacements instead of resumeHtml
+
+jdmatch.html:
+- Line ~5525-5540: Updated handleGenerate safe parsing with content-type check and 504 handling
+- Line ~7405-7420: Updated handleGenerateSubmit safe parsing with content-type check and 504 handling
+
+7) Before snippet
+netlify/functions/generateResume.js:
+const openaiKey = process.env.OPENAI_API_KEY;
+if (!candidateId || !companyName) {
+  return respond(400, { ok: false, error: 'Missing required fields: candidateId, companyName' });
+}
+let mustIncludeSkillsList = mustIncludeSkills;
+const userPrompt = `...Template to fill:\n${templateHtml}...`;
+const response = await fetch('https://api.openai.com/v1/chat/completions', { ..., temperature: 0.7, max_tokens: 2048 });
+if (!resumeData.filename || !resumeData.resumeHtml || !resumeData.addedSkills) {
+  return respond(500, { ok: false, error: 'Invalid response structure from OpenAI' });
+}
+
+jdmatch.html handleGenerate:
+const raw = await response.text();
+let data;
+try {
+  data = JSON.parse(raw);
+} catch (parseErr) {
+  showToast(`Server returned non-JSON response (status ${response.status}). Check Netlify Functions logs for generateResume.`, 'error');
+  throw new Error('non-json response');
+}
+
+8) After snippet
+netlify/functions/generateResume.js:
+const openaiKey = process.env.OPENAI_API_KEY || process.env.API_KEY;
+const safeCandidateId = candidateId || `anon_${Date.now()}`;
+const jdSafe = String(jobDescription || '').slice(0, 6000);
+const resumeSafe = String(baseResumeText || '').slice(0, 6000);
+mustIncludeSkillsList = mustIncludeSkills.slice(0, 60); // or .slice(0, 1200) for string
+const tokens = templateHtml.match(/{{[A-Z0-9_]+}}/g) || [];
+const placeholderKeys = Array.from(new Set(tokens.map(t => t.slice(2, -2))));
+const userPrompt = `...Available placeholders: ${placeholderKeys.join(', ')}\n...`;
+const controller = new AbortController();
+const timer = setTimeout(() => controller.abort(), 18000);
+response = await fetch(..., { signal: controller.signal, temperature: 0.4, max_tokens: 900 });
+if (fetchError.name === 'AbortError') {
+  return respond(504, { ok: false, error: 'AI request timed out. Please retry or shorten the Job Description.', details: 'timeout' });
+}
+let resumeHtml = templateHtml;
+for (const [key, value] of Object.entries(replacements)) {
+  resumeHtml = resumeHtml.replace(new RegExp(`{{${key}}}`.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), String(value));
+}
+resumeHtml = resumeHtml.replace(/{{[A-Z0-9_]+}}/g, '');
+if (!resumeData.filename || !resumeData.replacements || !resumeData.addedSkills) {
+  return respond(500, { ok: false, error: 'Invalid response structure from OpenAI' });
+}
+
+jdmatch.html handleGenerate:
+const raw = await response.text();
+const contentType = response.headers.get('content-type') || '';
+let data;
+if (contentType.includes('application/json') && (raw.startsWith('{') || raw.startsWith('['))) {
+  try {
+    data = JSON.parse(raw);
+  } catch (parseErr) {
+    showToast(`Server returned non-JSON response (status ${response.status}). Check Netlify function logs or timeout.`, 'error');
+    throw new Error('non-json response');
+  }
+} else {
+  showToast(`Server returned non-JSON response (status ${response.status}). Check Netlify function logs or timeout.`, 'error');
+  throw new Error('non-json response');
+}
+if (response.status === 504) {
+  showToast('Server timeout (504). Your Job Description or Resume may be too large. Please retry after shortening them.', 'error');
+  throw new Error('timeout');
+}
+
+9) Runtime verification steps
+1) Wait for Netlify auto-deploy from GitHub.
+2) Open https://aesthetic-heliotrope-ed1bb8.netlify.app/jdmatch.html
+3) Provide a normal size JD (not huge), select a template, click "Generate Matched Resume".
+Expected: No 504, JSON success response, resume HTML renders in results
+4) Stress test: Paste a very large JD, click generate.
+Expected: If it times out, show clean toast: "Server timeout (504) … shorten JD/resume", no "Unexpected token <", no UI crash
+5) Netlify function direct POST test (PowerShell):
+$body = @{ baseResumeText="test"; jobDescription="test jd"; companyName="test"; templateId="template_01" } | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri "https://aesthetic-heliotrope-ed1bb8.netlify.app/.netlify/functions/generateResume" -ContentType "application/json" -Body $body
+Expected: JSON ok:true or JSON ok:false with clear message, never HTML.
+
+10) Rollback instructions
+Revert netlify/functions/generateResume.js to previous version: remove openaiKey fallback, restore candidateId required check, remove jdSafe/resumeSafe truncations, restore full templateHtml in userPrompt, remove AbortController and timeout, restore temperature 0.7 and max_tokens 2048, restore resumeHtml from OpenAI response, restore validation for resumeHtml.
+Revert jdmatch.html handleGenerate and handleGenerateSubmit to previous safe parsing without content-type check and 504 specific handling.
 
 5) EXACT CHANGES APPLIED
 

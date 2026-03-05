@@ -53,14 +53,16 @@ exports.handler = async (event, context) => {
     return respond(400, { ok: false, error: 'jobDescription is required' });
   }
 
-  if (!candidateId || !companyName) {
-    return respond(400, { ok: false, error: 'Missing required fields: candidateId, companyName' });
+  if (!companyName) {
+    return respond(400, { ok: false, error: 'companyName is required' });
   }
 
-  const openaiKey = process.env.OPENAI_API_KEY;
+  const safeCandidateId = candidateId || `anon_${Date.now()}`;
+
+  const openaiKey = process.env.OPENAI_API_KEY || process.env.API_KEY;
   if (!openaiKey) {
-    console.log('generateResume error: OPENAI_API_KEY missing');
-    return respond(500, { ok: false, error: 'OPENAI_API_KEY is not configured in Netlify environment variables' });
+    console.log('generateResume error: OPENAI_API_KEY or API_KEY missing');
+    return respond(500, { ok: false, error: 'OPENAI_API_KEY or API_KEY is not configured in Netlify environment variables' });
   }
 
   const targetMode = String(targetMatchMode).toLowerCase();
@@ -71,11 +73,16 @@ exports.handler = async (event, context) => {
     targetMatch = Math.max(70, Math.min(100, Number(targetMatchValue) || 85));
   }
 
+  // Hard limit input size to prevent timeouts
+  const jdSafe = String(jobDescription || '').slice(0, 6000);
+  const resumeSafe = String(baseResumeText || '').slice(0, 6000);
+
   let mustIncludeSkillsList = [];
   if (Array.isArray(mustIncludeSkills)) {
-    mustIncludeSkillsList = mustIncludeSkills;
+    mustIncludeSkillsList = mustIncludeSkills.slice(0, 60);
   } else if (typeof mustIncludeSkills === 'string') {
     mustIncludeSkillsList = mustIncludeSkills
+      .slice(0, 1200)
       .split(',')
       .map((skill) => skill.trim())
       .filter((skill) => skill.length > 0);
@@ -94,59 +101,76 @@ exports.handler = async (event, context) => {
     return respond(500, { ok: false, error: 'Template file not found or unreadable' });
   }
 
-  console.log('generateResume request', { hasJD: Boolean(jobDescription && jobDescription.trim()), targetMatch, hasMustSkills: Boolean(mustIncludeSkills && (Array.isArray(mustIncludeSkills) ? mustIncludeSkills.length > 0 : mustIncludeSkills.trim())) });
+  // Extract placeholder keys from templateHtml
+  const tokens = templateHtml.match(/{{[A-Z0-9_]+}}/g) || [];
+  const placeholderKeys = Array.from(new Set(tokens.map(t => t.slice(2, -2))));
+
+  console.log('generateResume request', { safeCandidateId, hasJD: Boolean(jdSafe && jdSafe.trim()), targetMatch, hasMustSkills: Boolean(mustIncludeSkillsList.length > 0), placeholderKeysCount: placeholderKeys.length });
 
   const systemPrompt = `You are a professional resume writer. You MUST:
-1. Use the provided resume template structure EXACTLY - do not modify HTML tags, CSS, or element counts
-2. Only replace text content within {{PLACEHOLDER}} tags
-3. Return ONLY valid JSON (no markdown, no code blocks)
-4. Include all mustIncludeSkills if provided
-5. Ensure content is ATS-friendly and realistic
-6. Match the job description requirements as closely as possible
+1. Return ONLY valid JSON (no markdown, no code blocks)
+2. Include all mustIncludeSkills if provided
+3. Ensure content is ATS-friendly and realistic
+4. Match the job description requirements as closely as possible
 
 JSON response must have exactly these keys:
 {
   "filename": "FirstName_LastName_Role.pdf",
-  "resumeHtml": "<!DOCTYPE html>...",
+  "roleTitle": "string",
   "metrics": { "jdMatch": number 90-100, "atsFriendliness": number 90-100, "hrCatchiness": number 90-100, "chancesOfShortlisting": number 90-100 },
   "addedSkills": ["skill1", "skill2"],
   "targetMatch": number,
-  "roleTitle": "string"
+  "replacements": { "PLACEHOLDER_KEY": "value", ... }
 }`;
 
   const userPrompt = `Generate a professional resume tailored to this job:
 
 Company: ${companyName}
-Job Description: ${jobDescription}
+Job Description: ${jdSafe}
 Target Match Score: ${targetMatch}%
 Must Include Skills: ${mustIncludeSkillsList.length > 0 ? mustIncludeSkillsList.join(', ') : 'None'}
-${baseResumeText ? `\nReference Resume:\n${baseResumeText}` : ''}
+${resumeSafe ? `\nReference Resume:\n${resumeSafe}` : ''}
 
-Template to fill:
-${templateHtml}
+Available placeholders: ${placeholderKeys.join(', ')}
 
 Requirements:
-- Fill in the placeholders ({{CANDIDATE_NAME}}, {{PROFESSIONAL_TITLE}}, etc.)
+- Provide values for each placeholder key in the "replacements" object
 - Ensure all mustIncludeSkills are present in the SKILLS section
 - Make metrics realistic based on job fit (jdMatch should be around ${targetMatch})
 - Return ONLY the JSON object, nothing else`;
 
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${openaiKey}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      temperature: 0.7,
-      max_tokens: 2048
-    })
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 18000);
+
+  let response;
+  try {
+    response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.4,
+        max_tokens: 900
+      }),
+      signal: controller.signal
+    });
+  } catch (fetchError) {
+    clearTimeout(timer);
+    if (fetchError.name === 'AbortError') {
+      console.log('generateResume timeout', safeCandidateId);
+      return respond(504, { ok: false, error: 'AI request timed out. Please retry or shorten the Job Description.', details: 'timeout' });
+    }
+    console.log('generateResume fetch error', fetchError);
+    return respond(500, { ok: false, error: 'AI service error', details: fetchError.message });
+  }
+  clearTimeout(timer);
 
   if (!response.ok) {
     let errorBody = '';
@@ -178,9 +202,19 @@ Requirements:
     return respond(500, { ok: false, error: 'Failed to parse OpenAI response as JSON' });
   }
 
-  if (!resumeData.filename || !resumeData.resumeHtml || !resumeData.addedSkills) {
+  if (!resumeData.filename || !resumeData.replacements || !resumeData.addedSkills) {
     return respond(500, { ok: false, error: 'Invalid response structure from OpenAI' });
   }
+
+  // Construct resumeHtml by replacing placeholders
+  let resumeHtml = templateHtml;
+  const replacements = resumeData.replacements || {};
+  for (const [key, value] of Object.entries(replacements)) {
+    const placeholder = `{{${key}}}`;
+    resumeHtml = resumeHtml.replace(new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), String(value));
+  }
+  // Remove any remaining placeholders
+  resumeHtml = resumeHtml.replace(/{{[A-Z0-9_]+}}/g, '');
 
   const rawMetrics = resumeData.metrics || {};
   const clamp90 = (value, fallback) => {
@@ -198,7 +232,7 @@ Requirements:
     const responseBody = {
       ok: true,
       filename: resumeData.filename,
-      resumeHtml: resumeData.resumeHtml,
+      resumeHtml: resumeHtml,
       roleTitle: resumeData.roleTitle || '',
       targetMatch,
       metrics,

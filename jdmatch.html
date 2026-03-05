@@ -5528,13 +5528,25 @@
 
         // parse safely
         const raw = await response.text();
+        const contentType = response.headers.get('content-type') || '';
         let data;
-        try {
-          data = JSON.parse(raw);
-        } catch (parseErr) {
-          console.error('Non-JSON response from generateResume', response.status, response.headers.get('content-type'), raw.substring(0, 300));
-          showToast(`Server returned non-JSON response (status ${response.status}). Check Netlify Functions logs for generateResume.`, 'error');
+        if (contentType.includes('application/json') && (raw.startsWith('{') || raw.startsWith('['))) {
+          try {
+            data = JSON.parse(raw);
+          } catch (parseErr) {
+            console.error('Non-JSON response from generateResume', response.status, contentType, raw.substring(0, 120));
+            showToast(`Server returned non-JSON response (status ${response.status}). Check Netlify function logs or timeout.`, 'error');
+            throw new Error('non-json response');
+          }
+        } else {
+          console.error('Non-JSON response from generateResume', response.status, contentType, raw.substring(0, 120));
+          showToast(`Server returned non-JSON response (status ${response.status}). Check Netlify function logs or timeout.`, 'error');
           throw new Error('non-json response');
+        }
+
+        if (response.status === 504) {
+          showToast('Server timeout (504). Your Job Description or Resume may be too large. Please retry after shortening them.', 'error');
+          throw new Error('timeout');
         }
 
         if (!response.ok || (data && data.ok === false)) {
@@ -7409,11 +7421,21 @@
         });
 
         const responseText = await response.text();
+        const contentType = response.headers.get('content-type') || '';
         let data = null;
-        try {
-          data = JSON.parse(responseText);
-        } catch {
-          throw new Error('Invalid server response');
+        if (contentType.includes('application/json') && (responseText.startsWith('{') || responseText.startsWith('['))) {
+          try {
+            data = JSON.parse(responseText);
+          } catch {
+            throw new Error('Invalid server response');
+          }
+        } else {
+          console.error('Non-JSON response from generateResume', response.status, contentType, responseText.substring(0, 120));
+          throw new Error('Server returned non-JSON response. Check Netlify function logs or timeout.');
+        }
+
+        if (response.status === 504) {
+          throw new Error('Server timeout (504). Your Job Description or Resume may be too large. Please retry after shortening them.');
         }
 
         if (!response.ok || (data && data.ok === false)) {
