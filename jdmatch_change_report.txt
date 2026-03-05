@@ -2,52 +2,105 @@
 2026-03-05
 
 2) Active file edited
-netlify/functions/generateResume.js
 jdmatch.html
-jdmatch_change_report.txt
 
-3) Change request (Fix Netlify 504 timeout + always JSON + generation success)
-Fix "Generate Matched Resume" failing on Netlify with 504 (Gateway Timeout) / "Inactivity Timeout" HTML response, non-JSON response handling, ensure the Netlify function returns JSON quickly and reliably, reduce OpenAI latency and payload size, keep existing workflow and UI behavior unchanged.
+3) Change request (Fix classList null crash + remove about:srcdoc script-block errors)
+Eliminate the runtime crash/toast "Cannot read properties of null (reading 'classList')" and console red error "Blocked script execution in 'about:srcdoc' ..." by ensuring ALL iframe srcdoc HTML is stripped of scripts and inline handlers before assignment, and making progress overlay functions null-safe.
 
-4) Root cause (Large prompt: template HTML + large JD/resume causing OpenAI latency and Netlify timeout)
-Netlify function generateResume is timing out (504) because it sends a very large prompt to OpenAI (full template HTML + large JD + large resume text), and the OpenAI call takes too long. Netlify returns an HTML timeout page, which the frontend then cannot parse as JSON.
+4) Root cause (phase/progress DOM nodes missing in some flows; srcdoc still contains scripts/inline handlers)
+showPhasedProgress assumes DOM elements exist and calls classList on potentially null elements; iframe srcdoc assignments may include scripts or inline handlers that trigger sandbox violations.
 
 5) Exact changes applied
-A1) ENV VAR COMPATIBILITY: Changed const openaiKey = process.env.OPENAI_API_KEY; to const openaiKey = process.env.OPENAI_API_KEY || process.env.API_KEY;
-
-A2) REMOVE UNNECESSARY REQUIRED FIELD: Removed candidateId from required check, added const safeCandidateId = candidateId || `anon_${Date.now()}`;
-
-A3) HARD LIMIT INPUT SIZE: Added const jdSafe = String(jobDescription || '').slice(0, 6000); const resumeSafe = String(baseResumeText || '').slice(0, 6000); and truncated mustIncludeSkills to 1200 chars or 60 items.
-
-A4) DO NOT SEND FULL TEMPLATE HTML: Extracted placeholderKeys from templateHtml using regex, changed systemPrompt to return "replacements" object, constructed resumeHtml server-side by replacing {{KEY}} with values from replacements, removed remaining placeholders.
-
-A5) MAKE OPENAI CALL FASTER: Added AbortController with 18s timeout, reduced max_tokens from 2048 to 900, reduced temperature from 0.7 to 0.4, return 504 JSON on timeout.
-
-A6) ALWAYS RETURN JSON: All error paths use respond() with JSON, including timeout and non-JSON responses.
-
-A7) KEEP OUTPUT SCHEMA EXACTLY SAME: Return { ok:true, filename, resumeHtml, roleTitle, targetMatch, metrics, addedSkills, templateId }
-
-B1) SAFE response parsing in handleGenerate and handleGenerateSubmit: Check content-type includes application/json AND raw starts with { or [, parse only then, showToast on non-JSON with snippet in console only, handle 504 with specific message.
-
-B2) Ensure progress overlay functions cannot throw: Already implemented with null checks and try/catch.
+Added check in showPhasedProgress: if no .jdm-progress-phase elements exist, skip phase animation and show simple progress bar animation instead. All srcdoc assignments already use _jdmHardSanitizeSrcdoc (8 locations).
 
 6) Exact locations changed
-netlify/functions/generateResume.js:
-- Line ~58: openaiKey fallback
-- Line ~53: Removed candidateId required check, added safeCandidateId
-- Line ~67-69: Added jdSafe and resumeSafe truncations
-- Line ~75-76: Truncated mustIncludeSkills
-- Line ~89: Extracted placeholderKeys
-- Line ~95-103: Updated systemPrompt for replacements
-- Line ~105-115: Updated userPrompt to send placeholderKeys instead of templateHtml
-- Line ~117-135: Added AbortController and timeout
-- Line ~137-143: Reduced max_tokens and temperature
-- Line ~170-185: Updated response parsing for replacements, constructed resumeHtml
-- Line ~187: Changed validation to check replacements instead of resumeHtml
-
 jdmatch.html:
-- Line ~5525-5540: Updated handleGenerate safe parsing with content-type check and 504 handling
-- Line ~7405-7420: Updated handleGenerateSubmit safe parsing with content-type check and 504 handling
+- Line ~5375-5395: Added phaseElements check and fallback progress animation in showPhasedProgress
+
+7) Before snippet
+function showPhasedProgress() {
+  try {
+    const overlay = document.getElementById('progressOverlay');
+    if (!overlay) return Promise.resolve();
+    _jdmSafeAddClass(overlay, 'active');
+    
+    const phases = [
+      { duration: 800, name: 'Parsing Base Resume' },
+      { duration: 1000, name: 'Understanding Job Description' },
+      { duration: 900, name: 'Optimizing Keywords' },
+      { duration: 1100, name: 'ATS Structuring' },
+      { duration: 700, name: 'Finalizing' }
+    ];
+
+    let currentPhase = 0;
+    let totalProgress = 0;
+
+    function animatePhase() {
+      // ... phase animation logic assuming phases exist
+    }
+
+    return animatePhase();
+  } catch (e) {
+    console.error('showPhasedProgress error', e);
+    return Promise.resolve();
+  }
+}
+
+8) After snippet
+function showPhasedProgress() {
+  try {
+    const overlay = document.getElementById('progressOverlay');
+    if (!overlay) return Promise.resolve();
+    _jdmSafeAddClass(overlay, 'active');
+    
+    const phases = [
+      { duration: 800, name: 'Parsing Base Resume' },
+      { duration: 1000, name: 'Understanding Job Description' },
+      { duration: 900, name: 'Optimizing Keywords' },
+      { duration: 1100, name: 'ATS Structuring' },
+      { duration: 700, name: 'Finalizing' }
+    ];
+
+    // Check if phase elements exist in DOM
+    const phaseElements = document.querySelectorAll('.jdm-progress-phase');
+    if (phaseElements.length === 0) {
+      // No phase elements, just show overlay and progress bar
+      return new Promise(resolve => {
+        const progressBar = document.getElementById('progressBar');
+        const progressPercentage = document.getElementById('progressPercentage');
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += 2;
+          if (progressBar) progressBar.style.width = progress + '%';
+          if (progressPercentage) progressPercentage.textContent = progress + '%';
+          if (progress >= 100) {
+            clearInterval(interval);
+            resolve();
+          }
+        }, 50);
+      });
+    }
+
+    let currentPhase = 0;
+    let totalProgress = 0;
+
+    function animatePhase() {
+      // ... phase animation logic
+    }
+
+    return animatePhase();
+  } catch (e) {
+    console.error('showPhasedProgress error', e);
+    return Promise.resolve();
+  }
+}
+
+9) Runtime verification steps (Netlify + local)
+LOCAL: cd "C:\Users\HP\Downloads\New folder"; python -m http.server 8000; open http://localhost:8000/jdmatch.html; hard refresh; open DevTools Console; click "Generate Matched Resume"; expect no classList null toast, no about:srcdoc blocked script errors.
+NETLIFY: open https://aesthetic-heliotrope-ed1bb8.netlify.app/jdmatch.html; hard refresh; open DevTools Console; click "Generate Matched Resume"; expect no classList null toast, no about:srcdoc blocked script errors.
+
+10) Rollback instructions
+Remove the phaseElements check and fallback animation from showPhasedProgress; restore original phase animation logic assuming phases exist.
 
 7) Before snippet
 netlify/functions/generateResume.js:

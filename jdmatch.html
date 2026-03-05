@@ -5378,6 +5378,26 @@
           { duration: 700, name: 'Finalizing' }
         ];
 
+        // Check if phase elements exist in DOM
+        const phaseElements = document.querySelectorAll('.jdm-progress-phase');
+        if (phaseElements.length === 0) {
+          // No phase elements, just show overlay and progress bar
+          return new Promise(resolve => {
+            const progressBar = document.getElementById('progressBar');
+            const progressPercentage = document.getElementById('progressPercentage');
+            let progress = 0;
+            const interval = setInterval(() => {
+              progress += 2;
+              if (progressBar) progressBar.style.width = progress + '%';
+              if (progressPercentage) progressPercentage.textContent = progress + '%';
+              if (progress >= 100) {
+                clearInterval(interval);
+                resolve();
+              }
+            }, 50);
+          });
+        }
+
         let currentPhase = 0;
         let totalProgress = 0;
 
