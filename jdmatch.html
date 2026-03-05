@@ -5348,8 +5348,8 @@
     }
 
     // helper: safely add/remove classes without throwing
-    function _jdmSafeAddClass(el, cls) { if (el && el.classList && typeof el.classList.add === 'function') el.classList.add(cls); }
-    function _jdmSafeRemoveClass(el, cls) { if (el && el.classList && typeof el.classList.remove === 'function') el.classList.remove(cls); }
+    function _jdmSafeAddClass(el, cls) { if (el && el.classList) el.classList.add(cls); }
+    function _jdmSafeRemoveClass(el, cls) { if (el && el.classList) el.classList.remove(cls); }
 
     // hard sanitizer for iframe srcdoc; strips scripts, inline handlers, javascript: URLs
     function _jdmHardSanitizeSrcdoc(html) {
@@ -5453,22 +5453,23 @@
 
     function hidePhasedProgress() {
       try {
-        const overlay = document.getElementById('progressOverlay');
-        if (!overlay) return;
         setTimeout(() => {
-          _jdmSafeRemoveClass(overlay, 'active');
-          // Reset phases
-          document.querySelectorAll('.jdm-progress-phase').forEach(p => {
-            _jdmSafeRemoveClass(p, 'active');
-            _jdmSafeRemoveClass(p, 'completed');
-          });
+          const overlayNow = document.getElementById('progressOverlay');
+          if (overlayNow) _jdmSafeRemoveClass(overlayNow, 'active');
+          const phaseNodes = document.querySelectorAll('.jdm-progress-phase');
+          if (phaseNodes && phaseNodes.length) {
+            phaseNodes.forEach(p => {
+              _jdmSafeRemoveClass(p, 'active');
+              _jdmSafeRemoveClass(p, 'completed');
+            });
+          }
           const progressBar = document.getElementById('progressBar');
-          if (progressBar) progressBar.style.width = '0%';
-          const progressPercentage = document.getElementById('progressPercentage');
-          if (progressPercentage) progressPercentage.textContent = '0%';
-        }, 500);
+          if (progressBar && progressBar.style) progressBar.style.width = '0%';
+          const pct = document.getElementById('progressPercentage');
+          if (pct) pct.textContent = '0%';
+        }, 300);
       } catch (e) {
-        console.error('hidePhasedProgress error', e);
+        console.error('[progress] hidePhasedProgress error', e);
       }
     }
 
@@ -5576,14 +5577,22 @@
 
         // Wait for progress animation to complete
         await new Promise(resolve => setTimeout(resolve, 500));
-        hidePhasedProgress();
+        try {
+          hidePhasedProgress();
+        } catch (e) {
+          console.error('[generate] progress stop failed', e);
+        }
 
         currentGeneration = data;
         displayResults(data);
         showToast('Resume generated successfully!', 'success');
 
       } catch (error) {
-        hidePhasedProgress();
+        try {
+          hidePhasedProgress();
+        } catch (e) {
+          console.error('[generate] progress stop failed', e);
+        }
         showToast(`Error: ${error.message}`, 'error');
       } finally {
         btn.disabled = false;

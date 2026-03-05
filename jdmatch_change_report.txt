@@ -4,7 +4,7 @@
 2) Active file edited
 jdmatch.html
 
-3) Change request (Fix classList null crash + remove about:srcdoc script-block errors)
+3) Change request (Fix Generate Matched Resume classList null crash)
 Eliminate the runtime crash/toast "Cannot read properties of null (reading 'classList')" and console red error "Blocked script execution in 'about:srcdoc' ..." by ensuring ALL iframe srcdoc HTML is stripped of scripts and inline handlers before assignment, and making progress overlay functions null-safe.
 
 4) Root cause (phase/progress DOM nodes missing in some flows; srcdoc still contains scripts/inline handlers)
