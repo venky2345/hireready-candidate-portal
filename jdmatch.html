@@ -5605,6 +5605,16 @@
         displayResults(data);
         showToast('Resume generated successfully!', 'success');
 
+        // Auto-open preview after a brief delay to ensure DOM is ready
+        try {
+          setTimeout(() => {
+            previewResume();
+          }, 100);
+        } catch (previewErr) {
+          console.error('[generate] Failed to auto-open preview', previewErr);
+          showToast('Resume generated, but preview could not open automatically. Click Preview Resume button.', 'info');
+        }
+
       } catch (error) {
         try {
           hidePhasedProgress();
@@ -7554,6 +7564,16 @@
         const actionsCard = document.getElementById('outputActionsCard');
         if (actionsCard) actionsCard.style.display = 'block';
 
+        // Auto-open preview after a brief delay to ensure DOM is ready
+        try {
+          setTimeout(() => {
+            previewResume();
+          }, 100);
+        } catch (previewErr) {
+          console.error('[generateSubmit] Failed to auto-open preview', previewErr);
+          showToast('Resume generated, but preview could not open automatically. Click Preview Resume button.', 'info');
+        }
+
       } catch (error) {
         showToast(`Error: ${error.message}`, 'error');
       } finally {
@@ -7596,11 +7616,58 @@
     }
 
     function previewResume() {
-      if (!currentGeneration) return;
-      const pi = document.getElementById('previewIframe');
-      if (pi) pi.srcdoc = _jdmHardSanitizeSrcdoc(currentGeneration.resumeHtml);
-      const modal = document.getElementById('previewModal');
-      if (modal) modal.style.display = 'block';
+      if (!currentGeneration) {
+        console.warn('[previewResume] No generated resume available (currentGeneration missing)');
+        showToast('No generated resume available to preview', 'error');
+        return;
+      }
+
+      if (!currentGeneration.resumeHtml) {
+        console.warn('[previewResume] Generated resume HTML is missing');
+        showToast('Generated resume HTML is missing. Please try generating again.', 'error');
+        return;
+      }
+
+      try {
+        const pi = document.getElementById('previewIframe');
+        const modal = document.getElementById('previewModal');
+
+        if (!modal) {
+          console.error('[previewResume] Preview modal element not found');
+          showToast('Preview modal not found. Please refresh the page.', 'error');
+          return;
+        }
+
+        // Set iframe content if it exists
+        if (pi) {
+          try {
+            const sanitized = _jdmHardSanitizeSrcdoc(currentGeneration.resumeHtml);
+            pi.srcdoc = sanitized;
+            console.log('[previewResume] iframe content set successfully');
+          } catch (iframeErr) {
+            console.error('[previewResume] Failed to set iframe content', iframeErr);
+            showToast('Could not load preview in iframe. HTML may be too large or invalid.', 'error');
+            return;
+          }
+        } else {
+          console.warn('[previewResume] Preview iframe element not found, showing modal anyway');
+        }
+
+        // Show the modal
+        modal.style.display = 'block';
+        console.log('[previewResume] Preview modal opened successfully');
+
+        // Ensure modal is in focus (for accessibility)
+        try {
+          modal.focus();
+        } catch (e) {
+          // Focus on modal element might not be supported, ignore
+        }
+
+      } catch (err) {
+        console.error('[previewResume] Unexpected error opening preview', err);
+        showToast('Failed to open preview. Please refresh and try again.', 'error');
+      }
     }
 
     // ========================

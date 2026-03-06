@@ -3458,6 +3458,59 @@ Impact:
 
 Verification After Deploy:
 1. Generate resume successfully (200 status, valid JSON metrics returned)
+
+================================================================================
+ROUND 27 (2026-03-06) - AUTO-PREVIEW & OUTPUT VISIBILITY IMPROVEMENT
+================================================================================
+
+Issue: After generation success the UI only showed a toast; output/results 
+area sometimes remained hidden and preview required manual click. Users could
+not immediately inspect the generated resume.
+
+Root Cause: `handleGenerate` and `handleGenerateSubmit` success branches
+populated results and showed toast, but did not force output section to display
+and previewResume() was never called. The `previewResume` function itself
+didn't guard missing data and assumed elements existed, leading to silent fails.
+
+Exact Changes Applied:
+
+1) handleGenerate (core generation flow) - around line ~5575
+   - After storing `currentGeneration = data` and calling `displayResults(data)`,
+     added code to auto-open preview via `setTimeout(() => previewResume(),100)`.
+   - Wrapped preview call in try/catch with error logging and informational toast
+     fallback per PART 5 requirements.
+
+2) handleGenerateSubmit (form submit flow) - around line ~7547
+   - Similar auto-preview insertion after showing success toast and revealing
+     actions card.
+
+3) previewResume() function (near line ~7598)
+   - Added safety checks for `currentGeneration` and `currentGeneration.resumeHtml`.
+   - Added toast errors when missing data.
+   - Added try/catch around DOM operations with console.error logging.
+   - Focus attempt for accessibility.
+
+4) displayResults() functions already show outputSection and scroll; no 
+   modifications necessary there but combined with auto-preview ensures resiliency.
+
+Impact: 
+- On successful generation the output section is shown, scrolled into view, and
+  preview modal opens automatically.
+- Users can inspect resume immediately without hunting for a button.
+- Preview button remains visible/functional for later use.
+- No regressions in download, history, or editor functionality.
+
+Verification Steps for Round 27:
+1. Fill inputs and generate resume
+2. Toast success appears
+3. Output section becomes visible and page scrolls to it
+4. Preview modal auto-opens with correct resume shown
+5. Preview Resume button still clickable afterward
+6. Download buttons continue functioning
+
+Rollback instructions
+(refer earlier rollback entries).
+
 2. Confirm no "Cannot read properties of null" error appears
 3. Metrics display without crash
 4. outputActionsCard becomes visible without crash
@@ -3477,5 +3530,6 @@ Related Previous Rounds:
 - Rounds 20-24: Progress overlay null-safety + AI function creation
 - Round 25: UI state function null-safety (switchPanel, modals, etc.)
 - Round 26: Post-generation result display null-safety
-- Result: Comprehensive null-safety across entire application UI
+- Round 27: Auto-open preview and ensure output visibility after generation
+- Result: Comprehensive null-safety across entire application UI with improved post-generation workflow
 
