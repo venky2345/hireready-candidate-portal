@@ -1,10 +1,172 @@
 ﻿1) Timestamp
-2026-03-05
+2026-03-06
 
-2) Active file edited
+2) Active files edited
 jdmatch.html
+netlify/functions/generateResume.js
 
-3) Change request (Fix Generate Matched Resume classList null crash)
+3) Change request (Fix Generate Matched Resume: UI crash + safe parsing + Netlify 504 timeout)
+Eliminate the "Cannot read properties of null (reading 'classList')" UI crash, prevent JSON parse failures when the function returns HTML, and stop Netlify 504 timeout by shrinking prompt and adding timeout. Ensure the frontend and function always handle errors gracefully and only return JSON.
+
+4) Root cause (Progress overlay null classList; function prompt too large including full template HTML; no OpenAI timeout; response.json on HTML)
+showPhasedProgress/hidePhasedProgress assumed DOM elements existed and called classList directly. The Netlify function built a giant prompt containing entire template HTML plus JD and resume which frequently triggered OpenAI latency and Netlify 504; when timeout occurred the frontend attempted response.json() on an HTML page and crashed. The function also lacked a global JSON response helper and returned HTML on errors.
+
+5) Exact changes applied
+- Added _jdmSafeAddClass/_jdmSafeRemoveClass helpers and wrapped progress functions with try/catch, early returns, and element guards so they never throw.
+- Modified showPhasedProgress to bail if overlay missing, guard phase elements, progressBar and percentage, and always return a Promise.
+- Modified hidePhasedProgress to re-query DOM inside setTimeout, guard all elements, and wrap in try/catch.
+- Wrapped showPhasedProgress call in handleGenerate in try/catch; wrapped hidePhasedProgress calls in try/catch.
+- Rewrote handleGenerate response handling: read raw text, inspect content-type, parse JSON conditionally with error logging/toast, handle non-ok statuses, always hide progress and restore button in finally.
+- Added comprehensive respond() helper to Netlify function; enforced POST only; safe JSON.parse of request body; compatibility for OPENAI_API_KEY/API_KEY; trimmed and limited jd, resume, and mustIncludeSkills lengths; extract placeholder keys from template and build user prompt without full HTML; added AbortController with 18s timeout; reduced temperature to 0.4 and max_tokens to 900; always return JSON on every path including timeouts and errors; construct resumeHtml server-side from replacements; clamp metrics; log relevant request details.
+
+6) Exact locations changed
+jdmatch.html:
+- Lines ~5351-5352: added safe helper functions
+- Lines ~5367-5455: showPhasedProgress updated with early return, guards, try/catch
+- Lines ~5456-5478: hidePhasedProgress updated with inside-timeout re-check, guards, try/catch
+- Lines ~5515-5520 & 5576-5586 & 5585-5593 & 5586-5594: handleGenerate wrapping of progress calls and safe parsing (full function body around network call)
+
+netlify/functions/generateResume.js:
+- Added respond() helper at top
+- HTTP method check (OPTIONS/POST) early return
+- JSON.parse body try/catch
+- OpenAI key compatibility and error log
+- Payload size limits (jdSafe, resumeSafe, mustIncludeSkillsList)
+- placeholderKeys extraction
+- System/user prompt now uses only key list not full template HTML
+- AbortController with 18s timeout
+- Reduced temperature & max_tokens
+- Enhanced error handling on fetch and non-OK responses
+- JSON parsing of OpenAI response with cleanup and structure validation
+- Construct resumeHtml server-side replacing placeholders
+- Final respond(200, {ok:true,...}) including metrics and templateId
+- catch-all try/catch wrapping entire handler with JSON error response
+
+7) Before snippet
+```js
+function showPhasedProgress() {
+  const overlay = document.getElementById('progressOverlay');
+  overlay.classList.add('active');
+  // ... assumes all elements exist
+}
+
+function hidePhasedProgress() {
+  const overlay = document.getElementById('progressOverlay');
+  setTimeout(() => {
+    overlay.classList.remove('active');
+    document.getElementById('progressBar').style.width = '0%';
+    document.getElementById('progressPercentage').textContent = '0%';
+  }, 500);
+}
+
+// handleGenerate used response.json() directly:
+const data = await response.json();
+if (!response.ok) throw new Error(data.error);
+```
+
+In generateResume.js the prompt included `templateHtml` verbatim and there was no timeout helper. Errors sometimes returned HTML.
+
+8) After snippet
+```js
+function _jdmSafeAddClass(el, cls) { if (el && el.classList) el.classList.add(cls); }
+function _jdmSafeRemoveClass(el, cls) { if (el && el.classList) el.classList.remove(cls); }
+
+function showPhasedProgress() {
+  try {
+    const overlay = document.getElementById('progressOverlay');
+    if (!overlay) return Promise.resolve();
+    _jdmSafeAddClass(overlay, 'active');
+    // guard phases, progressBar, pct...
+  } catch(e) {
+    console.error('showPhasedProgress error', e);
+    return Promise.resolve();
+  }
+}
+
+function hidePhasedProgress() {
+  try {
+    setTimeout(() => {
+      const overlayNow = document.getElementById('progressOverlay');
+      if (overlayNow) _jdmSafeRemoveClass(overlayNow, 'active');
+      const progressBar = document.getElementById('progressBar');
+      if (progressBar) progressBar.style.width = '0%';
+      const pct = document.getElementById('progressPercentage');
+      if (pct) pct.textContent = '0%';
+    }, 300);
+  } catch (e) {
+    console.error('[progress] hidePhasedProgress error', e);
+  }
+}
+
+// handleGenerate parsing
+const raw = await response.text();
+const contentType = response.headers.get('content-type') || '';
+let data;
+if (contentType.includes('application/json') || raw.trim().startsWith('{')) {
+  try { data = JSON.parse(raw); }
+  catch (e) { console.error('Non-JSON response', response.status, contentType, raw.slice(0,300));
+    showToast('Server returned non-JSON response (status '+response.status+'). Please retry or shorten your inputs.','error');
+    throw new Error('non-json'); }
+} else {
+  console.error('Non-JSON response', response.status, contentType, raw.slice(0,300));
+  showToast('Server returned non-JSON response (status '+response.status+'). Please retry or shorten your inputs.','error');
+  throw new Error('non-json');
+}
+
+if (!response.ok || data.ok===false) {
+  const msg = data && data.error ? data.error : 'Generation failed (status '+response.status+')';
+  showToast(msg,'error');
+  throw new Error(msg);
+}
+
+// in finally: hidePhasedProgress() & restore button
+```
+
+In generateResume.js the final handler begins with:
+```js
+const respond = (statusCode, body) => ({statusCode, headers: corsHeaders, body: JSON.stringify(body)});
+exports.handler = async (event) => {
+  if (event.httpMethod !== 'POST') return respond(405,{ok:false,error:'Method not allowed'});
+  let payload;
+  try { payload = JSON.parse(event.body||'{}'); } catch(e){return respond(400,{ok:false,error:'Invalid JSON body'});} 
+  const openaiKey = process.env.OPENAI_API_KEY || process.env.API_KEY;
+  if (!openaiKey) return respond(500,{ok:false,error:'OPENAI_API_KEY is not configured'});
+  const jdSafe = String(jobDescription||'').slice(0,6000);
+  // ... similar for resumeSafe, mustIncludeSkillsList
+  // build prompt without templateHtml, just placeholderKeys
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(),18000);
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {signal:controller.signal, ...});
+    // handle non-ok, parse response.json, extract content
+    // parse JSON from content, validate structure
+    // construct resumeHtml by replacing placeholders
+    return respond(200,{ok:true,filename,...});
+  } catch(err){
+    if (err.name==='AbortError') return respond(504,{ok:false,error:'AI request timed out.'});
+    return respond(500,{ok:false,error:'Resume generation failed.'});
+  }
+};
+```
+
+9) Runtime verification steps (Netlify URL)
+LOCAL:
+- cd workspace; python -m http.server 8000
+- open http://localhost:8000/jdmatch.html
+- fill company and job description + resume; click Generate
+- should never see classList toast or console error; if function simulates timeout by returning HTML, toast explains non-JSON/timeout
+
+NETLIFY:
+- wait for deployment after git push
+- open https://aesthetic-heliotrope-ed1bb8.netlify.app/jdmatch.html
+- hard refresh and test with real job description and resume
+- expect either successful resume or a clean toast with 504 message; no UI crash; check network response is JSON on all paths
+
+10) Rollback instructions
+- revert jdmatch.html changes: restore original showPhasedProgress/hidePhasedProgress without guards and remove safe parsing in handleGenerate (revert to previous commit before this fix)
+- revert generateResume.js to previous version that included full templateHtml prompt, no abort controller, and no respond() helper
+- git push or git revert to undo commit
+
 Eliminate the runtime crash/toast "Cannot read properties of null (reading 'classList')" and console red error "Blocked script execution in 'about:srcdoc' ..." by ensuring ALL iframe srcdoc HTML is stripped of scripts and inline handlers before assignment, and making progress overlay functions null-safe.
 
 4) Root cause (phase/progress DOM nodes missing in some flows; srcdoc still contains scripts/inline handlers)
