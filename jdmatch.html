@@ -5103,8 +5103,11 @@
     console.log('[JDM-TEMPLATE] openTemplateDrawer global:', typeof window.openTemplateDrawer);
 
     function closeTemplateDrawer() {
-      document.getElementById('drawerOverlay').classList.remove('active');
-      document.getElementById('templateDrawer').classList.remove('active');
+      const overlay = document.getElementById('drawerOverlay');
+      const drawer = document.getElementById('templateDrawer');
+      if (overlay && overlay.classList) overlay.classList.remove('active');
+      if (drawer && drawer.classList) drawer.classList.remove('active');
+      console.log('[JDM-TEMPLATE] closeTemplateDrawer executed | overlay:', !!overlay, 'drawer:', !!drawer);
     }
 
     // ========================
@@ -5194,9 +5197,9 @@
         const srcdoc = buildTemplatePreviewSrcdoc(id);
         const wrap = frame.parentElement;
         if (srcdoc) {
-          var _gS = _stripAllScriptsFromHtml(srcdoc);
-          console.log('[JDM-SRCdoc] scripts stripped:', srcdoc.length, '->', _gS.length);
-          frame.srcdoc = _jdmHardSanitizeSrcdoc(_gS);
+          const sanitized = _stripAllScriptsFromHtml(srcdoc);
+          console.log('[JDM-SRCdoc] sanitized gallery preview srcdoc; original len:', srcdoc.length, '=>', sanitized.length);
+          frame.srcdoc = sanitized;
           frame.addEventListener('load', () => _scaleTplGalleryFrame(frame, wrap));
           _scaleTplGalleryFrame(frame, wrap);
         } else {
@@ -5222,9 +5225,9 @@
           frame.setAttribute('sandbox', 'allow-same-origin');
           frame.setAttribute('data-tplid', id);
           frame.addEventListener('load', () => _scaleTplGalleryFrame(frame, wrap));
-          var _lS = _stripAllScriptsFromHtml(srcdoc);
-          console.log('[JDM-SRCdoc] scripts stripped:', srcdoc.length, '->', _lS.length);
-          frame.srcdoc = _jdmHardSanitizeSrcdoc(_lS);
+          const sanitized = _stripAllScriptsFromHtml(srcdoc);
+          console.log('[JDM-SRCdoc] sanitized gallery lazy srcdoc; original len:', srcdoc.length, '=>', sanitized.length);
+          frame.srcdoc = sanitized;
           wrap.appendChild(frame);
           _scaleTplGalleryFrame(frame, wrap);
         } else {
@@ -6562,7 +6565,18 @@
         .replace(/<script\b[^>]*\/>/gi, '');
     }
     // Reusable alias — applied at every iframe.srcdoc assignment to prevent blocked-script warnings
-    function _stripAllScriptsFromHtml(html) { return _stripScriptTags(html); }
+    // General-purpose HTML sanitizer used by any iframe.srcdoc assignment.
+    // Historically this only stripped <script> tags, but that proved insufficient
+    // (inline event handlers and javascript: URLs were still causing sandbox
+    // warnings). To keep every srcdoc assignment on the same page and to avoid
+    // duplication we now delegate to the hard sanitizer routine.
+    // NOTE: callers previously expected simple script removal; we keep the same
+    // name for backwards compatibility. All existing call-sites now benefit
+    // from the enhanced stripping.
+    function _stripAllScriptsFromHtml(html) {
+      // hard sanitizer already handles null/undefined and non-strings gracefully
+      return _jdmHardSanitizeSrcdoc(html);
+    }
 
     // _jdmWrapPdfViewer: wraps srcdoc body content in .jdm-pdfviewer > .jdm-page and
     // injects preview-only viewer CSS into <head>. Gives a PDF-viewer framing entirely
@@ -8770,176 +8784,189 @@
         var doc = new DOMParser().parseFromString(html, 'text/html');
         var _patchFailed = false;
         (workDraft.sections || []).forEach(function(sec) {
-          if (sec.enabled === false) return;
-          if (!(sec.title || '').trim()) return; // skip sections with no title (not patchable)
-          if (!sec.items || sec.items.length === 0) return;
-          var liveItems = sec.items.filter(function(i){ return (i.text || '').trim() !== ''; });
-          if (liveItems.length === 0) return;
-          // Primary: data-jdm-sec-wrap wrapper injected by _jdmGEAnnotateSectionIds phase-2.
-          // This is the most reliable anchor — it is a dedicated <div> wrapping the entire
-          // section block, guaranteed to be unique even in flat/shared-container layouts.
-          var container = null;
-          var titleEl   = null;
-          if (sec.id) {
-            var byWrap = doc.querySelector('[data-jdm-sec-wrap="' + sec.id + '"]');
-            if (byWrap) {
-              container = byWrap;
-              titleEl   = byWrap.querySelector('h1,h2,h3,h4,h5,.sec-title,.section-title') ||
-                          byWrap.querySelector('[data-jdm-sec-id="' + sec.id + '"]');
-            }
-          }
-          // Secondary: any element carrying data-jdm-sec-id (heading or legacy direct container)
-          if (!container && sec.id) {
-            var byId = doc.querySelector('[data-jdm-sec-id="' + sec.id + '"]');
-            if (byId) {
-              container = byId;
-              titleEl   = byId.querySelector('h1,h2,h3,h4,h5,.sec-title,.section-title') ||
-                          (/^H[1-6]$/.test((byId.tagName || '').toUpperCase()) ? byId : null);
-            }
-          }
-          // Fallback: heading text search (covers first render before annotation ran)
-          if (!container) {
-            var searchTitles = [];
-            if (sec._origTitle) searchTitles.push(sec._origTitle);
-            if (sec.title && sec.title !== sec._origTitle) searchTitles.push(sec.title);
-            for (var ti = 0; ti < searchTitles.length; ti++) {
-              var found = _jdmGEFindSectionContainer(doc, searchTitles[ti]);
-              if (found) { container = found.container; titleEl = found.titleEl; break; }
-            }
-          }
-          if (!container) {
-            // Last-resort: inject a minimal stub wrapper so this section becomes patchable
-            // instead of silently skipping. This handles newly added / duplicated sections
-            // that annotation may not have seen yet (timing edge case).
-            var protoW2  = doc.querySelector('[data-jdm-sec-wrap]');
-            var stubPar2 = protoW2 ? protoW2.parentElement : doc.body;
-            if (!stubPar2) stubPar2 = doc.body;
-            var stub2 = doc.createElement('div');
-            stub2.setAttribute('data-jdm-sec-id',   sec.id);
-            stub2.setAttribute('data-jdm-sec-wrap',  sec.id);
-            var stub2Hd;
-            if (protoW2) {
-              var p2Hd = protoW2.querySelector(
-                'h1,h2,h3,h4,h5,h6,.sec-title,.section-title,.section-heading,.resume-section-title');
-              stub2Hd = p2Hd ? p2Hd.cloneNode(false) : doc.createElement('h3');
-            } else {
-              stub2Hd = doc.createElement('h3');
-            }
-            stub2Hd.textContent = sec.title || 'Section';
-            stub2.appendChild(stub2Hd);
-            stubPar2.appendChild(stub2);
-            container = stub2;
-            titleEl   = stub2Hd;
-            console.log('[JDM-GE:PATCH] injected stub for missing section:', sec.id, '"' + sec.title + '"');
-          }
-          if (sec.type === 'summary') {
-            // Summary: replace plain paragraph text
-            var p = container.querySelector('p');
-            if (p) p.textContent = liveItems[0].text;
-          } else {
-            // Bullet list sections
-            var ul = container.querySelector('ul,ol');
-            var tbl = container.querySelector('table');
-            if (ul) {
-              // Clone the first LI as a style prototype so class names / attributes are preserved.
-              var refLi   = ul.querySelector('li');
-              var liProto = refLi ? refLi.cloneNode(false) : doc.createElement('li');
-              while (ul.firstChild) ul.removeChild(ul.firstChild);
-              liveItems.forEach(function(item) {
-                var li = liProto.cloneNode(false);
-                li.textContent = item.text;
-                ul.appendChild(li);
-              });
-            } else if (tbl) {
-              // Table-based content (education, certification grids, etc.):
-              // clone the first row as a template to preserve cell structure and styling.
-              var tbody = tbl.querySelector('tbody') || tbl;
-              var rows  = Array.from(tbody.querySelectorAll('tr'));
-              if (rows.length > 0) {
-                var refRow = rows[0].cloneNode(true);
-                while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
-                liveItems.forEach(function(item) {
-                  var row   = refRow.cloneNode(true);
-                  var cells = row.querySelectorAll('td,th');
-                  if (cells.length > 0) cells[0].textContent = item.text;
-                  tbody.appendChild(row);
-                });
+          try {
+            if (sec.enabled === false) return;
+            if (!(sec.title || '').trim()) return; // skip sections with no title (not patchable)
+            if (!sec.items || sec.items.length === 0) return;
+            var liveItems = sec.items.filter(function(i){ return (i.text || '').trim() !== ''; });
+            if (liveItems.length === 0) return;
+            // Primary: data-jdm-sec-wrap wrapper injected by _jdmGEAnnotateSectionIds phase-2.
+            // This is the most reliable anchor — it is a dedicated <div> wrapping the entire
+            // section block, guaranteed to be unique even in flat/shared-container layouts.
+            var container = null;
+            var titleEl   = null;
+            if (sec.id) {
+              var byWrap = doc.querySelector('[data-jdm-sec-wrap="' + sec.id + '"]');
+              if (byWrap) {
+                container = byWrap;
+                titleEl   = byWrap.querySelector('h1,h2,h3,h4,h5,.sec-title,.section-title') ||
+                            byWrap.querySelector('[data-jdm-sec-id="' + sec.id + '"]');
               }
-            } else {
-              // Chip/tile/grid style (competencies, skills grids)
-              var chipSels = ['[class*="cap-card"]','[class*="competenc"]','[class*="skill-item"]',
-                              '[class*="chip"]','[class*="badge"]','[class*="tag"]'];
-              var chips = null;
-              for (var ci = 0; ci < chipSels.length; ci++) {
-                try {
-                  var cs = Array.from(container.querySelectorAll(chipSels[ci]));
-                  if (cs.length > 0) { chips = cs; break; }
-                } catch(e) {}
+            }
+            // Secondary: any element carrying data-jdm-sec-id (heading or legacy direct container)
+            if (!container && sec.id) {
+              var byId = doc.querySelector('[data-jdm-sec-id="' + sec.id + '"]');
+              if (byId) {
+                container = byId;
+                titleEl   = byId.querySelector('h1,h2,h3,h4,h5,.sec-title,.section-title') ||
+                            (/^H[1-6]$/.test((byId.tagName || '').toUpperCase()) ? byId : null);
               }
-              if (chips && chips.length > 0) {
-                var chipParent = chips[0].parentNode;
-                var cloneRef = chips[0].cloneNode(false);
-                while (chipParent.firstChild) chipParent.removeChild(chipParent.firstChild);
-                liveItems.forEach(function(item) {
-                  var c = cloneRef.cloneNode(false);
-                  c.textContent = item.text;
-                  chipParent.appendChild(c);
-                });
+            }
+            // Fallback: heading text search (covers first render before annotation ran)
+            if (!container) {
+              var searchTitles = [];
+              if (sec._origTitle) searchTitles.push(sec._origTitle);
+              if (sec.title && sec.title !== sec._origTitle) searchTitles.push(sec.title);
+              for (var ti = 0; ti < searchTitles.length; ti++) {
+                var found = _jdmGEFindSectionContainer(doc, searchTitles[ti]);
+                if (found) {
+                  container = found.container;
+                  titleEl  = found.titleEl;
+                  console.warn('[JDM-GE:PATCH] section found via heading text search:', searchTitles[ti]);
+                  break;
+                }
+              }
+            }
+            if (!container) {
+              // Last-resort: inject a minimal stub wrapper so this section becomes patchable
+              // instead of silently skipping. This handles newly added / duplicated sections
+              // that annotation may not have seen yet (timing edge case).
+              var protoW2  = doc.querySelector('[data-jdm-sec-wrap]');
+              var stubPar2 = protoW2 ? protoW2.parentElement : doc.body;
+              if (!stubPar2) stubPar2 = doc.body;
+              var stub2 = doc.createElement('div');
+              stub2.setAttribute('data-jdm-sec-id',   sec.id);
+              stub2.setAttribute('data-jdm-sec-wrap',  sec.id);
+              var stub2Hd;
+              if (protoW2) {
+                var p2Hd = protoW2.querySelector(
+                  'h1,h2,h3,h4,h5,h6,.sec-title,.section-title,.section-heading,.resume-section-title');
+                stub2Hd = p2Hd ? p2Hd.cloneNode(false) : doc.createElement('h3');
               } else {
-                // Generic repeated-class direct children (flat skill grids, icon-card rows,
-                // or any admin template where items share a common class name).
-                var dominated = false;
-                var contentKids = Array.from(container.children).filter(function(c) {
-                  return c !== titleEl && !/^H[1-6]$/.test((c.tagName || '').toUpperCase());
+                stub2Hd = doc.createElement('h3');
+              }
+              stub2Hd.textContent = sec.title || 'Section';
+              stub2.appendChild(stub2Hd);
+              stubPar2.appendChild(stub2);
+              container = stub2;
+              titleEl   = stub2Hd;
+              console.log('[JDM-GE:PATCH] injected stub for missing section:', sec.id, '"' + sec.title + '"');
+            }
+            if (sec.type === 'summary') {
+              // Summary: replace plain paragraph text
+              var p = container.querySelector('p');
+              if (p) p.textContent = liveItems[0].text;
+            } else {
+              // Bullet list sections
+              var ul = container.querySelector('ul,ol');
+              var tbl = container.querySelector('table');
+              if (ul) {
+                // Clone the first LI as a style prototype so class names / attributes are preserved.
+                var refLi   = ul.querySelector('li');
+                var liProto = refLi ? refLi.cloneNode(false) : doc.createElement('li');
+                while (ul.firstChild) ul.removeChild(ul.firstChild);
+                liveItems.forEach(function(item) {
+                  var li = liProto.cloneNode(false);
+                  li.textContent = item.text;
+                  ul.appendChild(li);
                 });
-                if (contentKids.length >= 2) {
-                  var classGroups = {};
-                  contentKids.forEach(function(c) {
-                    var cls = (c.className || '').trim();
-                    if (cls) classGroups[cls] = (classGroups[cls] || 0) + 1;
+              } else if (tbl) {
+                // Table-based content (education, certification grids, etc.):
+                // clone the first row as a template to preserve cell structure and styling.
+                var tbody = tbl.querySelector('tbody') || tbl;
+                var rows  = Array.from(tbody.querySelectorAll('tr'));
+                if (rows.length > 0) {
+                  var refRow = rows[0].cloneNode(true);
+                  while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+                  liveItems.forEach(function(item) {
+                    var row   = refRow.cloneNode(true);
+                    var cells = row.querySelectorAll('td,th');
+                    if (cells.length > 0) cells[0].textContent = item.text;
+                    tbody.appendChild(row);
                   });
-                  var domKeys = Object.keys(classGroups).filter(function(k) { return classGroups[k] >= 2; });
-                  if (domKeys.length > 0) {
-                    domKeys.sort(function(a, b) { return classGroups[b] - classGroups[a]; });
-                    var gridItems = contentKids.filter(function(c) { return (c.className || '').trim() === domKeys[0]; });
-                    if (gridItems.length > 0) {
-                      var gridPar   = gridItems[0].parentNode;
-                      var gridProto = gridItems[0].cloneNode(false);
-                      gridItems.forEach(function(c) { if (c.parentNode) c.parentNode.removeChild(c); });
-                      liveItems.forEach(function(item) {
-                        var c = gridProto.cloneNode(false);
-                        c.textContent = item.text;
-                        gridPar.appendChild(c);
-                      });
-                      dominated = true;
+                }
+              } else {
+                // Chip/tile/grid style (competencies, skills grids)
+                var chipSels = ['[class*="cap-card"]','[class*="competenc"]','[class*="skill-item"]',
+                                '[class*="chip"]','[class*="badge"]','[class*="tag"]'];
+                var chips = null;
+                for (var ci = 0; ci < chipSels.length; ci++) {
+                  try {
+                    var cs = Array.from(container.querySelectorAll(chipSels[ci]));
+                    if (cs.length > 0) { chips = cs; break; }
+                  } catch(e) {}
+                }
+                if (chips && chips.length > 0) {
+                  var chipParent = chips[0].parentNode;
+                  var cloneRef = chips[0].cloneNode(false);
+                  while (chipParent.firstChild) chipParent.removeChild(chipParent.firstChild);
+                  liveItems.forEach(function(item) {
+                    var c = cloneRef.cloneNode(false);
+                    c.textContent = item.text;
+                    chipParent.appendChild(c);
+                  });
+                } else {
+                  // Generic repeated-class direct children (flat skill grids, icon-card rows,
+                  // or any admin template where items share a common class name.
+                  var dominated = false;
+                  var contentKids = Array.from(container.children).filter(function(c) {
+                    return c !== titleEl && !/^H[1-6]$/.test((c.tagName || '').toUpperCase());
+                  });
+                  if (contentKids.length >= 2) {
+                    var classGroups = {};
+                    contentKids.forEach(function(c) {
+                      var cls = (c.className || '').trim();
+                      if (cls) classGroups[cls] = (classGroups[cls] || 0) + 1;
+                    });
+                    var domKeys = Object.keys(classGroups).filter(function(k) { return classGroups[k] >= 2; });
+                    if (domKeys.length > 0) {
+                      domKeys.sort(function(a, b) { return classGroups[b] - classGroups[a]; });
+                      var gridItems = contentKids.filter(function(c) { return (c.className || '').trim() === domKeys[0]; });
+                      if (gridItems.length > 0) {
+                        var gridPar   = gridItems[0].parentNode;
+                        var gridProto = gridItems[0].cloneNode(false);
+                        gridItems.forEach(function(c) { if (c.parentNode) c.parentNode.removeChild(c); });
+                        liveItems.forEach(function(item) {
+                          var c = gridProto.cloneNode(false);
+                          c.textContent = item.text;
+                          gridPar.appendChild(c);
+                        });
+                        dominated = true;
+                      }
                     }
                   }
-                }
-                if (!dominated) {
-                  // Paragraph-per-item fallback (some admin templates use <p> per bullet)
-                  var paras = Array.from(container.querySelectorAll('p')).filter(function(el){ return el !== titleEl; });
-                  if (paras.length > 0) {
-                    paras.forEach(function(el, i) {
-                      if (liveItems[i]) { el.textContent = liveItems[i].text; }
-                      else if (el.parentNode) { el.parentNode.removeChild(el); }
-                    });
-                    // Append extra items beyond original paragraph count
-                    if (liveItems.length > paras.length) {
-                      var refPara = paras[paras.length - 1];
-                      for (var pi = paras.length; pi < liveItems.length; pi++) {
-                        var np = doc.createElement('p');
-                        np.textContent = liveItems[pi].text;
-                        refPara.parentNode.insertBefore(np, refPara.nextSibling);
-                        refPara = np;
+                  if (!dominated) {
+                    // Paragraph-per-item fallback (some admin templates use <p> per bullet)
+                    var paras = Array.from(container.querySelectorAll('p')).filter(function(el){ return el !== titleEl; });
+                    if (paras.length > 0) {
+                      paras.forEach(function(el, i) {
+                        if (liveItems[i]) { el.textContent = liveItems[i].text; }
+                        else if (el.parentNode) { el.parentNode.removeChild(el); }
+                      });
+                      // Append extra items beyond original paragraph count
+                      if (liveItems.length > paras.length) {
+                        var refPara = paras[paras.length - 1];
+                        for (var pi = paras.length; pi < liveItems.length; pi++) {
+                          var np = doc.createElement('p');
+                          np.textContent = liveItems[pi].text;
+                          refPara.parentNode.insertBefore(np, refPara.nextSibling);
+                          refPara = np;
+                        }
                       }
                     }
                   }
                 }
               }
             }
+          } catch(secErr) {
+            console.warn('[JDM-GE:PATCH] section "' + (sec.id||sec.title||'<unknown>') + '" patch error:', secErr.message);
+            _patchFailed = true;
           }
         });
         var patched = '<!doctype html>' + doc.documentElement.outerHTML;
+        if (_patchFailed) {
+          console.warn('[JDM-GE:PATCH] one or more sections failed to patch; template may be incompatible');
+        }
         console.log('[JDM-GE:PATCH] content patches applied | sections:', (workDraft.sections||[]).length, '| html:', patched.length);
         return patched;
       } catch(e) {

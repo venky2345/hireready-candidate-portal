@@ -6,4 +6,10 @@ functions = "netlify/functions"
 NODE_VERSION = "18"
 
 [functions]
-included_files = ["netlify/functions/templates/**"]
+# Ensure Netlify packages our custom functions and any helper files.
+# previously only templates were included, which could exclude new JS files
+# such as rewriteBlock.js. Expand the pattern accordingly.
+included_files = [
+  "netlify/functions/templates/**",
+  "netlify/functions/*.js"
+]

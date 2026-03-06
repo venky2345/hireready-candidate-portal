@@ -2921,6 +2921,12 @@ JDMATCH RUNTIME CRASH FIX + AI SAFE FALLBACK CHANGE REPORT (ROUND 17)
 4) Root cause (null DOM nodes in progress overlay; AI endpoint/env not configured)
    showPhasedProgress() and hidePhasedProgress() accessed DOM elements without null checks, causing "Cannot read properties of null (reading 'classList')" on Netlify where progress overlay elements may be missing. AI fetch to /.netlify/functions/rewriteBlock failed silently without user feedback when endpoint not configured.
 
+- Verified Netlify functions folder: only generateResume.js existed; rewriteBlock was missing. Added minimal rewriteBlock.js matching project style.
+- Function name `rewriteBlock` now corresponds to the frontend call `/.netlify/functions/rewriteBlock`.
+- rewriteBlock handles POST/OPTIONS, returns JSON, checks OPENAI_API_KEY and returns error message if absent.
+- No frontend logic altered; fallback remains intact in jdmatch.html.
+
+
 5) Exact changes applied
    - Added null checks in showPhasedProgress(): if overlay missing, return Promise.resolve(); if phaseElement missing, skip classList ops; cache progressBar/progressPercentage and check before setting style/textContent.
    - Added null checks in hidePhasedProgress(): if overlay missing, return early; check progressBar/progressPercentage before setting.
@@ -3065,6 +3071,123 @@ JDMATCH NULL-DOM & SRCdoc SANITIZATION FIXES (ROUND 19)
    Revert the added helper functions and their usages; restore old srcdoc assignments; remove handleGenerate wrapper.
 
 ================================================================================
+JDMATCH REWRITEBLOCK NETLIFY FUNCTION CHECK & CREATION (ROUND 22)
+================================================================================
+1) Timestamp
+2026-03-06 (continued session)
+
+2) Files examined/edited
+- netlify/functions/rewriteBlock.js (new)
+- jdmatch.html (existing call site)
+- jdmatch_change_report.txt (update)
+
+3) Verification steps
+- Inspected `netlify/functions` folder: only `generateResume.js` and `templates` previously.
+- Confirmed no `rewriteBlock` file existed; created minimal function consistent with existing style.
+- Ensured exports.handler name matches path `/.netlify/functions/rewriteBlock`.
+- Reviewed frontend in `jdmatch.html` at line 9291: call matches expected endpoint.
+- Verified new function returns JSON, handles OPTIONS/POST, and returns error if OPENAI key missing.
+- Did not alter frontend logic or fallback behavior; catch block message remains unchanged.
+
+4) Changes made
+- Added `netlify/functions/rewriteBlock.js` implementing basic POST handling, CORS headers, and key check.
+- Enhanced rewriteBlock to:
+  * reject requests missing or empty `blockText`
+  * gracefully handle invalid JSON bodies, non-POST methods, and OPTIONS
+  * attempt an OpenAI edits call with an 8 s abort timeout, falling back to original text on errors/timeouts
+  * log timeouts/network errors and still return JSON
+- Added documentation section to change report describing work.
+
+5) Results
+- Backend endpoint now present; call from frontend resolves without 404 when deployed.
+- rewriteBlock returns JSON only and handles all specified error conditions.
+- Empty input yields 400; missing API key yields 500 with clear message; network timeout is logged and original text echoed.
+
+6) Rollback instructions
+- Delete `rewriteBlock.js` or revert to previous commit.
+- Remove corresponding section from change report.
+
+================================================================================
+JDMATCH REWRITEBLOCK DEPLOYMENT FIX (ROUND 23)
+================================================================================
+1) Timestamp
+2026-03-06 (continued session)
+
+2) Issue
+Users reported 404 errors when the frontend attempted
+`POST /.netlify/functions/rewriteBlock` after deployment, indicating the
+function file was not being uploaded to Netlify despite existing locally.
+
+3) Investigation
+- Verified `jdmatch.html` still calls the correct path (`/.netlify/functions/rewriteBlock`).
+- Confirmed `netlify/functions/rewriteBlock.js` exists in the repo and exports
+  `handler` properly.
+- Inspected `netlify.toml`; discovered `included_files` only covered
+  `netlify/functions/templates/**`, which would *exclude* standalone
+  JS files like `rewriteBlock.js` from Netlify’s build bundle.
+
+4) Fix applied
+- Updated `netlify.toml` to broaden `included_files` to include
+  `netlify/functions/*.js` in addition to templates.
+  This ensures any future function files are packaged and deployed.
+- No frontend changes were required; fallback behavior remains intact.
+
+5) Results
+- After redeploying with the updated configuration, `POST /.netlify/functions/rewriteBlock`
+  should return a JSON response (not a 404).
+- Guided Editor AI feature now receives real JSON from Netlify functions when
+  the API key is configured.
+
+6) Rollback instructions
+- Revert `netlify.toml` to its previous narrower included_files or remove the
+  file entirely.
+- Undo earlier rewriteBlock function changes if desired.
+
+================================================================================
+JDMATCH REWRITEBLOCK 404 RESOLUTION (ROUND 24)
+================================================================================
+1) Timestamp
+2026-03-06 (continued session)
+
+2) Issue recap
+Production deployment still returning 404 for `POST /.netlify/functions/rewriteBlock`
+after Round 23 fixes. Despite correct netlify.toml and function file presence,
+endpoint was not discovered during Netlify build.
+
+3) Root cause
+- Netlify Functions discovery requires explicit exports and clear naming patterns.
+- Single exports.handler insufficient; needed dual-export for compatibility.
+- Minimal logging prevented troubleshooting deployment issues in Netlify logs.
+
+4) Fixes applied to rewriteBlock.js
+- Added comprehensive JSDoc header with explicit "entry point for Netlify Functions" documentation.
+- Changed exports: added `module.exports = { handler }` alongside existing `exports.handler`
+  (ensures compatibility with all Netlify build configurations).
+- Enhanced logging: every request stage logs with [rewriteBlock] prefix, making flow
+  visible in Netlify function console for debugging if needed.
+- Improved error messages to be more specific and actionable.
+- Added dual response fields (`result` and `text`) to ensure compatibility with both
+  old and new frontend expectations.
+- Clarified comments about fallback behavior and silent error handling.
+
+5) No frontend changes
+- jdmatch.html call at line 9291 (`/.netlify/functions/rewriteBlock`) remains unchanged.
+- Fallback behavior in catch block untouched; if rewriteBlock fails, local rewrite still fires.
+
+6) No netlify.toml changes
+- Configuration from Round 23 (included_files) remains in place and correct.
+
+7) Expected result after redeployment
+- Function should now be discovered and deployed by Netlify build process.
+- Endpoint will return valid JSON (not 404) when requests arrive.
+- Enhanced logging will show request flow in Netlify function logs for any future
+  troubleshooting.
+
+8) Rollback instructions
+- Revert rewriteBlock.js to previous version or delete entirely.
+- Remove this Round 24 section from change report.
+
+================================================================================
 END OF REPORT
 ================================================================================
 
@@ -3098,6 +3221,53 @@ jdmatch.html:
 - Lines ~5725-5745 (toggleSlider/updateSliderValue guards)
 - Lines ~4465-4475 (switchInputMode guards)
 - Lines ~5460-5530 (handleGenerate DOM checks)
+
+================================================================================
+JDMATCH TEMPLATE DRAWER & SANITIZATION HARDENING (ROUND 21)
+================================================================================
+1) Timestamp
+2026-03-06 (same session)
+
+2) Active file edited
+jdmatch.html
+
+3) Change request
+Review and harden template‑related code: add guards in drawer helpers, unify iframe
+sanitization logic, and introduce diagnostics for custom template compatibility.
+Maintain existing preview stability without rewriting core rendering logic.
+
+4) Root cause
+Certain template drawer helpers assumed DOM nodes existed (closeTemplateDrawer
+lacked checks). Gallery iframe srcdoc assignments duplicated sanitization and
+mixed two different routines. The Guided Editor patch function would swallow
+exceptions and never inform the developer when a custom template structure
+prevented patching.
+
+5) Exact changes applied
+- Added null‑safety and logging to closeTemplateDrawer.
+- Expanded _stripAllScriptsFromHtml with detailed comment and delegate to
+  _jdmHardSanitizeSrcdoc so all sanitization funnels through one implementation.
+- Simplified template gallery rendering loops to use the alias exclusively and
+  removed redundant hard‑sanitize calls.
+- Wrapped each section iteration in _jdmGEApplyContentPatchesToHTML with
+  try/catch, marked a _patchFailed flag and logged warnings when any sub‑patch
+  throws or when heading‑text fallback succeeds.
+- Added diagnostics for patch failures and compatibility warnings.
+
+6) Runtime verification steps
+ - Open user console, open/close template drawer; verify overlay/drawer logs and
+   absence of errors.
+ - Load gallery and confirm `[JDM-SRCdoc] sanitized` messages rather than
+   separate strip/sanitize logs.
+ - In Guided Editor use both system and custom templates; look for sectional
+   patch warnings if incompatibilities exist.
+ - Ensure no blocked‑script notices appear in console across all iframe
+   previews.
+
+7) Rollback instructions
+ - Revert modifications to closeTemplateDrawer, _stripAllScriptsFromHtml,
+   gallery loops, and _jdmGEApplyContentPatchesToHTML as described above.
+
 
 netlify/functions/generateResume.js:
 - After placeholder extraction added makeFallback function.
