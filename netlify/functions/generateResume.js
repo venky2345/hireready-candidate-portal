@@ -88,17 +88,24 @@ exports.handler = async (event, context) => {
       .filter((skill) => skill.length > 0);
   }
 
-  const allowedTemplates = Array.from({length: 12}, (_, i) => `template_${String(i + 1).padStart(2, '0')}`);
-  if (!allowedTemplates.includes(templateId)) {
-    console.warn('generateResume: requested templateId not allowed', templateId);
+  // Map frontend IDs (t01..t12) to actual template file names (template_01..template_12)
+  const templateMap = {};
+  for (let i = 1; i <= 12; i++) {
+    const key = 't' + String(i).padStart(2, '0');
+    const file = 'template_' + String(i).padStart(2, '0');
+    templateMap[key] = file;
+  }
+  if (!templateMap[templateId]) {
+    console.warn('generateResume: requested templateId not found in map', templateId);
     return respond(400, { ok: false, error: 'Selected template was not found' });
   }
-  const selectedTemplate = templateId;
+  const selectedTemplateFile = templateMap[templateId];
+  const requestedTemplateId = templateId; // keep original for response
 
   // Read resume template
   let templateHtml;
   try {
-    const templatePath = path.join(__dirname, 'templates', `${selectedTemplate}.html`);
+    const templatePath = path.join(__dirname, 'templates', `${selectedTemplateFile}.html`);
     templateHtml = fs.readFileSync(templatePath, 'utf-8');
   } catch (readError) {
     console.error('Template read error', readError);
@@ -152,8 +159,8 @@ exports.handler = async (event, context) => {
       targetMatch,
       metrics,
       addedSkills: mustIncludeSkillsList,
-      templateId: selectedTemplate,
-      templateIdUsed: selectedTemplate,
+      templateId: requestedTemplateId,
+      templateIdUsed: requestedTemplateId,
       fallbackUsed: true
     });
   }
@@ -293,8 +300,8 @@ Requirements:
       targetMatch,
       metrics,
       addedSkills: Array.isArray(resumeData.addedSkills) ? resumeData.addedSkills : [],
-      templateId: selectedTemplate,
-      templateIdUsed: selectedTemplate
+      templateId: requestedTemplateId,
+      templateIdUsed: requestedTemplateId
     };
 
     console.log('generateResume done');

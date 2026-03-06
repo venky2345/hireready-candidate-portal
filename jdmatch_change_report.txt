@@ -3603,6 +3603,65 @@ Rollback instructions
 Revert frontend and backend edits, restore previous version of generateResume.js
 that silently fallbacked to template_01, and revert toast/log additions.
 
+================================================================================
+ROUND 29 (2026-03-06) - tXX TEMPLATE ID MAPPING FIX
+================================================================================
+
+Issue: Frontend used IDs like t01..t12 but backend ignored them or defaulted to
+wrong file, causing template mismatches or 400 errors.
+
+Root Cause: Backend expected template_01..template_12 filenames directly and
+did not translate the tXX identifiers transmitted by the frontend. This
+caused inconsistent output and user confusion.
+
+Exact Changes Applied:
+
+1. Added `templateMap` in generateResume.js mapping t01→template_01 ... t12→template_12.
+2. Validated incoming templateId against this map; return 400 if not found.
+3. Resolved file path using mapped name (`selectedTemplateFile`).
+4. Preserved original requested ID for response fields (`requestedTemplateId`).
+5. Updated both fallback and success responses to include `templateId: requestedTemplateId` and `templateIdUsed: requestedTemplateId`.
+6. Added warning log when requested templateId is missing from map.
+7. Frontend already logs template usage and handles mismatches.
+
+Exact locations changed:
+- netlify/functions/generateResume.js: lines ~53–67 added map and validation;
+  line ~89 changed path resolution; lines ~147 & ~285 modified response body.
+
+Before snippet:
+```js
+// backend
+const allowedTemplates = Array.from({length: 12}, (_, i) => `template_${String(i + 1).padStart(2, '0')}`);
+const selectedTemplate = allowedTemplates.includes(templateId) ? templateId : 'template_01';
+```
+After snippet:
+```js
+// backend
+const templateMap = {};
+for (let i = 1; i <= 12; i++) {
+  const key = 't' + String(i).padStart(2, '0');
+  const file = 'template_' + String(i).padStart(2, '0');
+  templateMap[key] = file;
+}
+if (!templateMap[templateId]) {
+  console.warn('generateResume: requested templateId not found in map', templateId);
+  return respond(400, { ok: false, error: 'Selected template was not found' });
+}
+const selectedTemplateFile = templateMap[templateId];
+const requestedTemplateId = templateId;
+```
+
+Runtime verification steps:
+1. Set selectedTemplate = 't03' in UI; generate.
+2. Check preview shows design corresponding to t03’s file.
+3. Download a PDF and inspect that it matches t03.
+4. Repeat with t12; ensure output changes accordingly.
+5. Manipulate payload to send 't99'; backend returns 400 error.
+
+Rollback instructions:
+Revert mapping logic and response changes, restore previous templateId
+handling and remove associated logs.
+
 
 2. Confirm no "Cannot read properties of null" error appears
 3. Metrics display without crash
