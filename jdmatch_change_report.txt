@@ -3067,3 +3067,71 @@ JDMATCH NULL-DOM & SRCdoc SANITIZATION FIXES (ROUND 19)
 ================================================================================
 END OF REPORT
 ================================================================================
+
+================================================================================
+JDMATCH NULL-CRASH + TIMEOUT FIX REPORT (ROUND 20)
+================================================================================
+1) Timestamp
+2026-03-06
+
+2) Active file edited
+jdmatch.html
+netlify/functions/generateResume.js
+
+3) Change request (Fix Generate Matched Resume failures: frontend null crash + Netlify function timeout)
+Ensure Generate Matched Resume runs reliably on Netlify: no classList null crashes, no HTML 504 pages, and always return a usable resume even if OpenAI is slow.
+
+4) Root cause (unsafe DOM access + Netlify function timeout causing HTML 504 + JSON parse failure)
+Critical UI helpers referenced missing DOM elements (slider controls, input fields) leading to uncaught classList/textContent errors. The Netlify function used an overly large prompt and long OpenAI timeout; slow responses triggered Netlify 504 HTML, which the frontend tried to parse as JSON and crashed.
+
+5) Exact changes applied
+- Added null guards in toggleSlider, updateSliderValue, switchInputMode, and handleGenerate start; errors now show toast and abort gracefully.
+- Added safe element access throughout and early exit when inputs are missing.
+- Enhanced handleGenerate parsing and UI cleanup (already present from earlier rounds).
+- In generateResume.js: reduced OpenAI abort timeout to 8000ms, temperature to 0.2, max_tokens to 500.
+- Added makeFallback() for deterministic resume generation when OpenAI times out or fails; returns JSON with fallbackUsed:true.
+- Added logging markers: start, openai ok, fallback used, done.
+- Ensured every code path returns JSON with CORS headers using respond().
+
+6) Exact locations changed
+jdmatch.html:
+- Lines ~5725-5745 (toggleSlider/updateSliderValue guards)
+- Lines ~4465-4475 (switchInputMode guards)
+- Lines ~5460-5530 (handleGenerate DOM checks)
+
+netlify/functions/generateResume.js:
+- After placeholder extraction added makeFallback function.
+- Modified fetch logic and error handling around lines 160-240 to include new timeout, smaller tokens, and fallback calls.
+- Added logging lines and fallbackUsed flag to response.
+
+7) Before snippet
+`js
+function toggleSlider() {
+  const isManual = document.getElementById('manualMode').checked;
+  document.getElementById('sliderGroup').classList.toggle('active', isManual);
+  updateSidebar();
+}
+// handleGenerate used response.json() and 18s timeout
+`
+
+8) After snippet
+`js
+function toggleSlider() {
+  try {
+    const manualEl = document.getElementById('manualMode');
+    if (!manualEl) return;
+    const isManual = manualEl.checked;
+    const group = document.getElementById('sliderGroup');
+    if (group && group.classList) group.classList.toggle('active', isManual);
+    updateSidebar();
+  } catch(e){console.error('[slider] toggleSlider error', e);} }
+`
+handleGenerate begins with DOM existence checks and uses text parsing logic described earlier; Netlify function uses 8s timeout, temp 0.2, max_tokens 500, and calls makeFallback() on abort or parse errors.
+
+9) Runtime verification steps
+LOCAL: run python server, open jdmatch.html, test slider deletion and generation flows; slow OpenAI returns fallbackUsed:true resume.
+NETLIFY: after deploy hard refresh site, fill real JD/resume, click Generate; expect no crashes and JSON responses even with delays. Use PowerShell POST to confirm JSON within 8s.
+
+10) Rollback instructions
+Revert the above guard additions and timeout/fallback logic from both files by reverting to previous commit before March 6 round.
+

@@ -4477,10 +4477,14 @@
     // ========================
     function switchInputMode(mode) {
       inputMode = mode;
-      document.getElementById('uploadModeBtn').classList.toggle('active', mode === 'upload');
-      document.getElementById('adminModeBtn').classList.toggle('active', mode === 'admin');
-      document.getElementById('uploadModeContainer').style.display = mode === 'upload' ? 'block' : 'none';
-      document.getElementById('adminModeContainer').style.display = mode === 'admin' ? 'block' : 'none';
+      const uploadBtn = document.getElementById('uploadModeBtn');
+      if (uploadBtn && uploadBtn.classList) uploadBtn.classList.toggle('active', mode === 'upload');
+      const adminBtn = document.getElementById('adminModeBtn');
+      if (adminBtn && adminBtn.classList) adminBtn.classList.toggle('active', mode === 'admin');
+      const uploadCont = document.getElementById('uploadModeContainer');
+      if (uploadCont && uploadCont.style) uploadCont.style.display = mode === 'upload' ? 'block' : 'none';
+      const adminCont = document.getElementById('adminModeContainer');
+      if (adminCont && adminCont.style) adminCont.style.display = mode === 'admin' ? 'block' : 'none';
 
       if (mode === 'admin') {
         loadAdminApprovedData();
@@ -5478,11 +5482,18 @@
     // ========================
     async function handleGenerate() {
       // Validation
-      const companyName = document.getElementById('companyName').value.trim();
-      const jobDescription = document.getElementById('jobDescription').value.trim();
+      const companyEl = document.getElementById('companyName');
+      const jobEl = document.getElementById('jobDescription');
+      if (!companyEl || !jobEl) {
+        showToast('Required input fields are missing. Please reload the page.', 'error');
+        return;
+      }
+      const companyName = companyEl.value.trim();
+      const jobDescription = jobEl.value.trim();
 
       // Determine effective resume text — either file extraction OR manual paste
-      const pasteText = document.getElementById('baseResumePaste').value.trim();
+      const pasteEl = document.getElementById('baseResumePaste');
+      const pasteText = pasteEl ? pasteEl.value.trim() : '';
       const effectiveResumeText = baseResumeText || pasteText;
 
       // Check if we have resume data (either uploaded, extracted, pasted, or admin mode)
@@ -5509,6 +5520,10 @@
       markStepCompleted(5);
 
       const btn = document.getElementById('generateBtn');
+      if (!btn) {
+        showToast('Generate button missing from page. Please refresh.', 'error');
+        return;
+      }
       btn.disabled = true;
       btn.innerHTML = '<span>⚙️ Generating...</span>';
 
@@ -5723,16 +5738,28 @@
     // SLIDER CONTROLS
     // ========================
     function toggleSlider() {
-      const isManual = document.getElementById('manualMode').checked;
-      document.getElementById('sliderGroup').classList.toggle('active', isManual);
-      updateSidebar();
+      try {
+        const manualEl = document.getElementById('manualMode');
+        if (!manualEl) return; // slider radios missing
+        const isManual = manualEl.checked;
+        const group = document.getElementById('sliderGroup');
+        if (group && group.classList) {
+          group.classList.toggle('active', isManual);
+        }
+        updateSidebar();
+      } catch (e) {
+        console.error('[slider] toggleSlider error', e);
+      }
     }
 
     function updateSliderValue(value) {
       value = Math.max(5, Math.min(100, parseInt(value)));
-      document.getElementById('targetSlider').value = value;
-      document.getElementById('targetInput').value = value;
-      document.getElementById('sliderDisplay').textContent = value + '%';
+      const slider = document.getElementById('targetSlider');
+      const input = document.getElementById('targetInput');
+      const display = document.getElementById('sliderDisplay');
+      if (slider) slider.value = value;
+      if (input) input.value = value;
+      if (display) display.textContent = value + '%';
       updateSidebar();
     }
 

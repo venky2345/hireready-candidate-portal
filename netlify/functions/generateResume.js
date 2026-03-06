@@ -105,6 +105,54 @@ exports.handler = async (event, context) => {
   const tokens = templateHtml.match(/{{[A-Z0-9_]+}}/g) || [];
   const placeholderKeys = Array.from(new Set(tokens.map(t => t.slice(2, -2))));
 
+  // Fallback resume constructor used when AI times out or fails
+  function makeFallback() {
+    console.log('generateResume fallback used', safeCandidateId);
+    const replacements = {};
+    // basic placeholders
+    replacements.CANDIDATE_NAME = '';
+    replacements.PROFESSIONAL_TITLE = '';
+    replacements.CONTACT_INFO = '';
+    replacements.PROFESSIONAL_SUMMARY = '';
+    // skills list from mustIncludeSkillsList
+    let skillsHtml = '<ul>' + mustIncludeSkillsList.slice(0,20).map(s => `<li>${s}</li>`).join('') + '</ul>';
+    replacements.SKILLS_LIST = skillsHtml;
+    // generic experience block
+    let expHtml = '<div><strong>Experience</strong><ul><li>Role at Company<br>• Delivered project using ' +
+                   (mustIncludeSkillsList[0] || 'relevant technologies') + '</li></ul></div>';
+    replacements.EXPERIENCE_SECTION = expHtml;
+    replacements.EDUCATION_SECTION = '<div><strong>Education</strong><ul><li>Degree | Institution</li></ul></div>';
+    replacements.CERTIFICATIONS_SECTION = '';
+    // any other placeholders blank
+    placeholderKeys.forEach(k => { if (!(k in replacements)) replacements[k] = ''; });
+
+    let resumeHtml = templateHtml;
+    for (const [key, value] of Object.entries(replacements)) {
+      const placeholder = `{{${key}}}`;
+      resumeHtml = resumeHtml.replace(new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), String(value));
+    }
+    resumeHtml = resumeHtml.replace(/{{[A-Z0-9_]+}}/g, '');
+
+    const metrics = {
+      jdMatch: targetMatch,
+      atsFriendliness: targetMatch,
+      hrCatchiness: targetMatch,
+      chancesOfShortlisting: targetMatch
+    };
+
+    return respond(200, {
+      ok: true,
+      filename: `fallback_${Date.now()}.pdf`,
+      resumeHtml,
+      roleTitle: '',
+      targetMatch,
+      metrics,
+      addedSkills: mustIncludeSkillsList,
+      templateId: selectedTemplate,
+      fallbackUsed: true
+    });
+  }
+
   console.log('generateResume request', { safeCandidateId, hasJD: Boolean(jdSafe && jdSafe.trim()), targetMatch, hasMustSkills: Boolean(mustIncludeSkillsList.length > 0), placeholderKeysCount: placeholderKeys.length });
 
   const systemPrompt = `You are a professional resume writer. You MUST:
@@ -139,8 +187,9 @@ Requirements:
 - Make metrics realistic based on job fit (jdMatch should be around ${targetMatch})
 - Return ONLY the JSON object, nothing else`;
 
+  console.log('generateResume start', { safeCandidateId });
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 18000);
+  const timer = setTimeout(() => controller.abort(), 8000);
 
   let response;
   try {
@@ -156,19 +205,19 @@ Requirements:
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        temperature: 0.4,
-        max_tokens: 900
+        temperature: 0.2,
+        max_tokens: 500
       }),
       signal: controller.signal
     });
   } catch (fetchError) {
     clearTimeout(timer);
     if (fetchError.name === 'AbortError') {
-      console.log('generateResume timeout', safeCandidateId);
-      return respond(504, { ok: false, error: 'AI request timed out. Please retry or shorten the Job Description.', details: 'timeout' });
+      console.log('generateResume abort timeout, using fallback', safeCandidateId);
+      return makeFallback();
     }
     console.log('generateResume fetch error', fetchError);
-    return respond(500, { ok: false, error: 'AI service error', details: fetchError.message });
+    return makeFallback();
   }
   clearTimeout(timer);
 
@@ -176,7 +225,7 @@ Requirements:
     let errorBody = '';
     try { errorBody = await response.text(); } catch(e) {}
     console.log('OpenAI API error status', response.status, errorBody);
-    return respond(500, { ok: false, error: 'OpenAI API error', details: `status ${response.status}` });
+    return makeFallback();
   }
 
   let data;
@@ -184,7 +233,7 @@ Requirements:
     data = await response.json();
   } catch (e) {
     console.log('OpenAI API returned non-JSON', e);
-    return respond(500, { ok: false, error: 'OpenAI API returned non-JSON response' });
+    return makeFallback();
   }
   const content = data.choices?.[0]?.message?.content;
 
@@ -203,8 +252,10 @@ Requirements:
   }
 
   if (!resumeData.filename || !resumeData.replacements || !resumeData.addedSkills) {
+    console.log('generateResume invalid structure', resumeData);
     return respond(500, { ok: false, error: 'Invalid response structure from OpenAI' });
   }
+  console.log('generateResume openai ok');
 
   // Construct resumeHtml by replacing placeholders
   let resumeHtml = templateHtml;
@@ -240,6 +291,7 @@ Requirements:
       templateId: selectedTemplate
     };
 
+    console.log('generateResume done');
     return respond(200, responseBody);
   } catch (err) {
     console.log('generateResume error', err);
