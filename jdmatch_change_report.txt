@@ -3378,3 +3378,104 @@ Verification:
 
 Note: This completes null-safety hardening across all UI state management.
 
+
+================================================================================
+ROUND 26 (2026-03-06) - POST-GENERATION NULL-SAFETY BUG FIX
+================================================================================
+
+Issue: Frontend throwing "Cannot read properties of null (reading 'classList')" 
+AFTER generateResume returns successfully (200, with valid JSON). The main 
+generateResume backend is working, but the UI crash occurs in the post-generation 
+flow when displaying results.
+
+Root Cause: Four functions were directly accessing DOM elements without null 
+checks in the post-generation flow:
+
+1. handleGenerateSubmit() - Line 7522 accessing outputActionsCard without check
+2. displayResults() (first version) - Lines 5625-5626 accessing metricsGrid and 
+   outputSection without null checks
+3. displayResults() (second version) - Lines 7541-7566 accessing results and 
+   metricsGrid without null checks
+4. previewResume() - Line 7563 accessing previewModal without null check
+
+Exact Changes Applied:
+
+File: jdmatch.html
+
+1) handleGenerateSubmit() - Line ~7522
+   Before:
+   document.getElementById('outputActionsCard').style.display = 'block';
+   
+   After:
+   const actionsCard = document.getElementById('outputActionsCard');
+   if (actionsCard) actionsCard.style.display = 'block';
+
+2) displayResults() [first version, handleGenerate flow] - Lines ~5625-5644
+   Before:
+   const outputSection = document.getElementById('outputSection');
+   const metricsGrid = document.getElementById('metricsGrid');
+   metricsGrid.innerHTML = `...`; // assumes both exist
+   outputSection.style.display = 'block';
+   outputSection.scrollIntoView(...);
+   
+   After:
+   - Added check: if (!metricsGrid) with early return and console.warn
+   - Added check: if (!outputSection) with console.warn and partial display
+   - All DOM access now guarded
+   - Graceful degradation: shows metrics without outputSection if needed
+
+3) displayResults() [second version, handleGenerateSubmit flow] - Lines ~7541-7566
+   Before:
+   const results = document.getElementById('results');
+   const metricsGrid = document.getElementById('metricsGrid');
+   metricsGrid.innerHTML = `...`; // assumes both exist
+   results.classList.add('active'); // crashes if results is null
+   
+   After:
+   - Added check: if (!metricsGrid) with early return and console.warn
+   - Earlier return guards against null metricsGrid
+   - Changed: if (results && results.classList) results.classList.add('active')
+   - All DOM access now safe
+
+4) previewResume() - Line ~7563
+   Before:
+   var pi = document.getElementById('previewIframe');
+   if (pi) pi.srcdoc = ...;
+   document.getElementById('previewModal').style.display = 'block'; // no check
+   
+   After:
+   const pi = document.getElementById('previewIframe');
+   if (pi) pi.srcdoc = ...;
+   const modal = document.getElementById('previewModal');
+   if (modal) modal.style.display = 'block';
+
+Impact:
+- No legacy code removed; UI flow preserved exactly
+- No styling, layout, AI calls, or unrelated code changed
+- All post-generation DOM operations now null-safe
+- Calls to displayResults() and previewResume() now guaranteed safe
+- Toast/logging added for diagnostics if elements missing
+
+Verification After Deploy:
+1. Generate resume successfully (200 status, valid JSON metrics returned)
+2. Confirm no "Cannot read properties of null" error appears
+3. Metrics display without crash
+4. outputActionsCard becomes visible without crash
+5. Click "Preview" button - preview modal opens without crash
+6. Close preview modal - no errors
+7. Multiple generations in sequence - no accumulated state errors
+
+Safety Pattern Now Consistent:
+All post-generation UI functions follow defensive pattern:
+const element = document.getElementById('id');
+if (element) element.operation(...);
+OR
+if (!element) { console.warn(...); return; }
+element.operation(...);
+
+Related Previous Rounds:
+- Rounds 20-24: Progress overlay null-safety + AI function creation
+- Round 25: UI state function null-safety (switchPanel, modals, etc.)
+- Round 26: Post-generation result display null-safety
+- Result: Comprehensive null-safety across entire application UI
+

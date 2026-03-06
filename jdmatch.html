@@ -5622,6 +5622,38 @@
       const outputSection = document.getElementById('outputSection');
       const metricsGrid = document.getElementById('metricsGrid');
 
+      if (!metricsGrid) {
+        console.warn('[displayResults] metricsGrid element not found, skipping metrics display');
+        if (outputSection) {
+          outputSection.style.display = 'block';
+          outputSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        return;
+      }
+
+      if (!outputSection) {
+        console.warn('[displayResults] outputSection element not found, displaying metrics only');
+        metricsGrid.innerHTML = `
+          <div class="jdm-metric-card">
+            <div class="jdm-metric-label">JD Match</div>
+            <div class="jdm-metric-value">${data.metrics?.jdMatch || '—'}%</div>
+          </div>
+          <div class="jdm-metric-card">
+            <div class="jdm-metric-label">ATS Score</div>
+            <div class="jdm-metric-value">${data.metrics?.atsFriendliness || '—'}%</div>
+          </div>
+          <div class="jdm-metric-card">
+            <div class="jdm-metric-label">HR Appeal</div>
+            <div class="jdm-metric-value">${data.metrics?.hrCatchiness || '—'}%</div>
+          </div>
+          <div class="jdm-metric-card">
+            <div class="jdm-metric-label">Shortlist %</div>
+            <div class="jdm-metric-value">${data.metrics?.chancesOfShortlisting || '—'}%</div>
+          </div>
+        `;
+        return;
+      }
+
       metricsGrid.innerHTML = `
         <div class="jdm-metric-card">
           <div class="jdm-metric-label">JD Match</div>
@@ -7519,7 +7551,8 @@
         currentGeneration = data;
         displayResults(data);
         showToast('Resume generated!', 'success');
-        document.getElementById('outputActionsCard').style.display = 'block';
+        const actionsCard = document.getElementById('outputActionsCard');
+        if (actionsCard) actionsCard.style.display = 'block';
 
       } catch (error) {
         showToast(`Error: ${error.message}`, 'error');
@@ -7533,6 +7566,12 @@
     function displayResults(data) {
       const results = document.getElementById('results');
       const metricsGrid = document.getElementById('metricsGrid');
+
+      if (!metricsGrid) {
+        console.warn('[displayResults] metricsGrid element not found, skipping metrics display');
+        if (results && results.classList) results.classList.add('active');
+        return;
+      }
 
       metricsGrid.innerHTML = `
         <div class="jdm-metric-card">
@@ -7553,14 +7592,15 @@
         </div>
       `;
 
-      results.classList.add('active');
+      if (results && results.classList) results.classList.add('active');
     }
 
     function previewResume() {
       if (!currentGeneration) return;
-      var pi = document.getElementById('previewIframe');
+      const pi = document.getElementById('previewIframe');
       if (pi) pi.srcdoc = _jdmHardSanitizeSrcdoc(currentGeneration.resumeHtml);
-      document.getElementById('previewModal').style.display = 'block';
+      const modal = document.getElementById('previewModal');
+      if (modal) modal.style.display = 'block';
     }
 
     // ========================
