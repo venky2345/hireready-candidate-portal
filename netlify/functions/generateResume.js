@@ -89,7 +89,11 @@ exports.handler = async (event, context) => {
   }
 
   const allowedTemplates = Array.from({length: 12}, (_, i) => `template_${String(i + 1).padStart(2, '0')}`);
-  const selectedTemplate = allowedTemplates.includes(templateId) ? templateId : 'template_01';
+  if (!allowedTemplates.includes(templateId)) {
+    console.warn('generateResume: requested templateId not allowed', templateId);
+    return respond(400, { ok: false, error: 'Selected template was not found' });
+  }
+  const selectedTemplate = templateId;
 
   // Read resume template
   let templateHtml;
@@ -149,6 +153,7 @@ exports.handler = async (event, context) => {
       metrics,
       addedSkills: mustIncludeSkillsList,
       templateId: selectedTemplate,
+      templateIdUsed: selectedTemplate,
       fallbackUsed: true
     });
   }
@@ -288,7 +293,8 @@ Requirements:
       targetMatch,
       metrics,
       addedSkills: Array.isArray(resumeData.addedSkills) ? resumeData.addedSkills : [],
-      templateId: selectedTemplate
+      templateId: selectedTemplate,
+      templateIdUsed: selectedTemplate
     };
 
     console.log('generateResume done');

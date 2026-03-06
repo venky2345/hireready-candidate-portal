@@ -3511,6 +3511,99 @@ Verification Steps for Round 27:
 Rollback instructions
 (refer earlier rollback entries).
 
+================================================================================
+ROUND 28 (2026-03-06) - TEMPLATE CONSISTENCY ENFORCEMENT
+================================================================================
+
+Issue: The final generated resume could use a template different from the one
+selected by the user, leading to confusion when previewing or downloading.
+
+Root Cause: The frontend sent `templateId: selectedTemplate` but did not verify
+that a template was selected; the backend silently defaulted to `template_01`
+when an invalid or missing ID was supplied. The response did not surface which
+template was actually used.
+
+Exact Changes Applied:
+
+Frontend (jdmatch.html):
+- Added pre-generation check and toast if `selectedTemplate` is falsy.
+- Logged `[generate] selectedTemplate` before request.
+- After fetch, logged `[generate] templateId sent to backend`.
+- Extracted `templateUsed` from response (`templateIdUsed||templateId`) and
+  compared against `selectedTemplate`.
+- If mismatch, console.warn and showToast error.
+- Stored `templateIdUsed` in `currentGeneration`.
+- Added equivalent logic/logs to `handleGenerateSubmit`.
+
+Backend (generateResume.js):
+- Validated incoming `templateId` against allowed list; returned 400 error
+  if not found.
+- Removed silent fallback to `template_01`.
+- Added `templateIdUsed` field in both fallback and success JSON responses.
+- Logged warning when requested templateId was not allowed.
+
+Result: The frontend now always knows exactly which template produced the
+resume, and mismatches cause visible errors rather than silent divergence.
+
+Exact locations changed
+- jdmatch.html: added checks/logs at generation start (lines ~5500 and ~7495),
+  updated success handling (lines ~5575 and ~7550), added mismatch warnings.
+- netlify/functions/generateResume.js: added template validation at lines ~56,
+  added templateIdUsed to responses at lines ~147 and ~285, added early error
+  return.
+
+Before snippet
+```js
+// frontend
+// no check for selectedTemplate
+// no logging of template usage
+
+// backend
+const selectedTemplate = allowedTemplates.includes(templateId) ? templateId : 'template_01';
+
+// responseBody did not include templateIdUsed
+```
+
+After snippet
+```js
+// frontend
+if (!selectedTemplate) { showToast('Please select a resume template first','error'); return; }
+console.log('[generate] selectedTemplate', selectedTemplate);
+// ... payload includes templateId
+console.log('[generate] templateId sent to backend', selectedTemplate);
+// after response
+const templateUsed = data.templateIdUsed || data.templateId || selectedTemplate;
+if (templateUsed !== selectedTemplate) {
+  console.warn('[generate] template mismatch', selectedTemplate, templateUsed);
+  showToast('Generated resume used a different template than selected','error');
+}
+currentGeneration = Object.assign({}, data, { templateIdUsed: templateUsed });
+
+// backend
+if (!allowedTemplates.includes(templateId)) {
+  console.warn('generateResume: requested templateId not allowed', templateId);
+  return respond(400, { ok: false, error: 'Selected template was not found' });
+}
+const selectedTemplate = templateId;
+// ... later
+return respond(200, { ok:true, ..., templateId: selectedTemplate, templateIdUsed: selectedTemplate });
+```
+
+Runtime verification steps
+1. Select Template 05 in UI
+2. Generate resume
+3. Preview opens showing Template 05 layout
+4. Download PDF/DOC/HTML; inspect—they match Template 05
+5. Confirm `templateIdUsed` in JS console matches selection
+6. Change template to a different one and repeat
+7. If invalid templateId sent (manipulated in console), backend returns
+   error {ok:false,error:'Selected template was not found'}
+
+Rollback instructions
+Revert frontend and backend edits, restore previous version of generateResume.js
+that silently fallbacked to template_01, and revert toast/log additions.
+
+
 2. Confirm no "Cannot read properties of null" error appears
 3. Metrics display without crash
 4. outputActionsCard becomes visible without crash

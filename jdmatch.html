@@ -5491,6 +5491,13 @@
         showToast('Required input fields are missing. Please reload the page.', 'error');
         return;
       }
+
+      // ensure template selected
+      if (!selectedTemplate) {
+        showToast('Please select a resume template first', 'error');
+        return;
+      }
+      console.log('[generate] selectedTemplate', selectedTemplate);
       const companyName = companyEl.value.trim();
       const jobDescription = jobEl.value.trim();
 
@@ -5564,6 +5571,7 @@
             baseResumeText: effectiveResumeText
           })
         });
+        console.log('[generate] templateId sent to backend', selectedTemplate);
 
         // parse safely
         const raw = await response.text();
@@ -5601,8 +5609,15 @@
           console.error('[generate] progress stop failed', e);
         }
 
-        currentGeneration = data;
-        displayResults(data);
+        // evaluate template used by backend
+        const templateUsed = data.templateIdUsed || data.templateId || selectedTemplate;
+        if (templateUsed !== selectedTemplate) {
+          console.warn('[generate] template mismatch', selectedTemplate, templateUsed);
+          showToast('Generated resume used a different template than selected', 'error');
+        }
+        currentGeneration = Object.assign({}, data, { templateIdUsed: templateUsed });
+        console.log('[generate] templateIdUsed returned', templateUsed);
+        displayResults(currentGeneration);
         showToast('Resume generated successfully!', 'success');
 
         // Auto-open preview after a brief delay to ensure DOM is ready
@@ -7509,6 +7524,11 @@
         showToast('Please fill company name and job description', 'error');
         return;
       }
+      if (!selectedTemplate) {
+        showToast('Please select a resume template first', 'error');
+        return;
+      }
+      console.log('[generateSubmit] selectedTemplate', selectedTemplate);
 
       const btn = document.getElementById('generateBtn');
       btn.disabled = true;
@@ -7558,8 +7578,14 @@
           throw new Error(data?.error || 'Generation failed');
         }
 
-        currentGeneration = data;
-        displayResults(data);
+        const templateUsed = data.templateIdUsed || data.templateId || selectedTemplate;
+        if (templateUsed !== selectedTemplate) {
+          console.warn('[generateSubmit] template mismatch', selectedTemplate, templateUsed);
+          showToast('Generated resume used a different template than selected', 'error');
+        }
+        currentGeneration = Object.assign({}, data, { templateIdUsed: templateUsed });
+        console.log('[generateSubmit] templateIdUsed returned', templateUsed);
+        displayResults(currentGeneration);
         showToast('Resume generated!', 'success');
         const actionsCard = document.getElementById('outputActionsCard');
         if (actionsCard) actionsCard.style.display = 'block';
