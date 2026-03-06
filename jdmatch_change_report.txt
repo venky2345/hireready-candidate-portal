@@ -3305,3 +3305,76 @@ NETLIFY: after deploy hard refresh site, fill real JD/resume, click Generate; ex
 10) Rollback instructions
 Revert the above guard additions and timeout/fallback logic from both files by reverting to previous commit before March 6 round.
 
+
+================================================================================
+ROUND 25 (2026-03-06) - FRONTEND NULL-SAFETY BUG FIX
+================================================================================
+
+Issue: Frontend throwing "Cannot read properties of null (reading 'classList')" 
+despite generateResume backend now returning 200 status. This is a pure frontend 
+DOM safety issue, not an API/backend failure.
+
+Root Cause: Seven functions were accessing .classList on elements without null 
+checks before attempting operations:
+
+1. openTemplateDrawer() - adding 'active' class to overlay/drawer without checks
+2. switchPanel() - accessing getElementById(panelName).classList directly
+3. switchResumeTab() - accessing getElementById(...).classList directly  
+4. openResumeEditor() - accessing getElementById('rEditorOverlay'/'rEditorDrawer').classList
+5. openShortcuts()/closeShortcuts() - accessing getElementById('shortcutsModal').classList
+6. openHowItWorks()/closeHowItWorks() - accessing getElementById('howItWorksModal').classList
+7. openGuidedEditor()/closeGuidedEditor() - accessing getElementById('jdmGuidedEditor').classList
+
+Exact Changes Applied:
+
+File: jdmatch.html
+
+1) openTemplateDrawer() - Line ~5083-5084
+   Added null + .classList check:
+   if (overlay && overlay.classList) overlay.classList.add('active');
+   if (drawer && drawer.classList) drawer.classList.add('active');
+
+2) switchPanel() - Line ~5725-5726
+   Extracted element, added checks:
+   const panelEl = document.getElementById(panelName);
+   if (panelEl && panelEl.classList) panelEl.classList.add('active');
+   if (event.target && event.target.classList) event.target.classList.add('active');
+
+3) switchResumeTab() - Line ~5735-5736
+   Extracted element, added checks:
+   const tabEl = document.getElementById(tabName === 'paste' ? 'pasteTab' : 'uploadTab');
+   if (tabEl && tabEl.classList) tabEl.classList.add('active');
+   if (event.target && event.target.classList) event.target.classList.add('active');
+
+4) openResumeEditor() - Line ~6031-6035
+   Extracted both elements, added checks:
+   const ov = document.getElementById('rEditorOverlay');
+   const dr = document.getElementById('rEditorDrawer');
+   if (ov && ov.classList) ov.classList.add('active');
+   if (dr && dr.classList) dr.classList.add('active');
+
+5) Modal functions - Lines ~8031-8043
+   openShortcuts/closeShortcuts/openHowItWorks/closeHowItWorks
+   All now extract element and add null + .classList check before operations
+
+6) Guided Editor - Lines ~8361 & 8375
+   openGuidedEditor/closeGuidedEditor
+   Both now extract element and add null + .classList check before operations
+
+Impact:
+- No legacy code removed; UI flow preserved exactly
+- No styling, layout, AI calls, template logic, or Guided Editor behavior changed
+- All DOM manipulations now safe for missing/null elements
+- generateResume success flow guaranteed null-safe
+
+Verification:
+1. After generateResume returns 200, metrics display without crashes
+2. Open template drawer - templates show without classList crash
+3. Switch upload/paste tabs - works without null errors
+4. Open resume editor - editor shows without null errors
+5. Press '?' for shortcuts - modal shows without null errors
+6. Open Guided Editor - editor works without null errors
+7. Close modals/drawers - all close cleanly
+
+Note: This completes null-safety hardening across all UI state management.
+

@@ -5080,8 +5080,8 @@
         return;
       }
       console.log('[user-template] ✓ Drawer elements found - setting active class');
-      overlay.classList.add('active');
-      drawer.classList.add('active');
+      if (overlay && overlay.classList) overlay.classList.add('active');
+      if (drawer && drawer.classList) drawer.classList.add('active');
       console.log('[JDM-TEMPLATE] drawer open state | overlay.active:', overlay.classList.contains('active'), '| drawer.active:', drawer.classList.contains('active'));
       renderTemplatesGrid();
       // Pass 1: immediate rAF for any already-visible scenario
@@ -5722,8 +5722,9 @@
     function switchPanel(panelName) {
       document.querySelectorAll('.jdm-panel').forEach(pane => pane.classList.remove('active'));
       document.querySelectorAll('.jdm-nav-btn').forEach(btn => btn.classList.remove('active'));
-      document.getElementById(panelName).classList.add('active');
-      event.target.classList.add('active');
+      const panelEl = document.getElementById(panelName);
+      if (panelEl && panelEl.classList) panelEl.classList.add('active');
+      if (event.target && event.target.classList) event.target.classList.add('active');
 
       if (panelName === 'templates') renderTemplatesGrid();
       if (panelName === 'history') renderHistory();
@@ -5733,8 +5734,9 @@
     function switchResumeTab(tabName) {
       document.querySelectorAll('.jdm-resume-content').forEach(c => c.classList.remove('active'));
       document.querySelectorAll('.jdm-resume-tab-btn').forEach(b => b.classList.remove('active'));
-      document.getElementById(tabName === 'paste' ? 'pasteTab' : 'uploadTab').classList.add('active');
-      event.target.classList.add('active');
+      const tabEl = document.getElementById(tabName === 'paste' ? 'pasteTab' : 'uploadTab');
+      if (tabEl && tabEl.classList) tabEl.classList.add('active');
+      if (event.target && event.target.classList) event.target.classList.add('active');
     }
 
     // ========================
@@ -6028,8 +6030,10 @@
       window.__jdmDraftDirty = false;
       var stEl = document.getElementById('rEditorSaveStatus');
       if (stEl) stEl.textContent = '\u2713 Saved';
-      document.getElementById('rEditorOverlay').classList.add('active');
-      document.getElementById('rEditorDrawer').classList.add('active');
+      const ov = document.getElementById('rEditorOverlay');
+      const dr = document.getElementById('rEditorDrawer');
+      if (ov && ov.classList) ov.classList.add('active');
+      if (dr && dr.classList) dr.classList.add('active');
       _renderDraftEditor();
       console.log('[JDM-EDITOR] open');
     }
@@ -8026,19 +8030,23 @@
     // KEYBOARD SHORTCUTS
     // ========================
     function openShortcuts() {
-      document.getElementById('shortcutsModal').classList.add('active');
+      const modal = document.getElementById('shortcutsModal');
+      if (modal && modal.classList) modal.classList.add('active');
     }
 
     function closeShortcuts() {
-      document.getElementById('shortcutsModal').classList.remove('active');
+      const modal = document.getElementById('shortcutsModal');
+      if (modal && modal.classList) modal.classList.remove('active');
     }
 
     function openHowItWorks() {
-      document.getElementById('howItWorksModal').classList.add('active');
+      const modal = document.getElementById('howItWorksModal');
+      if (modal && modal.classList) modal.classList.add('active');
     }
 
     function closeHowItWorks() {
-      document.getElementById('howItWorksModal').classList.remove('active');
+      const modal = document.getElementById('howItWorksModal');
+      if (modal && modal.classList) modal.classList.remove('active');
     }
 
     function initKeyboardShortcuts() {
@@ -8350,7 +8358,8 @@
         window._jdmGEWorkDraft = fresh;
       }
       _jdmGEActiveSec = 0;
-      document.getElementById('jdmGuidedEditor').classList.add('jdm-ge-open');
+      const geEl = document.getElementById('jdmGuidedEditor');
+      if (geEl && geEl.classList) geEl.classList.add('jdm-ge-open');
       _jdmGERenderTabs();
       _jdmGERenderForm(_jdmGEActiveSec);
       _jdmGERenderPreview();
@@ -8360,7 +8369,8 @@
     }
 
     function closeGuidedEditor() {
-      document.getElementById('jdmGuidedEditor').classList.remove('jdm-ge-open');
+      const geEl = document.getElementById('jdmGuidedEditor');
+      if (geEl && geEl.classList) geEl.classList.remove('jdm-ge-open');
       window.removeEventListener('resize', _jdmGEScalePreview);
       _refreshPreviewFromDraftLive();
       console.log('[JDM-GE] closed');
