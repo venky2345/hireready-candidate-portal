@@ -2791,6 +2791,9 @@
               <div style="padding: 16px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; margin-bottom: 16px;">
                 <div style="font-size: 13px; font-weight: 700; color: #22c55e; margin-bottom: 8px;">✔ Resume Generated</div>
                 <div style="font-size: 11px; color: var(--muted);">Your tailored resume is ready!</div>
+                <div id="generatedTemplateLabel" style="font-size: 11px; color: var(--muted); margin-top: 8px; display: none;">
+                  Generated template: <span id="generatedTemplateName" style="font-weight: 600; color: var(--text);"></span>
+                </div>
               </div>
               
               <div class="jdm-metrics-grid" id="metricsGrid"></div>
@@ -7700,6 +7703,16 @@
         outputSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         console.log('[generate] output actions revealed via displayResults');
       }
+      
+      // Populate generated template label
+      const templateUsed = data.templateIdUsed || 'unknown';
+      const templateName = JDM_TEMPLATE_MAP[templateUsed] ? JDM_TEMPLATE_MAP[templateUsed].name : templateUsed;
+      const labelEl = document.getElementById('generatedTemplateLabel');
+      const nameEl = document.getElementById('generatedTemplateName');
+      if (labelEl && nameEl) {
+        nameEl.textContent = templateName + ' (' + templateUsed + ')';
+        labelEl.style.display = 'block';
+      }
     }
 
     function previewResume() {
@@ -7709,11 +7722,16 @@
         return;
       }
 
-      if (!currentGeneration.resumeHtml) {
-        console.warn('[previewResume] Generated resume HTML is missing');
-        showToast('Generated resume HTML is missing. Please try generating again.', 'error');
+      const html = currentGeneration.resumeHtml || '';
+      if (!html || html.trim().length < 200) {
+        console.error('[preview] blocked: resumeHtml too short or empty', html.length);
+        showToast('Generated resume preview is unavailable because output HTML is empty or too short.', 'error');
         return;
       }
+      
+      const templateUsed = currentGeneration.templateIdUsed || 'unknown';
+      const templateName = JDM_TEMPLATE_MAP[templateUsed] ? JDM_TEMPLATE_MAP[templateUsed].name : templateUsed;
+      console.log('[preview] source templateIdUsed:', templateUsed, '| name:', templateName, '| resumeHtml length:', html.length);
 
       try {
         const pi = document.getElementById('previewIframe');
@@ -7758,10 +7776,45 @@
     }
 
     // ========================
+    // GENERATED HTML VALIDATION HELPER
+    // ========================
+    function _validateGeneratedHtml(operation) {
+      if (!currentGeneration) {
+        console.error('[' + operation + '] blocked: currentGeneration is null');
+        showToast('No generated resume available. Please generate a resume first.', 'error');
+        return false;
+      }
+      
+      const html = currentGeneration.resumeHtml || '';
+      if (!html || html.trim().length < 200) {
+        console.error('[' + operation + '] blocked: resumeHtml too short', html.length);
+        showToast('Generated resume content is empty or incomplete. Please regenerate.', 'error');
+        return false;
+      }
+      
+      // Check for meaningfully blank content (only whitespace/tags but no text)
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = html;
+      const textContent = (tempDiv.textContent || tempDiv.innerText || '').trim();
+      if (textContent.length < 50) {
+        console.error('[' + operation + '] blocked: rendered text content is blank', textContent.length);
+        showToast(operation + ' blocked: generated resume content appears blank.', 'error');
+        return false;
+      }
+      
+      return true;
+    }
+
+    // ========================
     // DOWNLOADS
     // ========================
     function downloadPDF() {
-      if (!currentGeneration) return;
+      if (!_validateGeneratedHtml('download-pdf')) return;
+      
+      const templateUsed = currentGeneration.templateIdUsed || 'unknown';
+      const templateName = JDM_TEMPLATE_MAP[templateUsed] ? JDM_TEMPLATE_MAP[templateUsed].name : templateUsed;
+      console.log('[download-pdf] source templateIdUsed:', templateUsed, '| name:', templateName, '| resumeHtml length:', currentGeneration.resumeHtml.length);
+      
       const opt = {
         margin: 10,
         filename: currentGeneration.filename,
@@ -7772,10 +7825,16 @@
       wrapper.innerHTML = currentGeneration.resumeHtml;
       html2pdf().set(opt).from(wrapper).save();
       showToast('PDF downloaded!', 'success');
+      console.log('[download-pdf] PDF generation complete');
     }
 
     function downloadDOC() {
-      if (!currentGeneration) return;
+      if (!_validateGeneratedHtml('download-docx')) return;
+      
+      const templateUsed = currentGeneration.templateIdUsed || 'unknown';
+      const templateName = JDM_TEMPLATE_MAP[templateUsed] ? JDM_TEMPLATE_MAP[templateUsed].name : templateUsed;
+      console.log('[download-docx] source templateIdUsed:', templateUsed, '| name:', templateName, '| resumeHtml length:', currentGeneration.resumeHtml.length);
+      
       const doc = `<html><head><meta charset='utf-8'></head><body>${currentGeneration.resumeHtml}</body></html>`;
       const blob = new Blob([doc], {type: 'application/msword'});
       const url = URL.createObjectURL(blob);
@@ -7784,15 +7843,22 @@
       link.download = currentGeneration.filename.replace('.pdf', '.doc');
       link.click();
       showToast('DOC downloaded!', 'success');
+      console.log('[download-docx] DOCX generation complete');
     }
 
     function downloadHTML() {
-      if (!currentGeneration) return;
+      if (!_validateGeneratedHtml('download-html')) return;
+      
+      const templateUsed = currentGeneration.templateIdUsed || 'unknown';
+      const templateName = JDM_TEMPLATE_MAP[templateUsed] ? JDM_TEMPLATE_MAP[templateUsed].name : templateUsed;
+      console.log('[download-html] source templateIdUsed:', templateUsed, '| name:', templateName, '| resumeHtml length:', currentGeneration.resumeHtml.length);
+      
       const link = document.createElement('a');
       link.href = 'data:text/html;charset=utf-8,' + encodeURIComponent(currentGeneration.resumeHtml);
       link.download = currentGeneration.filename.replace('.pdf', '.html');
       link.click();
       showToast('HTML downloaded!', 'success');
+      console.log('[download-html] HTML download complete');
     }
 
     // ========================

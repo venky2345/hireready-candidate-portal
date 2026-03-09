@@ -3860,3 +3860,166 @@ ROUND 30 (2026-03-09) — UNIFY TEMPLATE SOURCE + RESTORE DOWNLOAD ACTIONS
     Remove output-reveal code from handleGenerate/handleGenerateSubmit success paths.
     Remove JDM_TEMPLATE_MAP validation checks from frontend.
 
+================================================================================
+ROUND 31 (2026-03-09) — SINGLE SOURCE: GENERATED HTML + BLANK FILE PREVENTION
+================================================================================
+
+1) Timestamp
+   2026-03-09 (continued session)
+
+2) Active file(s) edited
+   jdmatch.html
+   jdmatch_change_report.txt
+
+3) Change request
+   Fix three critical issues:
+   ISSUE 1: Preview after generation must use ONLY currentGeneration.resumeHtml
+   ISSUE 2: PDF and DOCX downloads are creating blank files when resumeHtml is empty
+   ISSUE 3: No visual confirmation of which template was actually used in generation
+
+4) Root cause
+
+   ROOT CAUSE 1 — Preview used unvalidated HTML:
+   previewResume() checked for missing HTML but did not validate minimum length
+   or detect blank content (HTML with only whitespace/empty tags). This allowed
+   preview modal to open with effectively blank content.
+
+   ROOT CAUSE 2 — Downloads never validated content:
+   downloadPDF(), downloadDOC(), downloadHTML() had no validation beyond checking
+   if currentGeneration exists. They never verified that resumeHtml:
+   - is not empty string
+   - has sufficient length (not just a few chars)
+   - contains actual visible text content (not just empty HTML wrapper)
+   Result: blank PDF/DOCX files were generated when:
+   - backend returned minimal fallback HTML
+   - resumeHtml was accidentally overwritten with empty string
+   - generation succeeded but with empty template render
+
+   ROOT CAUSE 3 — No visual feedback of generated template:
+   After generation, user had no way to verify which template was actually used.
+   Output section only showed metrics and download buttons. If template mismatch
+   occurred (selected t02 but backend used t01), user would not notice until
+   downloading and opening the file.
+
+5) Exact changes applied
+
+   === jdmatch.html ===
+
+   A) Added _validateGeneratedHtml(operation) helper function (inserted before downloadPDF):
+      - Checks currentGeneration exists
+      - Validates resumeHtml is not empty and has minimum 200 chars
+      - Creates temp DOM element to extract text content
+      - Detects blank content (less than 50 chars of visible text)
+      - Returns false and shows error toast if any check fails
+      - Logs specific failure reason with operation name
+
+   B) Updated previewResume() (line ~7705):
+      - Replaced simple null check with length validation (min 200 chars)
+      - Added templateUsed extraction and logging before preview:
+        console.log('[preview] source templateIdUsed:', templateUsed, '| name:', templateName, '| resumeHtml length:', length)
+      - Shows specific error if HTML too short: "preview is unavailable because output HTML is empty or too short"
+
+   C) Updated downloadPDF() (line ~7764):
+      - Added _validateGeneratedHtml('download-pdf') guard at top
+      - Added templateUsed and templateName extraction
+      - Added comprehensive logging before generation:
+        console.log('[download-pdf] source templateIdUsed...resumeHtml length')
+      - Added completion log after html2pdf completes
+
+   D) Updated downloadDOC() (line ~7783):
+      - Added _validateGeneratedHtml('download-docx') guard at top
+      - Added templateUsed and templateName extraction
+      - Added comprehensive logging before generation
+      - Added completion log after blob creation
+
+   E) Updated downloadHTML() (line ~7801):
+      - Added _validateGeneratedHtml('download-html') guard at top
+      - Added templateUsed, templateName extraction, and logging
+      - Added completion log after download trigger
+
+   F) Added generated template label to output section HTML (line ~2793):
+      <div id="generatedTemplateLabel" style="...display: none;">
+        Generated template: <span id="generatedTemplateName" style="font-weight: 600;"></span>
+      </div>
+      Initially hidden, shown after successful generation.
+
+   G) Updated displayResults() (line ~7698):
+      - After revealing outputSection, populate template label:
+        const templateUsed = data.templateIdUsed || 'unknown';
+        const templateName = JDM_TEMPLATE_MAP[templateUsed] ? JDM_TEMPLATE_MAP[templateUsed].name : templateUsed;
+        nameEl.textContent = templateName + ' (' + templateUsed + ')';
+        labelEl.style.display = 'block';
+
+6) Exact locations changed
+
+   jdmatch.html:
+     Lines 2793-2798: Added generatedTemplateLabel div in output section HTML
+     Lines 7733-7761: Added _validateGeneratedHtml() helper function
+     Lines 7705-7721: Enhanced previewResume() with length validation and template logging
+     Lines 7764-7782: Enhanced downloadPDF() with validation, template logging
+     Lines 7783-7800: Enhanced downloadDOC() with validation, template logging
+     Lines 7801-7815: Enhanced downloadHTML() with validation, template logging
+     Lines 7698-7712: Enhanced displayResults() to populate template label
+
+7) Before snippet (downloadPDF — no validation)
+
+   function downloadPDF() {
+     if (!currentGeneration) return;
+     const opt = {...};
+     const wrapper = document.createElement('div');
+     wrapper.innerHTML = currentGeneration.resumeHtml;
+     html2pdf().set(opt).from(wrapper).save();
+     showToast('PDF downloaded!', 'success');
+   }
+
+8) After snippet (downloadPDF — with validation and logging)
+
+   function downloadPDF() {
+     if (!_validateGeneratedHtml('download-pdf')) return;
+     
+     const templateUsed = currentGeneration.templateIdUsed || 'unknown';
+     const templateName = JDM_TEMPLATE_MAP[templateUsed] ? JDM_TEMPLATE_MAP[templateUsed].name : templateUsed;
+     console.log('[download-pdf] source templateIdUsed:', templateUsed, '| name:', templateName, '| resumeHtml length:', currentGeneration.resumeHtml.length);
+     
+     const opt = {...};
+     const wrapper = document.createElement('div');
+     wrapper.innerHTML = currentGeneration.resumeHtml;
+     html2pdf().set(opt).from(wrapper).save();
+     showToast('PDF downloaded!', 'success');
+     console.log('[download-pdf] PDF generation complete');
+   }
+
+9) Runtime verification steps
+   1. Select Modern Minimal (t02)
+   2. Generate resume
+   3. After generation, output section shows:
+      "Generated template: Modern Minimal (t02)"
+   4. Console shows: [preview] source templateIdUsed: t02 | name: Modern Minimal | resumeHtml length: XXXX
+   5. Click Preview — modal opens with generated content
+   6. Console shows: [previewResume] iframe content set successfully
+   7. Click PDF — download starts
+   8. Console shows: [download-pdf] source templateIdUsed: t02 | name: Modern Minimal | resumeHtml length: XXXX
+   9. Console shows: [download-pdf] PDF generation complete
+   10. Open downloaded PDF — contains Modern Minimal layout with actual content (not blank)
+   11. Click DOC — download starts
+   12. Console shows: [download-docx] source templateIdUsed: t02 | name: Modern Minimal | resumeHtml length: XXXX
+   13. Open downloaded DOC — contains Modern Minimal layout with actual content (not blank)
+   14. Select different template (t05), generate again
+   15. Template label updates to "Divider Sections (t05)"
+   16. All downloads reflect new template
+   
+   NEGATIVE TEST — Blank content prevention:
+   17. Manually set currentGeneration.resumeHtml = '<div></div>' in console
+   18. Try to click Preview — blocked with toast: "Generated resume preview is unavailable because output HTML is empty or too short."
+   19. Console shows: [preview] blocked: resumeHtml too short or empty 11
+   20. Try to click PDF — blocked with toast: "download-pdf blocked: generated resume content appears blank."
+   21. Console shows: [download-pdf] blocked: rendered text content is blank 0
+   22. No blank file created
+
+10) Rollback instructions
+    Remove _validateGeneratedHtml() function.
+    Restore original previewResume() without length check and template logging.
+    Restore original downloadPDF/DOC/HTML without validation guards and logging.
+    Remove generatedTemplateLabel div from output section HTML.
+    Remove template label population code from displayResults().
+
