@@ -3477,6 +3477,23 @@
       { key: 'additionalInfo', label: 'Additional Information',        enabledByDefault: false, repeatable: false, itemType: 'text' }
     ];
 
+    // Shared template mapping — single source of truth for template ID → backend file
+    // Must stay in sync with JDM_TEMPLATE_MAP in netlify/functions/generateResume.js
+    const JDM_TEMPLATE_MAP = {
+      t01: { name: 'Classic ATS', file: 'template_01.html' },
+      t02: { name: 'Modern Minimal', file: 'template_02.html' },
+      t03: { name: 'Executive Serif', file: 'template_03.html' },
+      t04: { name: 'Compact Professional', file: 'template_04.html' },
+      t05: { name: 'Divider Sections', file: 'template_05.html' },
+      t06: { name: 'Left Accent Line', file: 'template_06.html' },
+      t07: { name: 'Bold Header Bar', file: 'template_07.html' },
+      t08: { name: 'Clean Two-Column', file: 'template_08.html' },
+      t09: { name: 'Skills-First', file: 'template_09.html' },
+      t10: { name: 'Experience-First', file: 'template_10.html' },
+      t11: { name: 'Academic Clean', file: 'template_11.html' },
+      t12: { name: 'Timeline Light', file: 'template_12.html' }
+    };
+
     // Full template registry — 12 ATS-friendly system templates.
     // Schema fields: id, name, tag, sourceType, isPublished, category, ownerUserId,
     //   designTokens, editableSections, createdAt, updatedAt, render
@@ -5492,12 +5509,17 @@
         return;
       }
 
-      // ensure template selected
+      // ensure template selected and valid in shared map
       if (!selectedTemplate) {
         showToast('Please select a resume template first', 'error');
         return;
       }
-      console.log('[generate] selectedTemplate', selectedTemplate);
+      if (!JDM_TEMPLATE_MAP[selectedTemplate]) {
+        showToast('Selected template is not recognized. Please choose another.', 'error');
+        return;
+      }
+      console.log('[template-ui] selectedTemplate', selectedTemplate, JDM_TEMPLATE_MAP[selectedTemplate].name);
+      console.log('[generate] templateId sent', selectedTemplate);
       const companyName = companyEl.value.trim();
       const jobDescription = jobEl.value.trim();
 
@@ -5612,19 +5634,31 @@
         // evaluate template used by backend
         const templateUsed = data.templateIdUsed || data.templateId || selectedTemplate;
         if (templateUsed !== selectedTemplate) {
-          console.warn('[generate] template mismatch', selectedTemplate, templateUsed);
+          console.error('[generate] template mismatch', { selectedTemplate, templateUsed, data });
           showToast('Generated resume used a different template than selected', 'error');
         }
+        // Clear stale state before assigning new generation
+        currentGeneration = null;
         currentGeneration = Object.assign({}, data, { templateIdUsed: templateUsed });
         console.log('[generate] templateIdUsed returned', templateUsed);
+        console.log('[generate] currentGeneration assigned, resumeHtml length:', (currentGeneration.resumeHtml || '').length);
         displayResults(currentGeneration);
         showToast('Resume generated successfully!', 'success');
+
+        // Explicitly reveal output section and actions after displayResults
+        const _outSec = document.getElementById('outputSection');
+        if (_outSec) {
+          _outSec.style.display = 'block';
+          _outSec.removeAttribute('hidden');
+          console.log('[generate] output actions revealed');
+          _outSec.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
 
         // Auto-open preview after a brief delay to ensure DOM is ready
         try {
           setTimeout(() => {
             previewResume();
-          }, 100);
+          }, 300);
         } catch (previewErr) {
           console.error('[generate] Failed to auto-open preview', previewErr);
           showToast('Resume generated, but preview could not open automatically. Click Preview Resume button.', 'info');
@@ -7528,7 +7562,12 @@
         showToast('Please select a resume template first', 'error');
         return;
       }
-      console.log('[generateSubmit] selectedTemplate', selectedTemplate);
+      if (!JDM_TEMPLATE_MAP[selectedTemplate]) {
+        showToast('Selected template is not recognized. Please choose another.', 'error');
+        return;
+      }
+      console.log('[template-ui] selectedTemplate', selectedTemplate, JDM_TEMPLATE_MAP[selectedTemplate].name);
+      console.log('[generate] templateId sent', selectedTemplate);
 
       const btn = document.getElementById('generateBtn');
       btn.disabled = true;
@@ -7580,13 +7619,25 @@
 
         const templateUsed = data.templateIdUsed || data.templateId || selectedTemplate;
         if (templateUsed !== selectedTemplate) {
-          console.warn('[generateSubmit] template mismatch', selectedTemplate, templateUsed);
+          console.error('[generate] template mismatch', { selectedTemplate, templateUsed, data });
           showToast('Generated resume used a different template than selected', 'error');
         }
+        // Clear stale state before assigning new generation
+        currentGeneration = null;
         currentGeneration = Object.assign({}, data, { templateIdUsed: templateUsed });
-        console.log('[generateSubmit] templateIdUsed returned', templateUsed);
+        console.log('[generate] templateIdUsed returned', templateUsed);
+        console.log('[generate] currentGeneration assigned, resumeHtml length:', (currentGeneration.resumeHtml || '').length);
         displayResults(currentGeneration);
         showToast('Resume generated!', 'success');
+
+        // Explicitly reveal output section and actions
+        const _outSec2 = document.getElementById('outputSection');
+        if (_outSec2) {
+          _outSec2.style.display = 'block';
+          _outSec2.removeAttribute('hidden');
+          console.log('[generate] output actions revealed');
+          _outSec2.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
         const actionsCard = document.getElementById('outputActionsCard');
         if (actionsCard) actionsCard.style.display = 'block';
 
@@ -7594,7 +7645,7 @@
         try {
           setTimeout(() => {
             previewResume();
-          }, 100);
+          }, 300);
         } catch (previewErr) {
           console.error('[generateSubmit] Failed to auto-open preview', previewErr);
           showToast('Resume generated, but preview could not open automatically. Click Preview Resume button.', 'info');
@@ -7610,35 +7661,45 @@
     }
 
     function displayResults(data) {
-      const results = document.getElementById('results');
+      const outputSection = document.getElementById('outputSection');
       const metricsGrid = document.getElementById('metricsGrid');
 
       if (!metricsGrid) {
         console.warn('[displayResults] metricsGrid element not found, skipping metrics display');
-        if (results && results.classList) results.classList.add('active');
+        if (outputSection) {
+          outputSection.style.display = 'block';
+          outputSection.removeAttribute('hidden');
+          outputSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          console.log('[generate] output actions revealed via displayResults');
+        }
         return;
       }
 
       metricsGrid.innerHTML = `
         <div class="jdm-metric-card">
           <div class="jdm-metric-label">JD Match</div>
-          <div class="jdm-metric-value">${data.metrics?.jdMatch || '–'}%</div>
+          <div class="jdm-metric-value">${data.metrics?.jdMatch || '\u2013'}%</div>
         </div>
         <div class="jdm-metric-card">
           <div class="jdm-metric-label">ATS Friendliness</div>
-          <div class="jdm-metric-value">${data.metrics?.atsFriendliness || '–'}%</div>
+          <div class="jdm-metric-value">${data.metrics?.atsFriendliness || '\u2013'}%</div>
         </div>
         <div class="jdm-metric-card">
           <div class="jdm-metric-label">HR Catchiness</div>
-          <div class="jdm-metric-value">${data.metrics?.hrCatchiness || '–'}%</div>
+          <div class="jdm-metric-value">${data.metrics?.hrCatchiness || '\u2013'}%</div>
         </div>
         <div class="jdm-metric-card">
           <div class="jdm-metric-label">Shortlist Chance</div>
-          <div class="jdm-metric-value">${data.metrics?.chancesOfShortlisting || '–'}%</div>
+          <div class="jdm-metric-value">${data.metrics?.chancesOfShortlisting || '\u2013'}%</div>
         </div>
       `;
 
-      if (results && results.classList) results.classList.add('active');
+      if (outputSection) {
+        outputSection.style.display = 'block';
+        outputSection.removeAttribute('hidden');
+        outputSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        console.log('[generate] output actions revealed via displayResults');
+      }
     }
 
     function previewResume() {

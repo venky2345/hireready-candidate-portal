@@ -3685,3 +3685,178 @@ Related Previous Rounds:
 - Round 27: Auto-open preview and ensure output visibility after generation
 - Result: Comprehensive null-safety across entire application UI with improved post-generation workflow
 
+================================================================================
+ROUND 30 (2026-03-09) — UNIFY TEMPLATE SOURCE + RESTORE DOWNLOAD ACTIONS
+================================================================================
+
+1) Timestamp
+   2026-03-09
+
+2) Active file(s) edited
+   jdmatch.html
+   netlify/functions/generateResume.js
+   jdmatch_change_report.txt
+
+3) Change request
+   Fix two issues:
+   ISSUE 1: The template selected in the Resume Template panel is still different
+             from the template used in the final generated resume preview.
+   ISSUE 2: After successful generation, the PDF and DOCX download actions are not
+             visible or accessible to the user.
+
+4) Root cause
+
+   ROOT CAUSE 1 — Template mapping:
+   Backend previously had a loop-generated mapping and a default templateId of
+   'template_01'. The frontend sends IDs like 't01'-'t12' but parsing and mapping
+   were inconsistent. No shared template mapping existed between frontend and backend.
+
+   ROOT CAUSE 2 — Download buttons never shown:
+   There were TWO displayResults() functions in jdmatch.html:
+     - First definition (line ~5646): correctly targets outputSection and sets
+       style.display='block'. This is the RIGHT implementation.
+     - Second definition (line ~7612): targets document.getElementById('results')
+       which DOES NOT EXIST in the DOM. This function OVERRIDES the first one
+       (JS last-definition wins).
+   Result: after generation, the second displayResults() was called. It looked for
+   a #results element, found null, so it never showed #outputSection. The entire
+   output area (metrics, Preview Resume, PDF, DOC, HTML buttons) stayed hidden.
+
+5) Exact changes applied
+
+   === netlify/functions/generateResume.js ===
+
+   A) Added explicit JDM_TEMPLATE_MAP constant at module level (lines 12-25):
+      const JDM_TEMPLATE_MAP = {
+        t01: { name: 'Classic ATS', file: 'template_01.html' },
+        t02: { name: 'Modern Minimal', file: 'template_02.html' },
+        ...t12: { name: 'Timeline Light', file: 'template_12.html' }
+      };
+      This replaces the previously loop-generated templateMap.
+
+   B) Changed default templateId from 'template_01' to '' (empty string) so
+      missing IDs are caught by the map validation.
+
+   C) Replaced loop-generated templateMap with JDM_TEMPLATE_MAP lookup:
+      const mappedEntry = JDM_TEMPLATE_MAP[templateId];
+      if (!mappedEntry) return respond(400, { ok:false, error:'...', templateIdReceived: templateId });
+      const selectedTemplateFile = mappedEntry.file.replace('.html', '');
+
+   D) Added templateFileUsed to both fallback and success response bodies.
+
+   E) Added console.log lines:
+      [generateResume] templateId received
+      [generateResume] template file used
+      [generateResume] done, templateIdUsed + file
+
+   === jdmatch.html ===
+
+   F) Added JDM_TEMPLATE_MAP constant before TEMPLATES array (line ~3480):
+      const JDM_TEMPLATE_MAP = { t01:{...}, t02:{...}, ... t12:{...} };
+      Must stay in sync with backend.
+
+   G) handleGenerate() validation (line ~5510):
+      - Added JDM_TEMPLATE_MAP[selectedTemplate] check before sending request
+      - Changed log from '[generate] selectedTemplate' to
+        '[template-ui] selectedTemplate' + '[generate] templateId sent'
+
+   H) handleGenerate() success path (line ~5643):
+      - console.error instead of console.warn for mismatch
+      - Clear stale: currentGeneration = null before assignment
+      - Added log: '[generate] currentGeneration assigned, resumeHtml length:'
+      - After displayResults, explicitly: outputSection.style.display = 'block'
+        + outputSection.removeAttribute('hidden') + scrollIntoView
+      - Changed auto-preview setTimeout from 100ms to 300ms
+
+   I) handleGenerateSubmit() validation (line ~7560):
+      - Added JDM_TEMPLATE_MAP check + [template-ui] / [generate] logs
+
+   J) handleGenerateSubmit() success path (line ~7617):
+      - Same stale-clearing and mismatch error pattern as handleGenerate
+      - After displayResults: outputSection.style.display = 'block'
+        + removeAttribute('hidden') + scrollIntoView + console.log
+      - Changed auto-preview setTimeout from 100ms to 300ms
+
+   K) CRITICAL: Second displayResults() (was line ~7612, now ~7663):
+      REPLACED the broken function that referenced nonexistent #results element
+      with a correct version that targets #outputSection:
+        const outputSection = document.getElementById('outputSection');
+        ...
+        outputSection.style.display = 'block';
+        outputSection.removeAttribute('hidden');
+        outputSection.scrollIntoView(...)
+      Both displayResults() definitions now correctly show outputSection.
+
+6) Exact locations changed
+
+   netlify/functions/generateResume.js:
+     Lines 12-25: JDM_TEMPLATE_MAP added
+     Line 59: templateId default '' replaces 'template_01'
+     Lines 108-118: map lookup replaces loop-generated templateMap
+     Lines 166-167: templateFileUsed added to fallback response
+     Lines 310-312: templateFileUsed added to success response, log updated
+
+   jdmatch.html:
+     Lines 3480-3496: JDM_TEMPLATE_MAP constant added
+     Lines 5510-5518: handleGenerate validation + logs
+     Lines 5643-5660: handleGenerate success path stale-clearing and output reveal
+     Lines 7560-7570: handleGenerateSubmit validation + logs
+     Lines 7617-7640: handleGenerateSubmit success path stale-clearing and output reveal
+     Lines 7663-7704: Second displayResults() REPLACED — now uses outputSection
+
+7) Before snippet (second displayResults — broken)
+
+   function displayResults(data) {
+     const results = document.getElementById('results');
+     const metricsGrid = document.getElementById('metricsGrid');
+     ...
+     if (results && results.classList) results.classList.add('active');
+   }
+
+8) After snippet (second displayResults — fixed)
+
+   function displayResults(data) {
+     const outputSection = document.getElementById('outputSection');
+     const metricsGrid = document.getElementById('metricsGrid');
+     ...
+     if (outputSection) {
+       outputSection.style.display = 'block';
+       outputSection.removeAttribute('hidden');
+       outputSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+       console.log('[generate] output actions revealed via displayResults');
+     }
+   }
+
+9) Runtime verification steps
+   1. Select Modern Minimal (t02) in gallery
+   2. Generate resume
+   3. Console shows: [template-ui] selectedTemplate t02 Modern Minimal
+   4. Console shows: [generate] templateId sent t02
+   5. Console shows: [generateResume] templateId received t02
+   6. Console shows: [generateResume] template file used template_02.html
+   7. Console shows: [generate] templateIdUsed returned t02
+   8. Console shows: [generate] output actions revealed
+   9. Generated preview modal shows Modern Minimal layout
+   10. Close modal
+   11. Output section is visible with metrics
+   12. Preview Resume button is visible and clickable
+   13. PDF button is visible and clickable
+   14. DOC button is visible and clickable
+   15. HTML button is visible and clickable
+   16. Downloaded PDF/DOC/HTML reflect Modern Minimal template
+   17. Select a different template (e.g. t05 Divider Sections)
+   18. Generate again
+   19. Entire output switches to Divider Sections layout
+   20. No stale previous template remains
+   21. Send invalid templateId (e.g. 't99') — backend returns 400 JSON:
+       { ok:false, error:'Selected template was not found', templateIdReceived:'t99' }
+
+10) Rollback instructions
+    Revert JDM_TEMPLATE_MAP additions in both files.
+    Restore loop-generated templateMap in generateResume.js.
+    Restore templateId default to 'template_01'.
+    Remove templateFileUsed from response bodies.
+    Restore original second displayResults() that referenced #results.
+    Remove output-reveal code from handleGenerate/handleGenerateSubmit success paths.
+    Remove JDM_TEMPLATE_MAP validation checks from frontend.
+

@@ -8,6 +8,22 @@
 const fs = require('fs');
 const path = require('path');
 
+// Shared template mapping — single source of truth for frontend ID → backend file
+const JDM_TEMPLATE_MAP = {
+  t01: { name: 'Classic ATS', file: 'template_01.html' },
+  t02: { name: 'Modern Minimal', file: 'template_02.html' },
+  t03: { name: 'Executive Serif', file: 'template_03.html' },
+  t04: { name: 'Compact Professional', file: 'template_04.html' },
+  t05: { name: 'Divider Sections', file: 'template_05.html' },
+  t06: { name: 'Left Accent Line', file: 'template_06.html' },
+  t07: { name: 'Bold Header Bar', file: 'template_07.html' },
+  t08: { name: 'Clean Two-Column', file: 'template_08.html' },
+  t09: { name: 'Skills-First', file: 'template_09.html' },
+  t10: { name: 'Experience-First', file: 'template_10.html' },
+  t11: { name: 'Academic Clean', file: 'template_11.html' },
+  t12: { name: 'Timeline Light', file: 'template_12.html' }
+};
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
@@ -45,7 +61,7 @@ exports.handler = async (event, context) => {
     targetMatchMode = 'auto',
     targetMatchValue = 85,
     mustIncludeSkills = '',
-    templateId = 'template_01',
+    templateId = '',
     baseResumeText = ''
   } = payload;
 
@@ -88,19 +104,16 @@ exports.handler = async (event, context) => {
       .filter((skill) => skill.length > 0);
   }
 
-  // Map frontend IDs (t01..t12) to actual template file names (template_01..template_12)
-  const templateMap = {};
-  for (let i = 1; i <= 12; i++) {
-    const key = 't' + String(i).padStart(2, '0');
-    const file = 'template_' + String(i).padStart(2, '0');
-    templateMap[key] = file;
+  // Resolve templateId through shared mapping — no silent fallback
+  console.log('[generateResume] templateId received', templateId);
+  const mappedEntry = JDM_TEMPLATE_MAP[templateId];
+  if (!mappedEntry) {
+    console.warn('[generateResume] templateId not found in JDM_TEMPLATE_MAP', templateId);
+    return respond(400, { ok: false, error: 'Selected template was not found', templateIdReceived: templateId });
   }
-  if (!templateMap[templateId]) {
-    console.warn('generateResume: requested templateId not found in map', templateId);
-    return respond(400, { ok: false, error: 'Selected template was not found' });
-  }
-  const selectedTemplateFile = templateMap[templateId];
-  const requestedTemplateId = templateId; // keep original for response
+  const selectedTemplateFile = mappedEntry.file.replace('.html', ''); // strip extension for path join
+  const requestedTemplateId = templateId;
+  console.log('[generateResume] template file used', mappedEntry.file);
 
   // Read resume template
   let templateHtml;
@@ -161,6 +174,7 @@ exports.handler = async (event, context) => {
       addedSkills: mustIncludeSkillsList,
       templateId: requestedTemplateId,
       templateIdUsed: requestedTemplateId,
+      templateFileUsed: mappedEntry.file,
       fallbackUsed: true
     });
   }
@@ -301,10 +315,11 @@ Requirements:
       metrics,
       addedSkills: Array.isArray(resumeData.addedSkills) ? resumeData.addedSkills : [],
       templateId: requestedTemplateId,
-      templateIdUsed: requestedTemplateId
+      templateIdUsed: requestedTemplateId,
+      templateFileUsed: mappedEntry.file
     };
 
-    console.log('generateResume done');
+    console.log('[generateResume] done, templateIdUsed:', requestedTemplateId, 'file:', mappedEntry.file);
     return respond(200, responseBody);
   } catch (err) {
     console.log('generateResume error', err);
