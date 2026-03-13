@@ -91,22 +91,27 @@ Effect of jdmatch.html Changes
 
 Backend fallback hard-failure and deterministic behavior
 --------------------------------------------------------
-- Netlify function `generateResume` now tracks precise fallback reasons via `fallbackReason`, `generationMode`, and human-readable `message` fields in its JSON responses.
+- Netlify function `generateResume` now tracks precise fallback reasons via `fallbackReason`, `generationMode`, and human-readable `message` fields in its JSON responses, and validates rendered HTML before returning `ok: true`.
 - When the OpenAI model succeeds:
-  - The function returns `ok: true` with the AI-enhanced resume and `generationMode: 'ai'`.
-  - `fallbackUsed: false` and `fallbackReason: null` are included to preserve the success shape used by the frontend.
+  - The function renders `resumeHtml` by applying `replacements` to the selected template file and then runs a semantic validator to ensure:
+    - No `{{PLACEHOLDER}}` tokens remain.
+    - No obvious sample text such as "CANDIDATE NAME", "PROFESSIONAL SUMMARY", "CORE PROFESSIONAL COMPETENCIES", "MM/YYYY", or "ORGANIZATION NAME" is left in the output.
+    - The HTML is not just a single giant raw text blob with minimal structural markup.
+  - If validation passes, the function returns `ok: true` with the AI-enhanced resume, `generationMode: 'ai'`, `fallbackUsed: false`, and `fallbackReason: null`.
+  - If validation fails, the function attempts deterministic fallback; only if that also fails does it return `ok: false` with a clear error.
 - When the OpenAI model times out or returns a transport/HTTP error but there is sufficient `baseResumeText`:
-  - A deterministic backend generator now builds a real resume directly from the provided resume text and job inputs.
-  - The function returns:
+  - A deterministic backend generator (`buildDeterministicResume`) builds a real resume directly from the provided resume text and job inputs, mapping parsed sections into the same template placeholders used in AI mode.
+  - The result is passed through the same semantic validator as AI output.
+  - On success the function returns:
     - `ok: true`
     - A non-placeholder filename (no `fallback_` prefix)
     - `generationMode: 'deterministic_fallback'`
     - `aiTimedOut`/`aiError` markers for diagnostics
     - `fallbackUsed: false` and `fallbackReason: null`
     - `templateId`, `templateIdUsed`, and `templateFileUsed` consistent with the selected template.
-- Only when both the AI model and deterministic fallback cannot build a meaningful resume (e.g., truly insufficient resume text) does the function return `ok: false` with:
+- Only when both the AI model and deterministic fallback cannot build a meaningful, template-valid resume (e.g., truly insufficient resume text or HTML failing validation) does the function return `ok: false` with:
   - `fallbackUsed: false`
-  - `fallbackReason: 'model_generation_failed'` (or another specific code)
+  - An appropriate `fallbackReason` such as `model_generation_failed` or `generated_content_invalid`
   - A clear, user-facing `message` explaining that both AI and deterministic generation failed.
 - Other error paths still attach structured reasons without generating placeholder HTML:
   - `missing_template_mapping` when the requested templateId is not present in `JDM_TEMPLATE_MAP`.

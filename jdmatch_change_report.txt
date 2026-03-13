@@ -3484,7 +3484,7 @@ ROUND 28 (2026-03-13) - JD MATCH AI TIMEOUT RESILIENCE WITH DETERMINISTIC BACKEN
 1) Files changed
 ----------------
 - netlify/functions/generateResume.js
-- jdmatch.html (behavior unchanged; no new edits in this round)
+- jdmatch.html
 
 2) Root cause addressed
 ------------------------
@@ -3526,15 +3526,16 @@ ROUND 28 (2026-03-13) - JD MATCH AI TIMEOUT RESILIENCE WITH DETERMINISTIC BACKEN
 
 5) Frontend behavior after fix
 ------------------------------
-- No changes were required in `jdmatch.html` for this round:
+- `jdmatch.html` continues to enforce strong guards and now incorporates semantic validation on the frontend as well:
   - Existing guards still reject responses with `fallbackUsed === true`, `ok === false`, `filename` starting with `fallback_`, or too-short `resumeHtml`.
-  - Deterministic fallback responses now satisfy the same success criteria as AI-backed responses (`ok: true`, no `fallback_` prefix, and sufficiently long HTML), so they are treated as valid successes.
+  - New semantic checks (via `isSemanticallyValidGeneratedResumeHtml`) ensure the HTML is not a placeholder shell (e.g., still containing "CANDIDATE NAME", "PROFESSIONAL SUMMARY", "CORE PROFESSIONAL COMPETENCIES", "MM/YYYY", "ORGANIZATION NAME", or `{{...}}`) and does not appear as a single raw text blob with minimal structure.
+  - These checks are applied before preview and before any download action; malformed HTML is blocked and surfaced to the user as an error.
 - User-visible behavior:
   - If AI returns in time, the flow is unchanged: AI-enhanced resume in the selected template, with normal preview and downloads.
   - If AI times out or returns a transport/HTTP error but `baseResumeText` is present:
-    - Users receive a real, template-correct resume built from their own resume content.
+    - Users receive a real, template-correct resume built from their own resume content, validated on both backend and frontend.
     - Preview and downloads work as normal.
-    - No placeholder shells, no blank content, and no `fallback_<timestamp>.pdf` filenames.
+    - No placeholder shells, no blank content, and no `fallback_<timestamp>.pdf` filenames are allowed through as success.
   - Only when both AI and deterministic generation fail do users see an error and no preview/download, preserving safety against junk content.
 
 

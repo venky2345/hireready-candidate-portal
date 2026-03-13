@@ -145,6 +145,70 @@ exports.handler = async (event, context) => {
   const tokens = templateHtml.match(/{{[A-Z0-9_]+}}/g) || [];
   const placeholderKeys = Array.from(new Set(tokens.map(t => t.slice(2, -2))));
 
+  // Backend semantic validator to ensure rendered HTML is truly a populated
+  // template and not a placeholder shell or raw text blob.
+  function validateRenderedResumeHtml(resumeHtml, templateIdUsed, templateFileUsed) {
+    const html = String(resumeHtml || '');
+    const trimmed = html.trim();
+    if (!trimmed || trimmed.length < 200) {
+      return {
+        ok: false,
+        reason: 'html_too_short',
+        message: 'Rendered resume HTML is empty or too short to be valid.'
+      };
+    }
+
+    // No unresolved {{PLACEHOLDER}} tokens should remain
+    if (/{{[A-Z0-9_]+}}/.test(html)) {
+      return {
+        ok: false,
+        reason: 'unresolved_placeholders',
+        message: 'Rendered resume contains unresolved template placeholders.'
+      };
+    }
+
+    const lower = trimmed.toLowerCase();
+    const placeholderPhrases = [
+      'candidate name',
+      'professional summary',
+      'core professional competencies',
+      'mm/yyyy',
+      'organization name',
+      'your professional summary'
+    ];
+    if (placeholderPhrases.some((p) => lower.includes(p))) {
+      return {
+        ok: false,
+        reason: 'placeholder_shell_detected',
+        message: 'Rendered resume appears to contain placeholder/sample template text.'
+      };
+    }
+
+    // Detect obvious "one giant raw text blob" cases by comparing visible text
+    // length to the amount of structural markup.
+    const textOnly = trimmed
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const blockTagMatches = html
+      .toLowerCase()
+      .match(/<(div|section|article|header|footer|ul|ol|li|table|tr|td|th)[\s>]/g) || [];
+    const blockCount = blockTagMatches.length;
+
+    if (textOnly.length > 2500 && blockCount < 5) {
+      return {
+        ok: false,
+        reason: 'raw_text_blob_detected',
+        message: 'Rendered resume appears to be mostly unstructured raw text instead of a populated template.'
+      };
+    }
+
+    return { ok: true };
+  }
+
   // Deterministic resume builder used when AI times out or fails but we still
   // have usable base resume text to construct a meaningful output.
   function buildDeterministicResume(options = {}) {
@@ -281,10 +345,12 @@ exports.handler = async (event, context) => {
     }
     resumeHtml = resumeHtml.replace(/{{[A-Z0-9_]+}}/g, '');
 
-    if (!resumeHtml || resumeHtml.replace(/\s+/g, '').length < 200) {
-      console.log('[generateResume] deterministic fallback produced too-short HTML', {
+    const validation = validateRenderedResumeHtml(resumeHtml, requestedTemplateId, mappedEntry.file);
+    if (!validation.ok) {
+      console.log('[generateResume] deterministic fallback validation failed', {
         safeCandidateId,
-        length: resumeHtml.length
+        reason: validation.reason,
+        message: validation.message
       });
       return null;
     }
@@ -507,15 +573,43 @@ Requirements:
   }
   console.log('generateResume openai ok');
 
-  // Construct resumeHtml by replacing placeholders
+  // Construct resumeHtml by replacing placeholders using the same template pipeline
   let resumeHtml = templateHtml;
   const replacements = resumeData.replacements || {};
   for (const [key, value] of Object.entries(replacements)) {
     const placeholder = `{{${key}}}`;
-    resumeHtml = resumeHtml.replace(new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), String(value));
+    resumeHtml = resumeHtml.replace(
+      new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
+      String(value)
+    );
   }
   // Remove any remaining placeholders
   resumeHtml = resumeHtml.replace(/{{[A-Z0-9_]+}}/g, '');
+
+  const aiValidation = validateRenderedResumeHtml(resumeHtml, requestedTemplateId, mappedEntry.file);
+  if (!aiValidation.ok) {
+    console.log('[generateResume] AI-rendered resume validation failed, attempting deterministic fallback', {
+      safeCandidateId,
+      reason: aiValidation.reason,
+      message: aiValidation.message
+    });
+    const deterministicFromInvalidAi = buildDeterministicResume({
+      aiTimedOut: false,
+      reason: 'generated_content_invalid',
+      aiError: aiValidation.reason
+    });
+    if (deterministicFromInvalidAi) {
+      return respond(200, deterministicFromInvalidAi);
+    }
+    return respond(500, {
+      ok: false,
+      error: 'Generated resume content from AI was invalid and deterministic fallback could not build a complete resume.',
+      message: aiValidation.message,
+      fallbackUsed: false,
+      fallbackReason: 'generated_content_invalid',
+      generationMode: 'none'
+    });
+  }
 
   const rawMetrics = resumeData.metrics || {};
   const clamp90 = (value, fallback) => {
