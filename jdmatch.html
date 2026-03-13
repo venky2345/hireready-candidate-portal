@@ -5522,7 +5522,9 @@
         return;
       }
       console.log('[template-ui] selectedTemplate', selectedTemplate, JDM_TEMPLATE_MAP[selectedTemplate].name);
-      console.log('[generate] templateId sent', selectedTemplate);
+      // Snapshot the template id at the moment of generation to avoid race conditions
+      const templateIdSent = selectedTemplate;
+      console.log('[generate] templateId sent', templateIdSent);
       const companyName = companyEl.value.trim();
       const jobDescription = jobEl.value.trim();
 
@@ -5592,11 +5594,11 @@
             targetMatchMode: 'manual',
             targetMatchValue: parseInt(strictness),
             mustIncludeSkills: skillsArray,
-            templateId: selectedTemplate,
+            templateId: templateIdSent,
             baseResumeText: effectiveResumeText
           })
         });
-        console.log('[generate] templateId sent to backend', selectedTemplate);
+        console.log('[generate] templateId sent to backend', templateIdSent);
 
         // parse safely
         const raw = await response.text();
@@ -5622,8 +5624,10 @@
         }
 
         if (!response.ok || (data && data.ok === false)) {
-          const msg = data && data.error ? data.error : `Status ${response.status}`;
-          throw new Error(msg);
+          const reason = data && data.fallbackReason ? data.fallbackReason : 'generation_failed';
+          const msgText = (data && (data.message || data.error)) || `Status ${response.status}`;
+          console.error('[generate] backend reported error', { status: response.status, reason, message: msgText });
+          throw new Error(`${reason}: ${msgText}`);
         }
 
         // Wait for progress animation to complete
@@ -5634,16 +5638,49 @@
           console.error('[generate] progress stop failed', e);
         }
 
-        // evaluate template used by backend
-        const templateUsed = data.templateIdUsed || data.templateId || selectedTemplate;
-        if (templateUsed !== selectedTemplate) {
-          console.error('[generate] template mismatch', { selectedTemplate, templateUsed, data });
-          showToast('Generated resume used a different template than selected', 'error');
+        // evaluate template used by backend against the snapshot taken at request time
+        const templateUsed = data.templateIdUsed || data.templateId || templateIdSent;
+        if (templateUsed !== templateIdSent) {
+          console.error('[generate] template mismatch (snapshot vs backend)', { templateIdSent, templateUsed, data });
+          showToast('Generated resume used a different template than the one selected when you clicked Generate.', 'error');
         }
+        if (!JDM_TEMPLATE_MAP[templateUsed]) {
+          console.error('[generate] template mapping failed for templateUsed', templateUsed);
+          showToast('Generated resume template could not be mapped. Please contact support if this persists.', 'error');
+        }
+
+        // Hard failure guard: reject fallback/invalid output even if HTTP status was 200
+        const rawHtml = (data.resumeHtml || '').trim();
+        const isFallbackFilename = typeof data.filename === 'string' && data.filename.indexOf('fallback_') === 0;
+        const isFallbackUsed = data.fallbackUsed === true;
+        const isOkFalse = data.ok === false;
+        const isHtmlTooShort = !rawHtml || rawHtml.length < 200;
+        if (isFallbackUsed || isOkFalse || isFallbackFilename || isHtmlTooShort) {
+          console.error('[generate] rejecting backend resume output', {
+            isFallbackUsed,
+            isOkFalse,
+            isFallbackFilename,
+            htmlLength: rawHtml.length,
+            fallbackReason: data.fallbackReason,
+            message: data.message || data.error
+          });
+          currentGeneration = null;
+          const _outSecReject = document.getElementById('outputSection');
+          if (_outSecReject) {
+            _outSecReject.style.display = 'none';
+          }
+          const userMessage = data.message || data.error || 'Resume generation failed. Please try again.';
+          showToast(userMessage, 'error');
+          return;
+        }
+
         // Clear stale state before assigning new generation
         currentGeneration = null;
-        currentGeneration = Object.assign({}, data, { templateIdUsed: templateUsed });
-        console.log('[generate] templateIdUsed returned', templateUsed);
+        currentGeneration = Object.assign({}, data, {
+          templateIdUsed: templateUsed,
+          templateIdSent
+        });
+        console.log('[generate] templateIdUsed returned', templateUsed, 'templateIdSent snapshot', templateIdSent);
         console.log('[generate] currentGeneration assigned, resumeHtml length:', (currentGeneration.resumeHtml || '').length);
         displayResults(currentGeneration);
         showToast('Resume generated successfully!', 'success');
@@ -5672,6 +5709,15 @@
           hidePhasedProgress();
         } catch (e) {
           console.error('[generate] progress stop failed', e);
+        }
+        // On error, clear currentGeneration so preview/download cannot use stale data
+        if (currentGeneration) {
+          console.warn('[generate] clearing stale currentGeneration due to error', error);
+        }
+        currentGeneration = null;
+        const _outSecErr = document.getElementById('outputSection');
+        if (_outSecErr) {
+          _outSecErr.style.display = 'none';
         }
         showToast(`Error: ${error.message}`, 'error');
       } finally {
@@ -7570,7 +7616,9 @@
         return;
       }
       console.log('[template-ui] selectedTemplate', selectedTemplate, JDM_TEMPLATE_MAP[selectedTemplate].name);
-      console.log('[generate] templateId sent', selectedTemplate);
+      // Snapshot the template id at the moment of generation to avoid race conditions
+      const templateIdSent = selectedTemplate;
+      console.log('[generate] templateId sent', templateIdSent);
 
       const btn = document.getElementById('generateBtn');
       btn.disabled = true;
@@ -7593,7 +7641,7 @@
             targetMatchMode: targetMode,
             targetMatchValue: targetValue,
             mustIncludeSkills: skillsRaw,
-            templateId: selectedTemplate,
+            templateId: templateIdSent,
             baseResumeText: baseResumeText
           })
         });
@@ -7617,18 +7665,54 @@
         }
 
         if (!response.ok || (data && data.ok === false)) {
-          throw new Error(data?.error || 'Generation failed');
+          const reason = data && data.fallbackReason ? data.fallbackReason : 'generation_failed';
+          const msgText = (data && (data.message || data.error)) || `Status ${response.status}`;
+          console.error('[generateSubmit] backend reported error', { status: response.status, reason, message: msgText });
+          throw new Error(`${reason}: ${msgText}`);
         }
 
-        const templateUsed = data.templateIdUsed || data.templateId || selectedTemplate;
-        if (templateUsed !== selectedTemplate) {
-          console.error('[generate] template mismatch', { selectedTemplate, templateUsed, data });
-          showToast('Generated resume used a different template than selected', 'error');
+        const templateUsed = data.templateIdUsed || data.templateId || templateIdSent;
+        if (templateUsed !== templateIdSent) {
+          console.error('[generate] template mismatch (snapshot vs backend)', { templateIdSent, templateUsed, data });
+          showToast('Generated resume used a different template than the one selected when you submitted the form.', 'error');
         }
+        if (!JDM_TEMPLATE_MAP[templateUsed]) {
+          console.error('[generate] template mapping failed for templateUsed', templateUsed);
+          showToast('Generated resume template could not be mapped. Please contact support if this persists.', 'error');
+        }
+
+        // Hard failure guard: reject fallback/invalid output even if HTTP status was 200
+        const rawHtml2 = (data.resumeHtml || '').trim();
+        const isFallbackFilename2 = typeof data.filename === 'string' && data.filename.indexOf('fallback_') === 0;
+        const isFallbackUsed2 = data.fallbackUsed === true;
+        const isOkFalse2 = data.ok === false;
+        const isHtmlTooShort2 = !rawHtml2 || rawHtml2.length < 200;
+        if (isFallbackUsed2 || isOkFalse2 || isFallbackFilename2 || isHtmlTooShort2) {
+          console.error('[generateSubmit] rejecting backend resume output', {
+            isFallbackUsed: isFallbackUsed2,
+            isOkFalse: isOkFalse2,
+            isFallbackFilename: isFallbackFilename2,
+            htmlLength: rawHtml2.length,
+            fallbackReason: data.fallbackReason,
+            message: data.message || data.error
+          });
+          currentGeneration = null;
+          const _outSecReject2 = document.getElementById('outputSection');
+          if (_outSecReject2) {
+            _outSecReject2.style.display = 'none';
+          }
+          const userMessage2 = data.message || data.error || 'Resume generation failed. Please try again.';
+          showToast(userMessage2, 'error');
+          return;
+        }
+
         // Clear stale state before assigning new generation
         currentGeneration = null;
-        currentGeneration = Object.assign({}, data, { templateIdUsed: templateUsed });
-        console.log('[generate] templateIdUsed returned', templateUsed);
+        currentGeneration = Object.assign({}, data, {
+          templateIdUsed: templateUsed,
+          templateIdSent
+        });
+        console.log('[generate] templateIdUsed returned', templateUsed, 'templateIdSent snapshot', templateIdSent);
         console.log('[generate] currentGeneration assigned, resumeHtml length:', (currentGeneration.resumeHtml || '').length);
         displayResults(currentGeneration);
         showToast('Resume generated!', 'success');
@@ -7655,6 +7739,15 @@
         }
 
       } catch (error) {
+        // On error, clear currentGeneration so preview/download cannot use stale data
+        if (currentGeneration) {
+          console.warn('[generateSubmit] clearing stale currentGeneration due to error', error);
+        }
+        currentGeneration = null;
+        const _outSecErr2 = document.getElementById('outputSection');
+        if (_outSecErr2) {
+          _outSecErr2.style.display = 'none';
+        }
         showToast(`Error: ${error.message}`, 'error');
       } finally {
         btn.disabled = false;

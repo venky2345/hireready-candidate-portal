@@ -1,4 +1,108 @@
-﻿1) Timestamp
+JD Match Fallback & Frontend Guard Change Report
+================================================
+
+Date: 2026-03-13
+
+1) Files changed
+----------------
+- netlify/functions/generateResume.js
+- jdmatch.html
+
+2) Exact logic added/changed (backend)
+-------------------------------------
+- `generateResume.js` now returns structured fallback metadata:
+  - `fallbackUsed`: boolean indicating that a deterministic fallback resume was built.
+  - `fallbackReason`: short code describing why fallback/error occurred.
+  - `message`: human-readable message suitable for direct display in the UI.
+- `makeFallback()` was updated to:
+  - Accept `(fallbackReason, message, extraMeta)` and log these values with `safeCandidateId`.
+  - Return `ok: false` whenever `fallbackUsed === true`, so placeholder fallback output is never treated as a silent success.
+  - Preserve `filename`, `resumeHtml`, `metrics`, `templateId`, `templateIdUsed`, and `templateFileUsed` for diagnostics.
+- Additional backend error responses were enriched with `fallbackReason` and `message`:
+  - Missing template mapping:
+    - `fallbackReason: 'missing_template_mapping'`
+    - `fallbackUsed: false`
+  - Template read failure:
+    - `fallbackReason: 'template_read_failed'`
+    - Includes `templateId`, `templateIdUsed`, and `templateFileUsed` when available.
+  - AI/model failures (timeout, HTTP error, non-OK status):
+    - `fallbackReason: 'model_generation_failed'`
+    - Returned via `makeFallback()` with `fallbackUsed: true` and `ok: false`.
+  - Invalid AI JSON / missing fields:
+    - `fallbackReason: 'generated_content_invalid'`
+    - `fallbackUsed: false`
+  - Unexpected internal error during template population:
+    - `fallbackReason: 'template_population_failed'`
+    - `fallbackUsed: false`
+- Successful AI generations now explicitly include:
+  - `fallbackUsed: false`
+  - `fallbackReason: null`
+
+3) Exact fallback conditions handled
+------------------------------------
+- `missing_template_mapping`:
+  - Triggered when the requested `templateId` is not found in `JDM_TEMPLATE_MAP`.
+  - Backend returns `ok: false`, `fallbackUsed: false`, and a clear `message`.
+- `template_read_failed`:
+  - Triggered when the HTML template file for the resolved id cannot be read from disk.
+  - Backend returns `ok: false`, `fallbackUsed: false`, and includes template metadata when known.
+- `model_generation_failed`:
+  - Triggered when the OpenAI chat completion request:
+    - Times out (AbortError after ~8s), or
+    - Fails at the HTTP/request layer, or
+    - Returns a non-OK HTTP status.
+  - Backend builds a deterministic fallback resume but now marks:
+    - `ok: false`
+    - `fallbackUsed: true`
+    - `fallbackReason: 'model_generation_failed'`
+    - `message` describing the timeout or model failure.
+- `generated_content_invalid`:
+  - Triggered when:
+    - The OpenAI response body cannot be parsed as JSON, or
+    - The parsed JSON is missing required keys such as `filename`, `replacements`, or `addedSkills`.
+  - Backend returns `ok: false`, `fallbackUsed: false`, and a descriptive `message`.
+- `template_population_failed`:
+  - Triggered by unexpected errors in the tail end of `generateResume` after a valid AI response.
+  - Backend returns `ok: false`, `fallbackUsed: false`, and a generic internal-error `message`.
+
+4) Exact frontend guards added (jdmatch.html)
+---------------------------------------------
+- `handleGenerate()` (button-based generation flow):
+  - After a 200 HTTP response and basic template-id checks, a hard failure guard now runs before assigning `currentGeneration`:
+    - Treats generation as failed if:
+      - `data.fallbackUsed === true`, OR
+      - `data.ok === false`, OR
+      - `data.filename` starts with `fallback_`, OR
+      - `data.resumeHtml` is missing or trimmed length is below the existing threshold (200 characters).
+  - On any of these conditions:
+    - Logs a structured console error including `fallbackReason`, `message`, and HTML length.
+    - Clears `currentGeneration` and hides the `outputSection`.
+    - Shows an error toast using `data.message` or `data.error` when present, otherwise a generic failure message.
+  - For non-OK HTTP responses or `ok: false` JSON payloads:
+    - Error handling now logs `fallbackReason` and `message`.
+    - Throws an Error whose message includes both the reason code and the message text, so the user-visible toast explains what went wrong.
+- `handleGenerateSubmit(event)` (form submission flow):
+  - Mirrors the same guard and error-propagation behavior as `handleGenerate()`:
+    - Rejects responses where `fallbackUsed` is true, `ok` is false, the filename starts with `fallback_`, or `resumeHtml` is missing/too short.
+    - Clears `currentGeneration`, hides `outputSection`, and shows an error toast based on backend `message`/`error`.
+  - Backend failures with `ok: false` now surface `fallbackReason` and `message` in both console logs and the thrown error string.
+
+5) Exact user-visible behavior after the fix
+--------------------------------------------
+- On successful AI-backed generation:
+  - The preview uses the real selected template, consistent with both `templateIdSent` and `templateIdUsed`.
+  - Downloads (PDF/Word/HTML) are enabled only when `currentGeneration.resumeHtml` passes existing length checks.
+  - Filenames do not start with `fallback_`, and no fallback flags are present.
+  - A success toast is shown, and history entries reflect genuine generated resumes.
+- On backend fallback or failure (including timeouts, model errors, invalid AI JSON, missing template mapping, or template read failures):
+  - The backend returns `ok: false` with `fallbackReason` and `message`.
+  - The jdmatch frontend:
+    - Does not set `currentGeneration` to the placeholder/fallback output.
+    - Hides or leaves hidden the `outputSection` so preview and download actions cannot proceed.
+    - Does not show any success toast.
+    - Shows a clear error toast derived from the backend `message` and/or `fallbackReason` so users understand why generation failed.
+
+1) Timestamp
 2026-03-06
 
 2) Active files edited
@@ -3304,6 +3408,74 @@ NETLIFY: after deploy hard refresh site, fill real JD/resume, click Generate; ex
 
 10) Rollback instructions
 Revert the above guard additions and timeout/fallback logic from both files by reverting to previous commit before March 6 round.
+
+================================================================================
+ROUND 27 (2026-03-13) - JD MATCH FALLBACK HARD-FAILURE & FRONTEND REJECTION
+================================================================================
+
+1) Files changed
+----------------
+- netlify/functions/generateResume.js
+- jdmatch.html
+
+2) Backend: explicit fallback reason tracking and hard failure
+-------------------------------------------------------------
+- Introduced structured fallback metadata in `generateResume` responses:
+  - `fallbackUsed`: boolean flag indicating that a deterministic fallback resume was built.
+  - `fallbackReason`: short machine-friendly code describing the root cause.
+  - `message`: human-readable message suitable for frontend display.
+- Updated `makeFallback()`:
+  - Now accepts `(fallbackReason, message, extraMeta)` arguments.
+  - Logs the fallback decision with candidate id, reason, and message.
+  - Returns `ok: false` when `fallbackUsed === true`, so placeholder fallback output is never reported as a silent success.
+  - Still includes `filename`, `resumeHtml`, `metrics`, `templateId`, `templateIdUsed`, and `templateFileUsed` for diagnostics.
+- Added concrete fallbackReason codes:
+  - `missing_template_mapping` when the requested template id is not present in `JDM_TEMPLATE_MAP`.
+  - `template_read_failed` when the on-disk HTML template cannot be read.
+  - `model_generation_failed` when the OpenAI chat completion request times out, fails at the HTTP layer, or returns a non-OK status.
+  - `generated_content_invalid` when the AI response cannot be parsed as JSON or is missing required fields.
+  - `template_population_failed` when an unexpected internal error occurs while populating the template and constructing `resumeHtml`.
+- Successful AI paths:
+  - Continue to return `ok: true` with the same payload shape as before.
+  - Now explicitly include `fallbackUsed: false` and `fallbackReason: null` to disambiguate from fallback scenarios.
+
+3) Frontend: jdmatch rejection of fallback / placeholder output
+---------------------------------------------------------------
+- `handleGenerate()` (button-based flow):
+  - After receiving a parsed JSON payload and validating the template id mapping, a hard failure guard now runs before assigning `currentGeneration`:
+    - Fails if `data.fallbackUsed === true`.
+    - Fails if `data.ok === false`.
+    - Fails if `data.filename` starts with `fallback_`.
+    - Fails if `data.resumeHtml` is missing or shorter than the established safety threshold (length < 200 characters).
+  - In any of these conditions:
+    - Logs a detailed console error including `fallbackReason`, `message`, and HTML length.
+    - Clears `currentGeneration` and hides `outputSection` so preview/download cannot act on placeholder content.
+    - Shows an error toast using `data.message` or `data.error` when available, otherwise falls back to a generic failure message.
+  - When the backend returns `ok: false` (including fallback responses), error handling now:
+    - Logs `fallbackReason` and `message`.
+    - Throws an error whose message includes the reason code and text, ensuring the user sees a clear explanation in the toast.
+- `handleGenerateSubmit(event)` (form-submit flow):
+  - Mirrors the same hard failure guard logic as `handleGenerate()` using the parsed `data` object.
+  - Rejects any response where `fallbackUsed` is true, `ok` is false, the filename begins with `fallback_`, or `resumeHtml` is absent/too short.
+  - On rejection:
+    - Clears `currentGeneration`.
+    - Hides `outputSection`.
+    - Displays an error toast with the backend-provided `message`/`error` or a generic message.
+  - Backend non-OK responses now log and propagate `fallbackReason` and `message` into the thrown error string.
+
+4) Effective user-visible behavior after this round
+---------------------------------------------------
+- When the backend truly succeeds with real AI content:
+  - The preview shows the actual selected template.
+  - Downloaded files match the preview and do not have filenames starting with `fallback_`.
+  - Success toasts and history entries reflect genuine, template-consistent resumes.
+- When the backend falls back or fails for any of the tracked reasons:
+  - The response carries `ok: false`, `fallbackUsed` (where applicable), `fallbackReason`, and `message`.
+  - The jdmatch frontend treats the result as a hard failure:
+    - No success toast is shown.
+    - `currentGeneration` is not set to the fallback/invalid output.
+    - Preview and download actions remain disabled or hidden.
+    - An error toast surfaces a clear explanation derived from the backend `message`/`fallbackReason`.
 
 
 ================================================================================

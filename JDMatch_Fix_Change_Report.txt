@@ -1,0 +1,179 @@
+JDMatch / Resume Generation Fix Change Report
+============================================
+
+Date: 2026-03-12
+
+Files Modified
+--------------
+1) jdmatch.html
+
+Summary of Intent
+-----------------
+- Ensure that the template used by the backend, the selected template in the UI at generation time, the preview, and the downloaded files are consistent.
+- Prevent blank or stale previews/downloads by clearing stale generation state on errors and validating generated HTML before use.
+- Add clear validation/logging when a template mapping cannot be resolved.
+
+Detailed Changes
+----------------
+
+1) jdmatch.html
+---------------
+
+a) handleGenerate()
+   - Before sending the request:
+     - Added a snapshot of the selected template ID:
+       - Introduced `const templateIdSent = selectedTemplate;`
+       - Updated logging from:
+         - `console.log('[generate] templateId sent', selectedTemplate);`
+         to:
+         - `console.log('[generate] templateId sent', templateIdSent);`
+     - Updated the request body to use the snapshot:
+       - Changed `templateId: selectedTemplate` to `templateId: templateIdSent`.
+       - Updated the log after `fetch` to log `templateIdSent` instead of `selectedTemplate`.
+
+   - After receiving a successful response:
+     - Changed template comparison logic from:
+       - `const templateUsed = data.templateIdUsed || data.templateId || selectedTemplate;`
+       - `if (templateUsed !== selectedTemplate) { ... }`
+       to:
+       - `const templateUsed = data.templateIdUsed || data.templateId || templateIdSent;`
+       - `if (templateUsed !== templateIdSent) { ... }`
+       - Error message now clarifies it compares against the template selected when Generate was clicked.
+     - Added explicit mapping validation:
+       - If `!JDM_TEMPLATE_MAP[templateUsed]`, log an error and show a toast:
+         - `'Generated resume template could not be mapped. Please contact support if this persists.'`
+     - Strengthened currentGeneration assignment:
+       - Now clears any stale generation:
+         - `currentGeneration = null;`
+       - Then assigns a new object that includes both backend and snapshot IDs:
+         - `currentGeneration = Object.assign({}, data, { templateIdUsed: templateUsed, templateIdSent });`
+       - Updated logging to show both `templateIdUsed` and `templateIdSent`.
+
+   - In the error path (catch block):
+     - After stopping the progress overlay, added logic to prevent stale previews/downloads:
+       - If `currentGeneration` exists, log a warning and clear it:
+         - `currentGeneration = null;`
+       - Hide the output section if present:
+         - `_outSecErr.style.display = 'none';`
+
+b) handleGenerateSubmit(event)
+   - Before sending the request:
+     - Added a snapshot of the selected template ID:
+       - `const templateIdSent = selectedTemplate;`
+       - Updated logging to use `templateIdSent` instead of `selectedTemplate`.
+     - Updated the request body to send the snapshot:
+       - Changed `templateId: selectedTemplate` to `templateId: templateIdSent`.
+
+   - After receiving a successful response:
+     - Adjusted template comparison to use the snapshot:
+       - `const templateUsed = data.templateIdUsed || data.templateId || templateIdSent;`
+       - Comparison now uses `templateIdSent` and logs an explicit mismatch between snapshot and backend if they differ.
+     - Added explicit mapping validation:
+       - If `!JDM_TEMPLATE_MAP[templateUsed]`, log an error and show a toast indicating mapping failure.
+     - Strengthened currentGeneration assignment:
+       - Clear stale state with `currentGeneration = null;`
+       - Assign `currentGeneration = Object.assign({}, data, { templateIdUsed: templateUsed, templateIdSent });`
+       - Updated logging to include both `templateIdUsed` and `templateIdSent`.
+
+   - In the error path (catch block):
+     - On any thrown error, now:
+       - Logs a warning if `currentGeneration` was set.
+       - Clears `currentGeneration = null;`
+       - Hides the `outputSection` (sets `style.display = 'none'`) so preview/download buttons do not act on stale data.
+
+Effect of jdmatch.html Changes
+------------------------------
+- The template ID used for generation is now frozen at the time the user initiates generation and is stored in `currentGeneration.templateIdSent`.
+- Backend template usage (`templateIdUsed`) is compared against that frozen snapshot, not against the mutable global `selectedTemplate`, eliminating race-condition mismatches when users change templates during generation.
+- If the backend returns a template ID that cannot be found in `JDM_TEMPLATE_MAP`, the app logs a clear error and notifies the user.
+- On any generation error, stale `currentGeneration` is cleared and the output section is hidden, preventing blank or incorrect previews/downloads from using an old successful generation.
+
+
+Backend fallback hard-failure behavior
+-------------------------------------
+- Netlify function `generateResume` now tracks precise fallback reasons via `fallbackReason` and human-readable `message` fields in its JSON responses.
+- When a deterministic fallback resume is built (e.g., OpenAI timeout, HTTP error, or fetch failure), the function now returns:
+  - `ok: false`
+  - `fallbackUsed: true`
+  - `fallbackReason: 'model_generation_failed'`
+  - `message` describing the timeout or model error
+  - `templateId`, `templateIdUsed`, and `templateFileUsed` where known.
+- Other error paths now attach structured reasons without generating placeholder HTML:
+  - `missing_template_mapping` when the requested templateId is not present in `JDM_TEMPLATE_MAP`.
+  - `template_read_failed` when the HTML template file cannot be read from disk.
+  - `generated_content_invalid` when the AI response cannot be parsed as JSON or is missing required fields.
+  - `template_population_failed` when an unexpected internal error occurs while populating the template.
+- Successful AI generations explicitly include `fallbackUsed: false` and `fallbackReason: null`, preserving the success shape used by the frontend.
+
+
+Frontend rejection of fallback/placeholder output
+-------------------------------------------------
+- Both `handleGenerate()` and `handleGenerateSubmit(event)` now enforce a hard failure guard after a nominally successful HTTP 200 response:
+  - If `data.fallbackUsed === true`,
+  - OR `data.ok === false`,
+  - OR `data.filename` starts with `fallback_`,
+  - OR `data.resumeHtml` is missing or shorter than the existing safety threshold,
+  then the generation is treated as a failure.
+- In these guarded failure cases:
+  - `currentGeneration` is not set (or is cleared).
+  - The `outputSection` is hidden so that preview/download actions cannot proceed.
+  - No success toast is shown.
+  - An error toast is shown using `data.message` or `data.error` from the backend when available, falling back to a generic message.
+- Error handling for non-OK HTTP responses (including `ok: false` JSON payloads) now logs the backend `fallbackReason` and `message` and surfaces them in the thrown error, so the user-facing toast communicates a specific reason (e.g., `model_generation_failed: AI model timed out while generating your resume.`).
+
+
+2) services.html
+----------------
+
+a) generateResume()
+   - After parsing the backend response into `data`:
+     - Introduced `rawHtml`:
+       - `const rawHtml = data.resumeHtml || '';`
+     - Added validation of generated HTML before it is stored or rendered:
+       - Length check:
+         - If `rawHtml.trim().length < 200`, logs an error, sets `currentGeneration = null`, shows a toast about incomplete content, and throws an error to fall into the catch block.
+       - Visible text-content check:
+         - Creates a temporary `div`, assigns `rawHtml` to `innerHTML`, and checks the trimmed text content length.
+         - If `< 50` characters, logs an error, clears `currentGeneration`, shows a toast that the resume appears blank, and throws.
+     - Only after passing these validations:
+       - Assigns `currentGeneration = data;`
+       - Applies the existing sanitization to `rawHtml` (scripts and on* attributes removed).
+       - Updates `jdmPreviewContainer.innerHTML` with the sanitized HTML.
+
+b) downloadResumePDF()
+   - Strengthened validation before initiating download:
+     - Still checks `!currentGeneration || !currentGeneration.resumeHtml` and shows `'No resume to download'` as before.
+     - Adds:
+       - Length check on `currentGeneration.resumeHtml.trim()` with minimum 200 characters.
+       - Visible text-content check via a temporary `div`, requiring at least 50 characters of rendered text.
+     - If either check fails:
+       - Logs a descriptive console error.
+       - Shows a toast explaining that content is empty/incomplete or appears blank.
+       - Returns early without starting the print/download flow.
+     - The existing logic that writes HTML into a hidden iframe and calls `print()` is preserved beyond these checks.
+
+c) downloadResumeWord()
+   - Mirrored the same validation logic as `downloadResumePDF()`:
+     - Confirms `currentGeneration.resumeHtml` is present.
+     - Enforces minimum HTML length (200 characters) and rendered text length (50 characters) prior to constructing the Word-compatible HTML document.
+     - If validation fails, logs an error, shows an explanatory toast, and returns without creating/downloading the DOC file.
+   - Existing Word document generation and download behavior remains unchanged when validation passes.
+
+Effect of services.html Changes
+-------------------------------
+- The services-page JD Match flow now rejects obviously empty or nearly-empty HTML coming from the backend before:
+  - Storing it in `currentGeneration`.
+  - Rendering it into the preview container.
+  - Allowing PDF/Word downloads.
+- This prevents blank or meaningless previews and downloads in that flow and aligns its validation behavior with the stricter checks already present on the jdmatch page.
+
+Overall Impact
+--------------
+- Selected template, backend-rendered template, preview, and downloads are now aligned via:
+  - Snapshotting the template ID at generation time on jdmatch.
+  - Storing both snapshot (`templateIdSent`) and backend-used (`templateIdUsed`) IDs on `currentGeneration`.
+  - Validating template mappings against `JDM_TEMPLATE_MAP` with explicit user-facing errors when they fail.
+- Blank or wrong previews/downloads caused by stale or insufficient HTML are mitigated by:
+  - Clearing `currentGeneration` and hiding the output section on jdmatch errors.
+  - Enforcing minimum HTML length and visible text content in both jdmatch (existing helper) and services (new checks) before preview/download actions proceed.
+

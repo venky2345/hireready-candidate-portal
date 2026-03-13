@@ -109,7 +109,14 @@ exports.handler = async (event, context) => {
   const mappedEntry = JDM_TEMPLATE_MAP[templateId];
   if (!mappedEntry) {
     console.warn('[generateResume] templateId not found in JDM_TEMPLATE_MAP', templateId);
-    return respond(400, { ok: false, error: 'Selected template was not found', templateIdReceived: templateId });
+    return respond(400, {
+      ok: false,
+      error: 'Selected template was not found',
+      message: 'Selected template was not found',
+      templateIdReceived: templateId,
+      fallbackUsed: false,
+      fallbackReason: 'missing_template_mapping'
+    });
   }
   const selectedTemplateFile = mappedEntry.file.replace('.html', ''); // strip extension for path join
   const requestedTemplateId = templateId;
@@ -122,7 +129,16 @@ exports.handler = async (event, context) => {
     templateHtml = fs.readFileSync(templatePath, 'utf-8');
   } catch (readError) {
     console.error('Template read error', readError);
-    return respond(500, { ok: false, error: 'Template file not found or unreadable' });
+    return respond(500, {
+      ok: false,
+      error: 'Template file not found or unreadable',
+      message: 'Template file not found or unreadable',
+      templateId: requestedTemplateId,
+      templateIdUsed: requestedTemplateId,
+      templateFileUsed: mappedEntry ? mappedEntry.file : undefined,
+      fallbackUsed: false,
+      fallbackReason: 'template_read_failed'
+    });
   }
 
   // Extract placeholder keys from templateHtml
@@ -130,8 +146,13 @@ exports.handler = async (event, context) => {
   const placeholderKeys = Array.from(new Set(tokens.map(t => t.slice(2, -2))));
 
   // Fallback resume constructor used when AI times out or fails
-  function makeFallback() {
-    console.log('generateResume fallback used', safeCandidateId);
+  function makeFallback(fallbackReason, message, extraMeta = {}) {
+    console.log('[generateResume] fallback used', {
+      safeCandidateId,
+      fallbackReason,
+      message,
+      meta: extraMeta
+    });
     const replacements = {};
     // basic placeholders
     replacements.CANDIDATE_NAME = '';
@@ -165,7 +186,7 @@ exports.handler = async (event, context) => {
     };
 
     return respond(200, {
-      ok: true,
+      ok: false,
       filename: `fallback_${Date.now()}.pdf`,
       resumeHtml,
       roleTitle: '',
@@ -175,7 +196,10 @@ exports.handler = async (event, context) => {
       templateId: requestedTemplateId,
       templateIdUsed: requestedTemplateId,
       templateFileUsed: mappedEntry.file,
-      fallbackUsed: true
+      fallbackUsed: true,
+      fallbackReason,
+      message: message || 'A fallback resume was generated instead of AI output.',
+      ...extraMeta
     });
   }
 
@@ -240,10 +264,26 @@ Requirements:
     clearTimeout(timer);
     if (fetchError.name === 'AbortError') {
       console.log('generateResume abort timeout, using fallback', safeCandidateId);
-      return makeFallback();
+      return makeFallback(
+        'model_generation_failed',
+        'AI model timed out while generating your resume.',
+        {
+          templateId: requestedTemplateId,
+          templateIdUsed: requestedTemplateId,
+          templateFileUsed: mappedEntry.file
+        }
+      );
     }
     console.log('generateResume fetch error', fetchError);
-    return makeFallback();
+    return makeFallback(
+      'model_generation_failed',
+      'AI model request failed while generating your resume.',
+      {
+        templateId: requestedTemplateId,
+        templateIdUsed: requestedTemplateId,
+        templateFileUsed: mappedEntry.file
+      }
+    );
   }
   clearTimeout(timer);
 
@@ -251,7 +291,16 @@ Requirements:
     let errorBody = '';
     try { errorBody = await response.text(); } catch(e) {}
     console.log('OpenAI API error status', response.status, errorBody);
-    return makeFallback();
+    return makeFallback(
+      'model_generation_failed',
+      'AI model returned an error response while generating your resume.',
+      {
+        templateId: requestedTemplateId,
+        templateIdUsed: requestedTemplateId,
+        templateFileUsed: mappedEntry.file,
+        openaiStatus: response.status
+      }
+    );
   }
 
   let data;
@@ -259,12 +308,24 @@ Requirements:
     data = await response.json();
   } catch (e) {
     console.log('OpenAI API returned non-JSON', e);
-    return makeFallback();
+    return respond(500, {
+      ok: false,
+      error: 'Failed to parse OpenAI response as JSON',
+      message: 'Failed to parse AI response while generating your resume.',
+      fallbackUsed: false,
+      fallbackReason: 'generated_content_invalid'
+    });
   }
   const content = data.choices?.[0]?.message?.content;
 
   if (!content) {
-    return respond(500, { ok: false, error: 'No response from OpenAI' });
+    return respond(500, {
+      ok: false,
+      error: 'No response from OpenAI',
+      message: 'No response was received from the AI model.',
+      fallbackUsed: false,
+      fallbackReason: 'model_generation_failed'
+    });
   }
 
   let resumeData;
@@ -274,12 +335,24 @@ Requirements:
     resumeData = JSON.parse(jsonStr);
   } catch (parseError) {
     console.error('JSON parse error:', parseError, 'Content:', content);
-    return respond(500, { ok: false, error: 'Failed to parse OpenAI response as JSON' });
+    return respond(500, {
+      ok: false,
+      error: 'Failed to parse OpenAI response as JSON',
+      message: 'Failed to parse AI response while generating your resume.',
+      fallbackUsed: false,
+      fallbackReason: 'generated_content_invalid'
+    });
   }
 
   if (!resumeData.filename || !resumeData.replacements || !resumeData.addedSkills) {
     console.log('generateResume invalid structure', resumeData);
-    return respond(500, { ok: false, error: 'Invalid response structure from OpenAI' });
+    return respond(500, {
+      ok: false,
+      error: 'Invalid response structure from OpenAI',
+      message: 'AI response was missing required fields for resume generation.',
+      fallbackUsed: false,
+      fallbackReason: 'generated_content_invalid'
+    });
   }
   console.log('generateResume openai ok');
 
@@ -316,13 +389,21 @@ Requirements:
       addedSkills: Array.isArray(resumeData.addedSkills) ? resumeData.addedSkills : [],
       templateId: requestedTemplateId,
       templateIdUsed: requestedTemplateId,
-      templateFileUsed: mappedEntry.file
+      templateFileUsed: mappedEntry.file,
+      fallbackUsed: false,
+      fallbackReason: null
     };
 
     console.log('[generateResume] done, templateIdUsed:', requestedTemplateId, 'file:', mappedEntry.file);
     return respond(200, responseBody);
   } catch (err) {
     console.log('generateResume error', err);
-    return respond(500, { ok: false, error: 'Resume generation failed. Check Netlify function logs.' });
+    return respond(500, {
+      ok: false,
+      error: 'Resume generation failed. Check Netlify function logs.',
+      message: 'Resume generation failed due to an internal error.',
+      fallbackUsed: false,
+      fallbackReason: 'template_population_failed'
+    });
   }
 };
