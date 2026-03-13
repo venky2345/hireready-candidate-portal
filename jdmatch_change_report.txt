@@ -10,6 +10,35 @@ Date: 2026-03-13
 
 2) Exact logic added/changed (backend)
 -------------------------------------
+- Phase 1 deterministic foundation (2026-03-13):
+  - `generateResume.js` no longer depends on AI success to build a usable resume.
+  - The function now uses a deterministic resume constructor (`buildDeterministicResume`) as the primary generation path.
+  - `buildDeterministicResume`:
+    - Uses the uploaded `baseResumeText` as its source.
+    - Extracts candidate name, contact information, summary, skills, experience, education, and certifications/projects using heading-based and heuristic parsing.
+    - Populates the actual selected template via placeholder keys (`CANDIDATE_NAME`, `PROFESSIONAL_SUMMARY`, `SKILLS_LIST`, `EXPERIENCE_SECTION`, `EDUCATION_SECTION`, `CERTIFICATIONS_SECTION`, etc.).
+    - Always renders the final resume through the resolved template file from `JDM_TEMPLATE_MAP`.
+  - AI/OpenAI calls and API key requirements have been removed from the Phase 1 code path:
+    - No external AI request is required for resume generation.
+    - Generation is now deterministic-first; if `baseResumeText` is usable, the function can succeed without any AI dependency.
+  - `validateRenderedResumeHtml` remains in place as a semantic gate:
+    - Ensures no unresolved `{{PLACEHOLDER}}` tokens.
+    - Blocks obvious placeholder shell text such as all-caps “CANDIDATE NAME”, “MM/YYYY”, “ORGANIZATION NAME”, etc.
+    - Rejects only clearly unstructured raw text blobs (very large visible text with almost no block-level HTML).
+    - This validation is applied to the deterministic output before any `ok: true` response is returned.
+  - On success, the function now returns:
+    - `ok: true`
+    - A non-`fallback_` filename based on candidate name and company.
+    - `resumeHtml` rendered from the selected template.
+    - Metrics derived deterministically from `targetMatch`.
+    - Correct `templateId`, `templateIdUsed`, and `templateFileUsed`.
+    - `fallbackUsed: false` and `fallbackReason: null`.
+  - Only when deterministic generation cannot construct a meaningful, template-valid resume from the provided `baseResumeText` does the function return:
+    - `ok: false`
+    - `fallbackUsed: false`
+    - `fallbackReason: 'deterministic_generation_failed'`
+    - A clear user-facing `message` indicating that the input resume content was insufficient.
+
 - `generateResume.js` now returns structured fallback metadata:
   - `fallbackUsed`: boolean indicating that a deterministic fallback resume was built.
   - `fallbackReason`: short code describing why fallback/error occurred.

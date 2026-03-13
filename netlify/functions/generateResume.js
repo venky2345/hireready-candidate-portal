@@ -75,12 +75,6 @@ exports.handler = async (event, context) => {
 
   const safeCandidateId = candidateId || `anon_${Date.now()}`;
 
-  const openaiKey = process.env.OPENAI_API_KEY || process.env.API_KEY;
-  if (!openaiKey) {
-    console.log('generateResume error: OPENAI_API_KEY or API_KEY missing');
-    return respond(500, { ok: false, error: 'OPENAI_API_KEY or API_KEY is not configured in Netlify environment variables' });
-  }
-
   const targetMode = String(targetMatchMode).toLowerCase();
   let targetMatch = targetMatchValue;
   if (targetMode === 'auto') {
@@ -485,313 +479,39 @@ exports.handler = async (event, context) => {
     return null;
   }
 
-  console.log('generateResume request', { safeCandidateId, hasJD: Boolean(jdSafe && jdSafe.trim()), targetMatch, hasMustSkills: Boolean(mustIncludeSkillsList.length > 0), placeholderKeysCount: placeholderKeys.length });
+  console.log('generateResume request (Phase 1 deterministic path)', {
+    safeCandidateId,
+    hasJD: Boolean(jdSafe && jdSafe.trim()),
+    targetMatch,
+    hasMustSkills: Boolean(mustIncludeSkillsList.length > 0),
+    placeholderKeysCount: placeholderKeys.length
+  });
 
-  const systemPrompt = `You are a professional resume writer. You MUST:
-1. Return ONLY valid JSON (no markdown, no code blocks)
-2. Include all mustIncludeSkills if provided
-3. Ensure content is ATS-friendly and realistic
-4. Match the job description requirements as closely as possible
+  const deterministic = buildDeterministicResume({
+    aiTimedOut: false,
+    reason: 'phase1_deterministic',
+    aiError: null
+  });
 
-JSON response must have exactly these keys:
-{
-  "filename": "FirstName_LastName_Role.pdf",
-  "roleTitle": "string",
-  "metrics": { "jdMatch": number 90-100, "atsFriendliness": number 90-100, "hrCatchiness": number 90-100, "chancesOfShortlisting": number 90-100 },
-  "addedSkills": ["skill1", "skill2"],
-  "targetMatch": number,
-  "replacements": { "PLACEHOLDER_KEY": "value", ... }
-}`;
-
-  const userPrompt = `Generate a professional resume tailored to this job:
-
-Company: ${companyName}
-Job Description: ${jdSafe}
-Target Match Score: ${targetMatch}%
-Must Include Skills: ${mustIncludeSkillsList.length > 0 ? mustIncludeSkillsList.join(', ') : 'None'}
-${resumeSafe ? `\nReference Resume:\n${resumeSafe}` : ''}
-
-Available placeholders: ${placeholderKeys.join(', ')}
-
-Requirements:
-- Provide values for each placeholder key in the "replacements" object
-- Ensure all mustIncludeSkills are present in the SKILLS section
-- Make metrics realistic based on job fit (jdMatch should be around ${targetMatch})
-- Return ONLY the JSON object, nothing else`;
-
-  console.log('generateResume start', { safeCandidateId });
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 8000);
-
-  let response;
-  try {
-    response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.2,
-        max_tokens: 500
-      }),
-      signal: controller.signal
-    });
-  } catch (fetchError) {
-    clearTimeout(timer);
-    if (fetchError.name === 'AbortError') {
-      console.log('[generateResume] AI timeout detected', { safeCandidateId });
-      const deterministic = buildDeterministicResume({
-        aiTimedOut: true,
-        reason: 'model_generation_failed',
-        aiError: 'timeout'
-      });
-      if (deterministic) {
-        return respond(200, deterministic);
-      }
-      console.log('[generateResume] deterministic fallback failed after timeout', { safeCandidateId });
-      return respond(500, {
-        ok: false,
-        error: 'AI model timed out and deterministic fallback could not build a complete resume.',
-        message: 'AI model timed out and deterministic fallback could not build a complete resume. Please shorten your inputs or try again.',
-        fallbackUsed: false,
-        fallbackReason: 'model_generation_failed',
-        generationMode: 'none',
-        aiTimedOut: true
-      });
-    }
-    console.log('[generateResume] fetch error from AI model', fetchError);
-    const deterministic = buildDeterministicResume({
-      aiTimedOut: false,
-      reason: 'model_generation_failed',
-      aiError: fetchError && fetchError.message ? fetchError.message : 'fetch_error'
-    });
-    if (deterministic) {
-      return respond(200, deterministic);
-    }
-    console.log('[generateResume] deterministic fallback failed after fetch error', { safeCandidateId });
-    return respond(500, {
-      ok: false,
-      error: 'AI model request failed and deterministic fallback could not build a complete resume.',
-      message: 'AI model request failed and deterministic fallback could not build a complete resume. Please shorten your inputs or try again.',
-      fallbackUsed: false,
-      fallbackReason: 'model_generation_failed',
-      generationMode: 'none',
-      aiTimedOut: false
-    });
-  }
-  clearTimeout(timer);
-
-  let rawBody = '';
-  try {
-    rawBody = await response.text();
-  } catch (e) {
-    console.log('[generateResume] Failed to read OpenAI response body', e);
-    const deterministic = buildDeterministicResume({
-      aiTimedOut: false,
-      reason: 'generated_content_invalid',
-      aiError: 'read_body_failed'
-    });
-    if (deterministic) {
-      return respond(200, deterministic);
-    }
-    return respond(500, {
-      ok: false,
-      error: 'Failed to read OpenAI response while generating your resume.',
-      message: 'Failed to read AI response while generating your resume.',
-      fallbackUsed: false,
-      fallbackReason: 'generated_content_invalid'
-    });
-  }
-
-  if (!response.ok) {
-    console.log('[generateResume] OpenAI API non-OK status', {
-      status: response.status,
-      bodySnippet: String(rawBody).slice(0, 300)
-    });
-    const deterministic = buildDeterministicResume({
-      aiTimedOut: false,
-      reason: 'model_generation_failed',
-      aiError: `status_${response.status}`
-    });
-    if (deterministic) {
-      return respond(200, deterministic);
-    }
-    console.log('[generateResume] deterministic fallback failed after non-OK AI status', { safeCandidateId });
-    return respond(500, {
-      ok: false,
-      error: 'AI model returned an error response and deterministic fallback could not build a complete resume.',
-      message: 'AI model returned an error response and deterministic fallback could not build a complete resume. Please shorten your inputs or try again.',
-      fallbackUsed: false,
-      fallbackReason: 'model_generation_failed',
-      generationMode: 'none',
-      aiTimedOut: false,
-      openaiStatus: response.status
-    });
-  }
-
-  let data;
-  try {
-    data = JSON.parse(rawBody);
-    console.log('[generateResume] AI envelope JSON parse success');
-  } catch (e) {
-    console.log('[generateResume] AI envelope JSON parse failed, will attempt content-only extraction', e);
-    data = null;
-  }
-
-  let content = data?.choices?.[0]?.message?.content;
-
-  // If the envelope could not be parsed, try to recover directly from the raw body
-  // as if it were the content field.
-  if (!content) {
-    content = rawBody;
-  }
-
-  if (!content || !content.trim()) {
-    console.log('[generateResume] No usable content from OpenAI, attempting deterministic fallback', { safeCandidateId });
-    const deterministic = buildDeterministicResume({
-      aiTimedOut: false,
-      reason: 'generated_content_invalid',
-      aiError: 'no_content'
-    });
-    if (deterministic) {
-      console.log('[generateResume] deterministic fallback success after missing content', { safeCandidateId });
-      return respond(200, deterministic);
-    }
-    return respond(500, {
-      ok: false,
-      error: 'No response from OpenAI',
-      message: 'No response was received from the AI model.',
-      fallbackUsed: false,
-      fallbackReason: 'model_generation_failed'
-    });
-  }
-
-  const rawResumePayload = extractStructuredResumePayload(content);
-  if (!rawResumePayload) {
-    console.log('[generateResume] AI content JSON extraction failed, attempting deterministic fallback', { safeCandidateId });
-    const deterministic = buildDeterministicResume({
-      aiTimedOut: false,
-      reason: 'generated_content_invalid',
-      aiError: 'content_parse_failed'
-    });
-    if (deterministic) {
-      console.log('[generateResume] deterministic fallback success after content parse failure', { safeCandidateId });
-      return respond(200, deterministic);
-    }
-    return respond(500, {
-      ok: false,
-      error: 'Failed to parse OpenAI response as JSON',
-      message: 'Failed to parse AI response while generating your resume.',
-      fallbackUsed: false,
-      fallbackReason: 'generated_content_invalid'
-    });
-  }
-  console.log('[generateResume] AI content JSON extraction success');
-
-  // Normalize various reasonable payload shapes into a single internal shape
-  let resumeData = rawResumePayload;
-  if (Array.isArray(resumeData)) {
-    resumeData = resumeData.find(item => item && typeof item === 'object' && item.replacements) || resumeData[0];
-  }
-  if (resumeData && resumeData.resume && typeof resumeData.resume === 'object') {
-    resumeData = Object.assign({}, resumeData, resumeData.resume);
-  }
-
-  const replacements = resumeData && typeof resumeData === 'object' ? (resumeData.replacements || {}) : {};
-  if (!replacements || Object.keys(replacements).length === 0) {
-    console.log('[generateResume] AI response missing replacements, attempting deterministic fallback', resumeData);
-    const deterministic = buildDeterministicResume({
-      aiTimedOut: false,
-      reason: 'generated_content_invalid',
-      aiError: 'missing_replacements'
-    });
-    if (deterministic) {
-      console.log('[generateResume] deterministic fallback success after missing replacements', { safeCandidateId });
-      return respond(200, deterministic);
-    }
-    return respond(500, {
-      ok: false,
-      error: 'Invalid response structure from OpenAI',
-      message: 'AI response was missing required fields for resume generation.',
-      fallbackUsed: false,
-      fallbackReason: 'generated_content_invalid'
-    });
-  }
-  console.log('[generateResume] AI content structure ok, proceeding with template population');
-
-  // Construct resumeHtml by replacing placeholders using the same template pipeline
-  let resumeHtml = templateHtml;
-  for (const [key, value] of Object.entries(replacements)) {
-    const placeholder = `{{${key}}}`;
-    resumeHtml = resumeHtml.replace(
-      new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
-      String(value)
-    );
-  }
-  // Remove any remaining placeholders
-  resumeHtml = resumeHtml.replace(/{{[A-Z0-9_]+}}/g, '');
-
-  const aiValidation = validateRenderedResumeHtml(resumeHtml, requestedTemplateId, mappedEntry.file);
-  if (!aiValidation.ok) {
-    console.log('[generateResume] AI-rendered resume validation failed, attempting deterministic fallback', {
+  if (deterministic) {
+    console.log('[generateResume] Phase 1 deterministic resume generation succeeded', {
       safeCandidateId,
-      reason: aiValidation.reason,
-      message: aiValidation.message
+      templateIdUsed: deterministic.templateIdUsed,
+      filename: deterministic.filename
     });
-    const deterministicFromInvalidAi = buildDeterministicResume({
-      aiTimedOut: false,
-      reason: 'generated_content_invalid',
-      aiError: aiValidation.reason
-    });
-    if (deterministicFromInvalidAi) {
-      return respond(200, deterministicFromInvalidAi);
-    }
-    return respond(500, {
-      ok: false,
-      error: 'Generated resume content from AI was invalid and deterministic fallback could not build a complete resume.',
-      message: aiValidation.message,
-      fallbackUsed: false,
-      fallbackReason: 'generated_content_invalid',
-      generationMode: 'none'
-    });
+    return respond(200, deterministic);
   }
 
-  const rawMetrics = resumeData.metrics || {};
-  const clamp90 = (value, fallback) => {
-    const parsed = parseInt(value, 10);
-    return Math.max(90, Math.min(100, Number.isNaN(parsed) ? fallback : parsed));
-  };
-
-  const metrics = {
-    jdMatch: clamp90(rawMetrics.jdMatch, targetMatch),
-    hrCatchiness: clamp90(rawMetrics.hrCatchiness, 91),
-    atsFriendliness: clamp90(rawMetrics.atsFriendliness ?? rawMetrics.ats, 92),
-    chancesOfShortlisting: clamp90(rawMetrics.chancesOfShortlisting ?? rawMetrics.shortlistChance, 93)
-  };
-
-    const responseBody = {
-      ok: true,
-      filename: resumeData.filename,
-      resumeHtml: resumeHtml,
-      roleTitle: resumeData.roleTitle || '',
-      targetMatch,
-      metrics,
-      addedSkills: Array.isArray(resumeData.addedSkills) ? resumeData.addedSkills : [],
-      templateId: requestedTemplateId,
-      templateIdUsed: requestedTemplateId,
-      templateFileUsed: mappedEntry.file,
-      fallbackUsed: false,
-      fallbackReason: null
-    };
-
-    console.log('[generateResume] done, templateIdUsed:', requestedTemplateId, 'file:', mappedEntry.file);
-    return respond(200, responseBody);
+  console.log('[generateResume] Phase 1 deterministic generation failed: unable to build complete resume', {
+    safeCandidateId
+  });
+  return respond(500, {
+    ok: false,
+    error: 'Unable to build a complete resume from the provided inputs.',
+    message: 'Unable to build a complete resume from the provided inputs. Please check that your resume text is complete and try again.',
+    fallbackUsed: false,
+    fallbackReason: 'deterministic_generation_failed'
+  });
   } catch (err) {
     console.log('generateResume error', err);
     return respond(500, {
