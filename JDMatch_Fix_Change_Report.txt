@@ -89,21 +89,30 @@ Effect of jdmatch.html Changes
 - On any generation error, stale `currentGeneration` is cleared and the output section is hidden, preventing blank or incorrect previews/downloads from using an old successful generation.
 
 
-Backend fallback hard-failure behavior
--------------------------------------
-- Netlify function `generateResume` now tracks precise fallback reasons via `fallbackReason` and human-readable `message` fields in its JSON responses.
-- When a deterministic fallback resume is built (e.g., OpenAI timeout, HTTP error, or fetch failure), the function now returns:
-  - `ok: false`
-  - `fallbackUsed: true`
-  - `fallbackReason: 'model_generation_failed'`
-  - `message` describing the timeout or model error
-  - `templateId`, `templateIdUsed`, and `templateFileUsed` where known.
-- Other error paths now attach structured reasons without generating placeholder HTML:
+Backend fallback hard-failure and deterministic behavior
+--------------------------------------------------------
+- Netlify function `generateResume` now tracks precise fallback reasons via `fallbackReason`, `generationMode`, and human-readable `message` fields in its JSON responses.
+- When the OpenAI model succeeds:
+  - The function returns `ok: true` with the AI-enhanced resume and `generationMode: 'ai'`.
+  - `fallbackUsed: false` and `fallbackReason: null` are included to preserve the success shape used by the frontend.
+- When the OpenAI model times out or returns a transport/HTTP error but there is sufficient `baseResumeText`:
+  - A deterministic backend generator now builds a real resume directly from the provided resume text and job inputs.
+  - The function returns:
+    - `ok: true`
+    - A non-placeholder filename (no `fallback_` prefix)
+    - `generationMode: 'deterministic_fallback'`
+    - `aiTimedOut`/`aiError` markers for diagnostics
+    - `fallbackUsed: false` and `fallbackReason: null`
+    - `templateId`, `templateIdUsed`, and `templateFileUsed` consistent with the selected template.
+- Only when both the AI model and deterministic fallback cannot build a meaningful resume (e.g., truly insufficient resume text) does the function return `ok: false` with:
+  - `fallbackUsed: false`
+  - `fallbackReason: 'model_generation_failed'` (or another specific code)
+  - A clear, user-facing `message` explaining that both AI and deterministic generation failed.
+- Other error paths still attach structured reasons without generating placeholder HTML:
   - `missing_template_mapping` when the requested templateId is not present in `JDM_TEMPLATE_MAP`.
   - `template_read_failed` when the HTML template file cannot be read from disk.
   - `generated_content_invalid` when the AI response cannot be parsed as JSON or is missing required fields.
   - `template_population_failed` when an unexpected internal error occurs while populating the template.
-- Successful AI generations explicitly include `fallbackUsed: false` and `fallbackReason: null`, preserving the success shape used by the frontend.
 
 
 Frontend rejection of fallback/placeholder output

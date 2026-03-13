@@ -145,39 +145,151 @@ exports.handler = async (event, context) => {
   const tokens = templateHtml.match(/{{[A-Z0-9_]+}}/g) || [];
   const placeholderKeys = Array.from(new Set(tokens.map(t => t.slice(2, -2))));
 
-  // Fallback resume constructor used when AI times out or fails
-  function makeFallback(fallbackReason, message, extraMeta = {}) {
-    console.log('[generateResume] fallback used', {
+  // Deterministic resume builder used when AI times out or fails but we still
+  // have usable base resume text to construct a meaningful output.
+  function buildDeterministicResume(options = {}) {
+    const { aiTimedOut = false, reason = 'model_generation_failed', aiError = null } = options;
+    const src = (resumeSafe || '').trim();
+    if (!src || src.length < 100) {
+      console.log('[generateResume] deterministic fallback skipped — insufficient resume text', {
+        safeCandidateId,
+        length: src.length
+      });
+      return null;
+    }
+
+    console.log('[generateResume] deterministic fallback starting', {
       safeCandidateId,
-      fallbackReason,
-      message,
-      meta: extraMeta
+      aiTimedOut,
+      reason
     });
+
+    const lines = src.split(/\r?\n/).map(l => l.trim());
+    const nonEmpty = lines.filter(Boolean);
+
+    // Candidate name: first non-empty line
+    const candidateName = nonEmpty[0] || '';
+
+    // Contact info: lines with email/phone-like patterns
+    const contactCandidates = nonEmpty.filter(l => /@/.test(l) || /\d{6,}/.test(l));
+    const contactInfo = contactCandidates.slice(0, 3).join(' | ');
+
+    // Heuristic headings
+    const headingRegex = /^(summary|professional summary|profile|skills|technical skills|experience|work experience|professional experience|projects|education|certifications?|training)\b/i;
+
+    // Summary: lines after name until first heading
+    const summaryLines = [];
+    for (let i = 1; i < nonEmpty.length; i++) {
+      const l = nonEmpty[i];
+      if (headingRegex.test(l)) break;
+      summaryLines.push(l);
+      if (summaryLines.join(' ').length > 400) break;
+    }
+    const summaryText = summaryLines.join(' ') || src.slice(0, 600);
+
+    function extractSection(keywords) {
+      const lower = nonEmpty.map(l => l.toLowerCase());
+      let start = -1;
+      for (let i = 0; i < lower.length; i++) {
+        if (keywords.some(kw => lower[i].startsWith(kw))) {
+          start = i + 1;
+          break;
+        }
+      }
+      if (start === -1) return '';
+      const sectionLines = [];
+      for (let i = start; i < nonEmpty.length; i++) {
+        if (headingRegex.test(nonEmpty[i])) break;
+        sectionLines.push(nonEmpty[i]);
+        if (sectionLines.length > 80) break;
+      }
+      return sectionLines.join('\n');
+    }
+
+    const skillsText = extractSection(['skills', 'technical skills']);
+    const experienceText = extractSection(['experience', 'work experience', 'professional experience', 'projects']);
+    const educationText = extractSection(['education']);
+    const certsText = extractSection(['certifications', 'certification', 'training']);
+
+    // Derive skills list from skillsText and mustIncludeSkillsList
+    let derivedSkills = [];
+    if (skillsText) {
+      const tokensFromSkills = skillsText
+        .split(/[\u2022•\-\n,;]+/)
+        .map(s => s.trim())
+        .filter(Boolean);
+      derivedSkills = derivedSkills.concat(tokensFromSkills);
+    }
+    derivedSkills = derivedSkills.concat(mustIncludeSkillsList || []);
+    const skillsSet = Array.from(new Set(derivedSkills.map(s => s.trim()).filter(Boolean)));
+    const skillsHtml = skillsSet.length
+      ? '<ul>' + skillsSet.slice(0, 40).map(s => `<li>${s}</li>`).join('') + '</ul>'
+      : '';
+
+    function wrapParagraphs(text, headingLabel) {
+      if (!text || !text.trim()) return '';
+      const parts = text.split(/\n+/).map(t => t.trim()).filter(Boolean);
+      if (!parts.length) return '';
+      return `<div><strong>${headingLabel}</strong><ul>` +
+        parts.map(p => `<li>${p}</li>`).join('') +
+        `</ul></div>`;
+    }
+
+    const experienceHtml = wrapParagraphs(experienceText || summaryText, 'Experience');
+    const educationHtml = wrapParagraphs(educationText, 'Education');
+    const certsHtml = wrapParagraphs(certsText, 'Certifications');
+
     const replacements = {};
-    // basic placeholders
-    replacements.CANDIDATE_NAME = '';
-    replacements.PROFESSIONAL_TITLE = '';
-    replacements.CONTACT_INFO = '';
-    replacements.PROFESSIONAL_SUMMARY = '';
-    // skills list from mustIncludeSkillsList
-    let skillsHtml = '<ul>' + mustIncludeSkillsList.slice(0,20).map(s => `<li>${s}</li>`).join('') + '</ul>';
-    replacements.SKILLS_LIST = skillsHtml;
-    // generic experience block
-    let expHtml = '<div><strong>Experience</strong><ul><li>Role at Company<br>• Delivered project using ' +
-                   (mustIncludeSkillsList[0] || 'relevant technologies') + '</li></ul></div>';
-    replacements.EXPERIENCE_SECTION = expHtml;
-    replacements.EDUCATION_SECTION = '<div><strong>Education</strong><ul><li>Degree | Institution</li></ul></div>';
-    replacements.CERTIFICATIONS_SECTION = '';
-    // any other placeholders blank
-    placeholderKeys.forEach(k => { if (!(k in replacements)) replacements[k] = ''; });
+
+    if (placeholderKeys.includes('CANDIDATE_NAME')) {
+      replacements.CANDIDATE_NAME = candidateName;
+    }
+    if (placeholderKeys.includes('PROFESSIONAL_TITLE')) {
+      replacements.PROFESSIONAL_TITLE = '';
+    }
+    if (placeholderKeys.includes('CONTACT_INFO')) {
+      replacements.CONTACT_INFO = contactInfo;
+    }
+    if (placeholderKeys.includes('PROFESSIONAL_SUMMARY')) {
+      replacements.PROFESSIONAL_SUMMARY = summaryText;
+    }
+    if (placeholderKeys.includes('SKILLS_LIST')) {
+      replacements.SKILLS_LIST = skillsHtml;
+    }
+    if (placeholderKeys.includes('EXPERIENCE_SECTION')) {
+      replacements.EXPERIENCE_SECTION = experienceHtml;
+    }
+    if (placeholderKeys.includes('EDUCATION_SECTION')) {
+      replacements.EDUCATION_SECTION = educationHtml;
+    }
+    if (placeholderKeys.includes('CERTIFICATIONS_SECTION')) {
+      replacements.CERTIFICATIONS_SECTION = certsHtml;
+    }
+
+    // Fill any remaining placeholders with empty string so templates stay clean
+    placeholderKeys.forEach((k) => {
+      if (!(k in replacements)) replacements[k] = '';
+    });
 
     let resumeHtml = templateHtml;
     for (const [key, value] of Object.entries(replacements)) {
       const placeholder = `{{${key}}}`;
-      resumeHtml = resumeHtml.replace(new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), String(value));
+      resumeHtml = resumeHtml.replace(
+        new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
+        String(value)
+      );
     }
     resumeHtml = resumeHtml.replace(/{{[A-Z0-9_]+}}/g, '');
 
+    if (!resumeHtml || resumeHtml.replace(/\s+/g, '').length < 200) {
+      console.log('[generateResume] deterministic fallback produced too-short HTML', {
+        safeCandidateId,
+        length: resumeHtml.length
+      });
+      return null;
+    }
+
+    // Metrics: reuse targetMatch for a stable, high-quality score
     const metrics = {
       jdMatch: targetMatch,
       atsFriendliness: targetMatch,
@@ -185,22 +297,34 @@ exports.handler = async (event, context) => {
       chancesOfShortlisting: targetMatch
     };
 
-    return respond(200, {
-      ok: false,
-      filename: `fallback_${Date.now()}.pdf`,
+    const safeNamePart = (candidateName || 'Candidate').replace(/[^A-Za-z0-9]+/g, '_').slice(0, 40) || 'Candidate';
+    const safeCompanyPart = (companyName || 'Role').replace(/[^A-Za-z0-9]+/g, '_').slice(0, 40) || 'Role';
+    const filename = `${safeNamePart}_${safeCompanyPart}_JDMatch.pdf`;
+
+    console.log('[generateResume] deterministic fallback success', {
+      safeCandidateId,
+      aiTimedOut,
+      reason,
+      htmlLength: resumeHtml.length
+    });
+
+    return {
+      ok: true,
+      filename,
       resumeHtml,
       roleTitle: '',
       targetMatch,
       metrics,
-      addedSkills: mustIncludeSkillsList,
+      addedSkills: skillsSet,
       templateId: requestedTemplateId,
       templateIdUsed: requestedTemplateId,
       templateFileUsed: mappedEntry.file,
-      fallbackUsed: true,
-      fallbackReason,
-      message: message || 'A fallback resume was generated instead of AI output.',
-      ...extraMeta
-    });
+      fallbackUsed: false,
+      fallbackReason: null,
+      generationMode: 'deterministic_fallback',
+      aiTimedOut,
+      aiError
+    };
   }
 
   console.log('generateResume request', { safeCandidateId, hasJD: Boolean(jdSafe && jdSafe.trim()), targetMatch, hasMustSkills: Boolean(mustIncludeSkillsList.length > 0), placeholderKeysCount: placeholderKeys.length });
@@ -263,44 +387,71 @@ Requirements:
   } catch (fetchError) {
     clearTimeout(timer);
     if (fetchError.name === 'AbortError') {
-      console.log('generateResume abort timeout, using fallback', safeCandidateId);
-      return makeFallback(
-        'model_generation_failed',
-        'AI model timed out while generating your resume.',
-        {
-          templateId: requestedTemplateId,
-          templateIdUsed: requestedTemplateId,
-          templateFileUsed: mappedEntry.file
-        }
-      );
-    }
-    console.log('generateResume fetch error', fetchError);
-    return makeFallback(
-      'model_generation_failed',
-      'AI model request failed while generating your resume.',
-      {
-        templateId: requestedTemplateId,
-        templateIdUsed: requestedTemplateId,
-        templateFileUsed: mappedEntry.file
+      console.log('[generateResume] AI timeout detected', { safeCandidateId });
+      const deterministic = buildDeterministicResume({
+        aiTimedOut: true,
+        reason: 'model_generation_failed',
+        aiError: 'timeout'
+      });
+      if (deterministic) {
+        return respond(200, deterministic);
       }
-    );
+      console.log('[generateResume] deterministic fallback failed after timeout', { safeCandidateId });
+      return respond(500, {
+        ok: false,
+        error: 'AI model timed out and deterministic fallback could not build a complete resume.',
+        message: 'AI model timed out and deterministic fallback could not build a complete resume. Please shorten your inputs or try again.',
+        fallbackUsed: false,
+        fallbackReason: 'model_generation_failed',
+        generationMode: 'none',
+        aiTimedOut: true
+      });
+    }
+    console.log('[generateResume] fetch error from AI model', fetchError);
+    const deterministic = buildDeterministicResume({
+      aiTimedOut: false,
+      reason: 'model_generation_failed',
+      aiError: fetchError && fetchError.message ? fetchError.message : 'fetch_error'
+    });
+    if (deterministic) {
+      return respond(200, deterministic);
+    }
+    console.log('[generateResume] deterministic fallback failed after fetch error', { safeCandidateId });
+    return respond(500, {
+      ok: false,
+      error: 'AI model request failed and deterministic fallback could not build a complete resume.',
+      message: 'AI model request failed and deterministic fallback could not build a complete resume. Please shorten your inputs or try again.',
+      fallbackUsed: false,
+      fallbackReason: 'model_generation_failed',
+      generationMode: 'none',
+      aiTimedOut: false
+    });
   }
   clearTimeout(timer);
 
   if (!response.ok) {
     let errorBody = '';
     try { errorBody = await response.text(); } catch(e) {}
-    console.log('OpenAI API error status', response.status, errorBody);
-    return makeFallback(
-      'model_generation_failed',
-      'AI model returned an error response while generating your resume.',
-      {
-        templateId: requestedTemplateId,
-        templateIdUsed: requestedTemplateId,
-        templateFileUsed: mappedEntry.file,
-        openaiStatus: response.status
-      }
-    );
+    console.log('[generateResume] OpenAI API non-OK status', { status: response.status, bodySnippet: String(errorBody).slice(0, 300) });
+    const deterministic = buildDeterministicResume({
+      aiTimedOut: false,
+      reason: 'model_generation_failed',
+      aiError: `status_${response.status}`
+    });
+    if (deterministic) {
+      return respond(200, deterministic);
+    }
+    console.log('[generateResume] deterministic fallback failed after non-OK AI status', { safeCandidateId });
+    return respond(500, {
+      ok: false,
+      error: 'AI model returned an error response and deterministic fallback could not build a complete resume.',
+      message: 'AI model returned an error response and deterministic fallback could not build a complete resume. Please shorten your inputs or try again.',
+      fallbackUsed: false,
+      fallbackReason: 'model_generation_failed',
+      generationMode: 'none',
+      aiTimedOut: false,
+      openaiStatus: response.status
+    });
   }
 
   let data;

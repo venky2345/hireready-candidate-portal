@@ -3477,6 +3477,66 @@ ROUND 27 (2026-03-13) - JD MATCH FALLBACK HARD-FAILURE & FRONTEND REJECTION
     - Preview and download actions remain disabled or hidden.
     - An error toast surfaces a clear explanation derived from the backend `message`/`fallbackReason`.
 
+================================================================================
+ROUND 28 (2026-03-13) - JD MATCH AI TIMEOUT RESILIENCE WITH DETERMINISTIC BACKEND FALLBACK
+================================================================================
+
+1) Files changed
+----------------
+- netlify/functions/generateResume.js
+- jdmatch.html (behavior unchanged; no new edits in this round)
+
+2) Root cause addressed
+------------------------
+- After strict guards were added to block placeholder fallback output, AI/model timeouts caused the backend to return `ok: false` with `fallbackReason: 'model_generation_failed'`, which the frontend correctly treated as a hard failure.
+- As a result, users with valid `baseResumeText` received an error instead of a usable resume whenever the AI call timed out or failed at the transport/HTTP layer.
+
+3) Timeout-handling changes (backend)
+-------------------------------------
+- Added `buildDeterministicResume(options)` in `generateResume.js`:
+  - Uses `baseResumeText` (`resumeSafe`) as the primary source of truth when AI fails.
+  - Extracts a candidate name from the first non-empty line.
+  - Derives contact information from lines containing email or phone-like patterns.
+  - Builds a summary from the initial block of lines after the name up to the first section heading.
+  - Locates skills, experience/projects, education, and certifications by scanning for common section headings and capturing the text beneath them.
+  - Converts these sections into simple `<div>/<ul>/<li>` HTML fragments and maps them into template placeholders such as `CANDIDATE_NAME`, `CONTACT_INFO`, `PROFESSIONAL_SUMMARY`, `SKILLS_LIST`, `EXPERIENCE_SECTION`, `EDUCATION_SECTION`, and `CERTIFICATIONS_SECTION` — but only when those placeholders exist in the selected template.
+  - Ensures the final `resumeHtml` is non-empty and exceeds the existing safety length threshold before treating it as a valid result.
+- Updated AI error/timeout handling to route into deterministic generation when possible:
+  - On `AbortError` (OpenAI timeout), the function:
+    - Logs `[generateResume] AI timeout detected`.
+    - Attempts `buildDeterministicResume({ aiTimedOut: true, reason: 'model_generation_failed', aiError: 'timeout' })`.
+    - Returns `200` with `ok: true` if deterministic generation succeeds.
+    - Only returns `ok: false` when deterministic generation cannot build a complete resume due to insufficient content.
+  - On fetch/network errors and non-OK HTTP statuses:
+    - Attempts deterministic generation with `aiError` describing the failure (e.g., `status_500`).
+    - Falls back to `ok: false` only when deterministic generation cannot produce a usable resume.
+
+4) Deterministic fallback response shape
+----------------------------------------
+- Successful deterministic responses now have:
+  - `ok: true`
+  - A non-placeholder filename (no `fallback_` prefix), derived from candidate name and company (e.g., `Candidate_Company_JDMatch.pdf`).
+  - `resumeHtml` populated with real content from the user’s resume.
+  - `metrics` aligned with `targetMatch`, preserving existing scoring semantics.
+  - `templateId`, `templateIdUsed`, and `templateFileUsed` aligned with the selected template snapshot.
+  - `fallbackUsed: false` and `fallbackReason: null`.
+  - `generationMode: 'deterministic_fallback'` plus `aiTimedOut`/`aiError` flags for diagnostics.
+- Hard failures now occur only when:
+  - Both the AI model and deterministic fallback cannot build a meaningful resume (e.g., missing or extremely short resume text), in which case the handler returns `ok: false` with a clear `message` and appropriate `fallbackReason`.
+
+5) Frontend behavior after fix
+------------------------------
+- No changes were required in `jdmatch.html` for this round:
+  - Existing guards still reject responses with `fallbackUsed === true`, `ok === false`, `filename` starting with `fallback_`, or too-short `resumeHtml`.
+  - Deterministic fallback responses now satisfy the same success criteria as AI-backed responses (`ok: true`, no `fallback_` prefix, and sufficiently long HTML), so they are treated as valid successes.
+- User-visible behavior:
+  - If AI returns in time, the flow is unchanged: AI-enhanced resume in the selected template, with normal preview and downloads.
+  - If AI times out or returns a transport/HTTP error but `baseResumeText` is present:
+    - Users receive a real, template-correct resume built from their own resume content.
+    - Preview and downloads work as normal.
+    - No placeholder shells, no blank content, and no `fallback_<timestamp>.pdf` filenames.
+  - Only when both AI and deterministic generation fail do users see an error and no preview/download, preserving safety against junk content.
+
 
 ================================================================================
 ROUND 25 (2026-03-06) - FRONTEND NULL-SAFETY BUG FIX
