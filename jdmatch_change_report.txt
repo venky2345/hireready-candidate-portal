@@ -3538,6 +3538,84 @@ ROUND 28 (2026-03-13) - JD MATCH AI TIMEOUT RESILIENCE WITH DETERMINISTIC BACKEN
     - No placeholder shells, no blank content, and no `fallback_<timestamp>.pdf` filenames are allowed through as success.
   - Only when both AI and deterministic generation fail do users see an error and no preview/download, preserving safety against junk content.
 
+================================================================================
+ROUND 29 (2026-03-13) - JD MATCH AI PARSE HARDENING & BACKEND TEMPLATE-VALID FALLBACK
+================================================================================
+
+1) Files changed
+----------------
+- netlify/functions/generateResume.js
+- jdmatch_change_report.txt (this file)
+
+2) Root cause fixed
+-------------------
+- Users were seeing `generated_content_invalid: Failed to parse AI response while generating your resume.` on the live JD Match page.
+- The backend was treating malformed or slightly off-spec AI responses as hard failures, returning `ok: false` and surfacing the error even when valid `baseResumeText` was available to construct a usable resume.
+
+3) AI parse hardening
+---------------------
+- Switched OpenAI response handling from `response.json()` to a more tolerant pipeline:
+  - Read the raw response body via `await response.text()`.
+  - For non-OK HTTP statuses:
+    - Log the status and a short snippet of the body.
+    - Attempt deterministic fallback generation before returning an error.
+  - For OK responses:
+    - Attempt to `JSON.parse` the entire body as the OpenAI envelope.
+    - Log explicit success (`[generateResume] AI envelope JSON parse success`) or failure.
+    - On envelope parse failure:
+      - Attempt deterministic fallback using `baseResumeText`.
+      - Only return `ok: false` with `fallbackReason: 'generated_content_invalid'` if deterministic generation also fails.
+- Hardened AI content JSON parsing:
+  - Extracts the first likely JSON object from `content` using:
+    - ```json``` fenced blocks when present, or
+    - The first `{ ... }` brace-delimited segment, or
+    - The full `content` string as a final fallback.
+  - Parses the extracted string with `JSON.parse`, logging:
+    - `[generateResume] AI content JSON parse success` on success.
+    - A detailed error and falling back to deterministic generation on failure.
+  - When the AI response is missing required fields (`filename`, `replacements`, `addedSkills`):
+    - Logs `[generateResume] AI response structure invalid, attempting deterministic fallback`.
+    - Attempts deterministic fallback before returning `ok: false`.
+
+4) Deterministic fallback improvement
+-------------------------------------
+- Reused and relied on `buildDeterministicResume(options)` instead of hard-failing on AI parse/structure errors:
+  - When envelope parse fails, content parse fails, or structure is invalid, the backend now:
+    - Tries to build a structured resume from `baseResumeText` and current JD inputs.
+    - Applies parsed sections into the same template placeholders used for AI mode.
+    - Returns `ok: true` only if the resulting HTML passes backend semantic validation via `validateRenderedResumeHtml`.
+  - Deterministic fallback is now invoked for:
+    - Envelope JSON parse failures.
+    - AI content JSON parse failures.
+    - AI responses that are missing required keys.
+
+5) Final validation guarantees
+------------------------------
+- `validateRenderedResumeHtml` is used for both AI and deterministic results to ensure:
+  - No unresolved `{{PLACEHOLDER}}` tokens remain.
+  - No obvious placeholder/sample text like "CANDIDATE NAME", "PROFESSIONAL SUMMARY", "CORE PROFESSIONAL COMPETENCIES", "MM/YYYY", or "ORGANIZATION NAME" appears in the final HTML.
+  - The HTML is not merely a large raw text blob with minimal structural tags.
+- If validation fails after:
+  - AI rendering, and
+  - Deterministic fallback attempts,
+  then the backend:
+  - Returns `ok: false` with a clear `error`/`message`.
+  - Does **not** return malformed `resumeHtml` as success.
+
+6) Expected user-visible result after this round
+------------------------------------------------
+- The existing JD Match UI, layout, template picker, preview modal, and download flows remain unchanged.
+- When AI output is malformed or cannot be parsed:
+  - Users will **no longer** immediately see `generated_content_invalid` if they provided valid `baseResumeText`.
+  - Instead, the backend will:
+    - Attempt to build a deterministic, template-rendered resume from the provided resume text.
+    - Return `ok: true` only if that content passes strict template-validation checks.
+  - Only if both AI and deterministic fallback fail to produce a valid, populated template will users see a parse-related error.
+- As a result:
+  - Selected-template generation is preserved.
+  - Malformed AI output falls back to a valid deterministic template population rather than an immediate parse failure.
+  - Raw text blobs and placeholder shells remain blocked from ever being returned as a successful generation.
+
 
 ================================================================================
 ROUND 25 (2026-03-06) - FRONTEND NULL-SAFETY BUG FIX

@@ -495,10 +495,33 @@ Requirements:
   }
   clearTimeout(timer);
 
+  let rawBody = '';
+  try {
+    rawBody = await response.text();
+  } catch (e) {
+    console.log('[generateResume] Failed to read OpenAI response body', e);
+    const deterministic = buildDeterministicResume({
+      aiTimedOut: false,
+      reason: 'generated_content_invalid',
+      aiError: 'read_body_failed'
+    });
+    if (deterministic) {
+      return respond(200, deterministic);
+    }
+    return respond(500, {
+      ok: false,
+      error: 'Failed to read OpenAI response while generating your resume.',
+      message: 'Failed to read AI response while generating your resume.',
+      fallbackUsed: false,
+      fallbackReason: 'generated_content_invalid'
+    });
+  }
+
   if (!response.ok) {
-    let errorBody = '';
-    try { errorBody = await response.text(); } catch(e) {}
-    console.log('[generateResume] OpenAI API non-OK status', { status: response.status, bodySnippet: String(errorBody).slice(0, 300) });
+    console.log('[generateResume] OpenAI API non-OK status', {
+      status: response.status,
+      bodySnippet: String(rawBody).slice(0, 300)
+    });
     const deterministic = buildDeterministicResume({
       aiTimedOut: false,
       reason: 'model_generation_failed',
@@ -522,9 +545,19 @@ Requirements:
 
   let data;
   try {
-    data = await response.json();
+    data = JSON.parse(rawBody);
+    console.log('[generateResume] AI envelope JSON parse success');
   } catch (e) {
-    console.log('OpenAI API returned non-JSON', e);
+    console.log('[generateResume] AI envelope JSON parse failed, attempting deterministic fallback', e);
+    const deterministic = buildDeterministicResume({
+      aiTimedOut: false,
+      reason: 'generated_content_invalid',
+      aiError: 'envelope_parse_failed'
+    });
+    if (deterministic) {
+      console.log('[generateResume] deterministic fallback success after envelope parse failure', { safeCandidateId });
+      return respond(200, deterministic);
+    }
     return respond(500, {
       ok: false,
       error: 'Failed to parse OpenAI response as JSON',
@@ -547,11 +580,22 @@ Requirements:
 
   let resumeData;
   try {
-    const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/) || content.match(/({[\s\S]*})/);
-    const jsonStr = jsonMatch ? jsonMatch[1] : content;
+    const fencedMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+    const braceMatch = content.match(/({[\s\S]*})/);
+    const jsonStr = fencedMatch ? fencedMatch[1] : braceMatch ? braceMatch[1] : content;
     resumeData = JSON.parse(jsonStr);
+    console.log('[generateResume] AI content JSON parse success');
   } catch (parseError) {
-    console.error('JSON parse error:', parseError, 'Content:', content);
+    console.error('[generateResume] AI content JSON parse error, attempting deterministic fallback', parseError);
+    const deterministic = buildDeterministicResume({
+      aiTimedOut: false,
+      reason: 'generated_content_invalid',
+      aiError: 'content_parse_failed'
+    });
+    if (deterministic) {
+      console.log('[generateResume] deterministic fallback success after content parse failure', { safeCandidateId });
+      return respond(200, deterministic);
+    }
     return respond(500, {
       ok: false,
       error: 'Failed to parse OpenAI response as JSON',
@@ -562,7 +606,16 @@ Requirements:
   }
 
   if (!resumeData.filename || !resumeData.replacements || !resumeData.addedSkills) {
-    console.log('generateResume invalid structure', resumeData);
+    console.log('[generateResume] AI response structure invalid, attempting deterministic fallback', resumeData);
+    const deterministic = buildDeterministicResume({
+      aiTimedOut: false,
+      reason: 'generated_content_invalid',
+      aiError: 'missing_fields'
+    });
+    if (deterministic) {
+      console.log('[generateResume] deterministic fallback success after invalid AI structure', { safeCandidateId });
+      return respond(200, deterministic);
+    }
     return respond(500, {
       ok: false,
       error: 'Invalid response structure from OpenAI',
@@ -571,7 +624,7 @@ Requirements:
       fallbackReason: 'generated_content_invalid'
     });
   }
-  console.log('generateResume openai ok');
+  console.log('[generateResume] AI content structure ok, proceeding with template population');
 
   // Construct resumeHtml by replacing placeholders using the same template pipeline
   let resumeHtml = templateHtml;
