@@ -362,7 +362,24 @@ exports.handler = async (event, context) => {
         String(value)
       );
     }
+    // Remove any remaining placeholders
     resumeHtml = resumeHtml.replace(/{{[A-Z0-9_]+}}/g, '');
+
+    // Scrub known template shell labels that the frontend treats as placeholder text
+    // but which may remain in the static template (e.g., "CANDIDATE NAME", "MM/YYYY").
+    const shellLabels = [
+      'CANDIDATE NAME',
+      'PROFESSIONAL SUMMARY',
+      'CORE PROFESSIONAL COMPETENCIES',
+      'MM/YYYY',
+      'ORGANIZATION NAME'
+    ];
+    shellLabels.forEach((label) => {
+      resumeHtml = resumeHtml.replace(
+        new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'),
+        ''
+      );
+    });
 
     const validation = validateRenderedResumeHtml(resumeHtml, requestedTemplateId, mappedEntry.file);
     if (!validation.ok) {
