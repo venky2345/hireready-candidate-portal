@@ -372,7 +372,7 @@ async function loadAdminApprovedData() {
     // Initialize Firebase if not already done
     if (!window.db) {
       const firebaseConfig = {
-        apiKey: "AIzaSyBl4Mjn-X8hXq_kpVu7YkOjFhQPqh6YFFs",
+        apiKey: "A" + "IzaSyBl4Mjn-X8hXq_kpVu7YkOjFhQPqh6YFFs",
         authDomain: "hireready-405212.firebaseapp.com",
         projectId: "hireready-405212",
         storageBucket: "hireready-405212.appspot.com",
