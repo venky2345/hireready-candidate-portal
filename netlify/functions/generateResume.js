@@ -144,7 +144,8 @@ exports.handler = async (event, context) => {
   function validateRenderedResumeHtml(resumeHtml, templateIdUsed, templateFileUsed) {
     const html = String(resumeHtml || '');
     const trimmed = html.trim();
-    if (!trimmed || trimmed.length < 200) {
+    // Phase 1: be realistic about length; only block clearly tiny outputs.
+    if (!trimmed || trimmed.length < 120) {
       return {
         ok: false,
         reason: 'html_too_short',
@@ -158,34 +159,6 @@ exports.handler = async (event, context) => {
         ok: false,
         reason: 'unresolved_placeholders',
         message: 'Rendered resume contains unresolved template placeholders.'
-      };
-    }
-
-    const lower = trimmed.toLowerCase();
-    const placeholderPhrases = [
-      'candidate name',
-      'professional summary',
-      'core professional competencies',
-      'mm/yyyy',
-      'organization name'
-    ];
-    // Only treat these as placeholder shells when they appear in obvious
-    // template-like forms (all-caps headings or bracketed labels).
-    const normalized = trimmed.replace(/\s+/g, ' ');
-    const upper = normalized.toUpperCase();
-    const shellPhrasesUpper = [
-      'CANDIDATE NAME',
-      'PROFESSIONAL SUMMARY',
-      'CORE PROFESSIONAL COMPETENCIES',
-      'MM/YYYY',
-      'ORGANIZATION NAME'
-    ];
-    if (shellPhrasesUpper.some((p) => upper.includes(p))
-        || placeholderPhrases.some((p) => /\[\s*([A-Z ]*?)\s*\]/.test(normalized))) {
-      return {
-        ok: false,
-        reason: 'placeholder_shell_detected',
-        message: 'Rendered resume appears to contain placeholder/sample template text.'
       };
     }
 
@@ -219,7 +192,8 @@ exports.handler = async (event, context) => {
   function buildDeterministicResume(options = {}) {
     const { aiTimedOut = false, reason = 'model_generation_failed', aiError = null } = options;
     const src = (resumeSafe || '').trim();
-    if (!src || src.length < 100) {
+    // Phase 1: allow shorter resumes, but still require some meaningful text.
+    if (!src || src.length < 20) {
       console.log('[generateResume] deterministic fallback skipped — insufficient resume text', {
         safeCandidateId,
         length: src.length
