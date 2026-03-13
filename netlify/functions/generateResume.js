@@ -393,6 +393,47 @@ exports.handler = async (event, context) => {
     };
   }
 
+  // Robust extractor for structured resume payload from potentially messy AI content.
+  function extractStructuredResumePayload(rawContent) {
+    if (!rawContent || typeof rawContent !== 'string') return null;
+    const content = rawContent.trim();
+    let lastError = null;
+
+    function tryParse(jsonStr) {
+      try {
+        const obj = JSON.parse(jsonStr);
+        return obj;
+      } catch (e) {
+        lastError = e;
+        return null;
+      }
+    }
+
+    // 1) Try fenced ```json``` block if present
+    const fencedMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fencedMatch && fencedMatch[1]) {
+      const obj = tryParse(fencedMatch[1]);
+      if (obj) return obj;
+    }
+
+    // 2) Try first brace-delimited object
+    const braceMatch = content.match(/({[\s\S]*})/);
+    if (braceMatch && braceMatch[1]) {
+      const obj = tryParse(braceMatch[1]);
+      if (obj) return obj;
+    }
+
+    // 3) Try whole content as JSON
+    const obj = tryParse(content);
+    if (obj) return obj;
+
+    console.log('[generateResume] extractStructuredResumePayload failed to parse JSON', {
+      safeCandidateId,
+      lastError: lastError ? lastError.message : null
+    });
+    return null;
+  }
+
   console.log('generateResume request', { safeCandidateId, hasJD: Boolean(jdSafe && jdSafe.trim()), targetMatch, hasMustSkills: Boolean(mustIncludeSkillsList.length > 0), placeholderKeysCount: placeholderKeys.length });
 
   const systemPrompt = `You are a professional resume writer. You MUST:
@@ -548,27 +589,29 @@ Requirements:
     data = JSON.parse(rawBody);
     console.log('[generateResume] AI envelope JSON parse success');
   } catch (e) {
-    console.log('[generateResume] AI envelope JSON parse failed, attempting deterministic fallback', e);
+    console.log('[generateResume] AI envelope JSON parse failed, will attempt content-only extraction', e);
+    data = null;
+  }
+
+  let content = data?.choices?.[0]?.message?.content;
+
+  // If the envelope could not be parsed, try to recover directly from the raw body
+  // as if it were the content field.
+  if (!content) {
+    content = rawBody;
+  }
+
+  if (!content || !content.trim()) {
+    console.log('[generateResume] No usable content from OpenAI, attempting deterministic fallback', { safeCandidateId });
     const deterministic = buildDeterministicResume({
       aiTimedOut: false,
       reason: 'generated_content_invalid',
-      aiError: 'envelope_parse_failed'
+      aiError: 'no_content'
     });
     if (deterministic) {
-      console.log('[generateResume] deterministic fallback success after envelope parse failure', { safeCandidateId });
+      console.log('[generateResume] deterministic fallback success after missing content', { safeCandidateId });
       return respond(200, deterministic);
     }
-    return respond(500, {
-      ok: false,
-      error: 'Failed to parse OpenAI response as JSON',
-      message: 'Failed to parse AI response while generating your resume.',
-      fallbackUsed: false,
-      fallbackReason: 'generated_content_invalid'
-    });
-  }
-  const content = data.choices?.[0]?.message?.content;
-
-  if (!content) {
     return respond(500, {
       ok: false,
       error: 'No response from OpenAI',
@@ -578,15 +621,9 @@ Requirements:
     });
   }
 
-  let resumeData;
-  try {
-    const fencedMatch = content.match(/```(?:json)?\s*([\s\S]*?)```/);
-    const braceMatch = content.match(/({[\s\S]*})/);
-    const jsonStr = fencedMatch ? fencedMatch[1] : braceMatch ? braceMatch[1] : content;
-    resumeData = JSON.parse(jsonStr);
-    console.log('[generateResume] AI content JSON parse success');
-  } catch (parseError) {
-    console.error('[generateResume] AI content JSON parse error, attempting deterministic fallback', parseError);
+  const rawResumePayload = extractStructuredResumePayload(content);
+  if (!rawResumePayload) {
+    console.log('[generateResume] AI content JSON extraction failed, attempting deterministic fallback', { safeCandidateId });
     const deterministic = buildDeterministicResume({
       aiTimedOut: false,
       reason: 'generated_content_invalid',
@@ -604,16 +641,27 @@ Requirements:
       fallbackReason: 'generated_content_invalid'
     });
   }
+  console.log('[generateResume] AI content JSON extraction success');
 
-  if (!resumeData.filename || !resumeData.replacements || !resumeData.addedSkills) {
-    console.log('[generateResume] AI response structure invalid, attempting deterministic fallback', resumeData);
+  // Normalize various reasonable payload shapes into a single internal shape
+  let resumeData = rawResumePayload;
+  if (Array.isArray(resumeData)) {
+    resumeData = resumeData.find(item => item && typeof item === 'object' && item.replacements) || resumeData[0];
+  }
+  if (resumeData && resumeData.resume && typeof resumeData.resume === 'object') {
+    resumeData = Object.assign({}, resumeData, resumeData.resume);
+  }
+
+  const replacements = resumeData && typeof resumeData === 'object' ? (resumeData.replacements || {}) : {};
+  if (!replacements || Object.keys(replacements).length === 0) {
+    console.log('[generateResume] AI response missing replacements, attempting deterministic fallback', resumeData);
     const deterministic = buildDeterministicResume({
       aiTimedOut: false,
       reason: 'generated_content_invalid',
-      aiError: 'missing_fields'
+      aiError: 'missing_replacements'
     });
     if (deterministic) {
-      console.log('[generateResume] deterministic fallback success after invalid AI structure', { safeCandidateId });
+      console.log('[generateResume] deterministic fallback success after missing replacements', { safeCandidateId });
       return respond(200, deterministic);
     }
     return respond(500, {
@@ -628,7 +676,6 @@ Requirements:
 
   // Construct resumeHtml by replacing placeholders using the same template pipeline
   let resumeHtml = templateHtml;
-  const replacements = resumeData.replacements || {};
   for (const [key, value] of Object.entries(replacements)) {
     const placeholder = `{{${key}}}`;
     resumeHtml = resumeHtml.replace(
