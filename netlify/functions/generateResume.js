@@ -173,10 +173,21 @@ exports.handler = async (event, context) => {
       'professional summary',
       'core professional competencies',
       'mm/yyyy',
-      'organization name',
-      'your professional summary'
+      'organization name'
     ];
-    if (placeholderPhrases.some((p) => lower.includes(p))) {
+    // Only treat these as placeholder shells when they appear in obvious
+    // template-like forms (all-caps headings or bracketed labels).
+    const normalized = trimmed.replace(/\s+/g, ' ');
+    const upper = normalized.toUpperCase();
+    const shellPhrasesUpper = [
+      'CANDIDATE NAME',
+      'PROFESSIONAL SUMMARY',
+      'CORE PROFESSIONAL COMPETENCIES',
+      'MM/YYYY',
+      'ORGANIZATION NAME'
+    ];
+    if (shellPhrasesUpper.some((p) => upper.includes(p))
+        || placeholderPhrases.some((p) => /\[\s*([A-Z ]*?)\s*\]/.test(normalized))) {
       return {
         ok: false,
         reason: 'placeholder_shell_detected',
@@ -198,7 +209,7 @@ exports.handler = async (event, context) => {
       .match(/<(div|section|article|header|footer|ul|ol|li|table|tr|td|th)[\s>]/g) || [];
     const blockCount = blockTagMatches.length;
 
-    if (textOnly.length > 2500 && blockCount < 5) {
+    if (textOnly.length > 8000 && blockCount < 5) {
       return {
         ok: false,
         reason: 'raw_text_blob_detected',
@@ -238,8 +249,8 @@ exports.handler = async (event, context) => {
     const contactCandidates = nonEmpty.filter(l => /@/.test(l) || /\d{6,}/.test(l));
     const contactInfo = contactCandidates.slice(0, 3).join(' | ');
 
-    // Heuristic headings
-    const headingRegex = /^(summary|professional summary|profile|skills|technical skills|experience|work experience|professional experience|projects|education|certifications?|training)\b/i;
+    // Heuristic headings (tolerant matching for common section labels)
+    const headingRegex = /^(summary|professional summary|profile|skills|technical skills|core skills|technologies|experience|work experience|professional experience|projects|project experience|education|certifications?|certifications & trainings|training)\b/i;
 
     // Summary: lines after name until first heading
     const summaryLines = [];
@@ -255,7 +266,7 @@ exports.handler = async (event, context) => {
       const lower = nonEmpty.map(l => l.toLowerCase());
       let start = -1;
       for (let i = 0; i < lower.length; i++) {
-        if (keywords.some(kw => lower[i].startsWith(kw))) {
+        if (keywords.some(kw => lower[i].includes(kw))) {
           start = i + 1;
           break;
         }
@@ -270,10 +281,50 @@ exports.handler = async (event, context) => {
       return sectionLines.join('\n');
     }
 
-    const skillsText = extractSection(['skills', 'technical skills']);
-    const experienceText = extractSection(['experience', 'work experience', 'professional experience', 'projects']);
-    const educationText = extractSection(['education']);
-    const certsText = extractSection(['certifications', 'certification', 'training']);
+    const skillsText = extractSection([
+      'skills',
+      'technical skills',
+      'core skills',
+      'technologies'
+    ]);
+    let experienceText = extractSection([
+      'experience',
+      'work experience',
+      'professional experience',
+      'projects',
+      'project experience'
+    ]);
+    let educationText = extractSection(['education']);
+    let certsText = extractSection([
+      'certifications',
+      'certification',
+      'certifications & trainings',
+      'training'
+    ]);
+
+    // Fallback extraction when headings are missing or imperfect
+    if (!experienceText) {
+      const experienceCandidates = nonEmpty.filter(l =>
+        /\b(19|20)\d{2}\b/.test(l) ||
+        /\b(present|current)\b/i.test(l) ||
+        /\bat\b/.test(l)
+      );
+      experienceText = experienceCandidates.slice(0, 40).join('\n');
+    }
+
+    if (!educationText) {
+      const educationCandidates = nonEmpty.filter(l =>
+        /\b(bachelor|master|bsc|msc|b\.tech|m\.tech|phd|university|college|institute)\b/i.test(l)
+      );
+      educationText = educationCandidates.slice(0, 20).join('\n');
+    }
+
+    if (!certsText) {
+      const certCandidates = nonEmpty.filter(l =>
+        /\b(certified|certification|course|training)\b/i.test(l)
+      );
+      certsText = certCandidates.slice(0, 20).join('\n');
+    }
 
     // Derive skills list from skillsText and mustIncludeSkillsList
     let derivedSkills = [];

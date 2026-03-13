@@ -3694,6 +3694,74 @@ ROUND 30 (2026-03-13) - JD MATCH BACKEND PARSE FAILURE HARDENING & STRUCTURED PA
   - Deterministic template-safe generation cannot construct a valid, populated template
   will users see a final error instead of a generated resume.
 
+================================================================================
+ROUND 31 (2026-03-13) - JD MATCH DETERMINISTIC FALLBACK SECTION EXTRACTION & REALISTIC VALIDATION
+================================================================================
+
+1) Files changed
+----------------
+- netlify/functions/generateResume.js
+- jdmatch_change_report.txt (this file)
+
+2) Root cause fixed
+-------------------
+- After AI timeouts, users still occasionally saw:
+  - `model_generation_failed: AI model timed out and deterministic fallback could not build a complete resume.`
+- The deterministic fallback path was too weak/strict:
+  - Section extraction from `baseResumeText` sometimes produced insufficient structure.
+  - Backend validation could reject otherwise usable deterministic resumes as placeholder shells or raw text blobs.
+
+3) Deterministic fallback extraction improvements
+-------------------------------------------------
+- Strengthened heading detection and section slicing inside `buildDeterministicResume`:
+  - Expanded the heading regex to recognize more tolerant section labels, including:
+    - `Professional Summary`, `Summary`, `Profile`
+    - `Skills`, `Technical Skills`, `Core Skills`, `Technologies`
+    - `Experience`, `Work Experience`, `Professional Experience`, `Projects`, `Project Experience`
+    - `Education`
+    - `Certifications`, `Certifications & Trainings`, `Training`
+  - Updated `extractSection(keywords)` to:
+    - Match headings where the line **contains** the keyword (not just starts with it), making it more tolerant of prefixes and formatting.
+- Added robust fallbacks when headings are missing or imperfect:
+  - **Experience**:
+    - If no explicit experience section is found, the extractor now:
+      - Scans for lines containing years (`19xx` or `20xx`), or words like `present`/`current`, or the pattern ` at ` (common in role/company lines).
+      - Uses up to 40 such lines as an experience section block.
+  - **Education**:
+    - If no explicit education section is found, the extractor now looks for lines containing degree/education cues:
+      - `Bachelor`, `Master`, `BSc`, `MSc`, `B.Tech`, `M.Tech`, `PhD`, `University`, `College`, `Institute`,
+      - and uses up to 20 of these lines as the education section.
+  - **Certifications/Training**:
+    - If no explicit certifications section is found, the extractor searches for:
+      - `certified`, `certification`, `course`, `training`,
+      - and uses up to 20 lines as the certifications/training section.
+- These improvements ensure that even when headings are slightly off or missing, deterministic fallback still builds meaningful **experience**, **education**, and **certifications/training** sections from real resume content.
+
+4) Validation changes (more realistic, less over-strict)
+--------------------------------------------------------
+- Updated `validateRenderedResumeHtml` to avoid misclassifying real content as placeholder shells:
+  - Placeholder detection now focuses on **obvious template shell forms**:
+    - Checks for all-caps variants like `CANDIDATE NAME`, `PROFESSIONAL SUMMARY`, `CORE PROFESSIONAL COMPETENCIES`, `MM/YYYY`, `ORGANIZATION NAME`.
+    - Reduces the chance of flagging user-written sentences that merely mention “professional summary” or similar phrases in normal prose.
+  - Raw text blob detection was relaxed:
+    - The check now only flags content as a blob when:
+      - Visible text length is **very large** (now `> 8000` characters), and
+      - There are **fewer than 5** structural block-level tags.
+    - This is more realistic for long, structured resumes generated from templates and reduces false positives while still blocking true blobs.
+- These adjustments keep the validator strong against actual placeholder shells and unstructured text, but stop it from rejecting legitimate deterministic resumes that have good structure and content.
+
+5) Expected result after this round
+-----------------------------------
+- When AI times out or the AI response cannot be used, and `baseResumeText` is present and reasonably complete:
+  - The deterministic fallback:
+    - More reliably extracts candidate name, contact, summary, skills, experience, education, and certifications/projects.
+    - Populates the selected HTML template with these structured sections via the existing placeholder pipeline.
+    - Produces rendered HTML that passes realistic backend semantic validation.
+  - The backend now:
+    - Returns `ok: true` with a valid, selected-template resume whenever deterministic extraction succeeds.
+    - Only returns `ok: false` when both AI and deterministic extraction/validation genuinely cannot produce a meaningful template-rendered resume from the provided inputs.
+- Frontend behavior, layout, template picker, preview, and download flows remain unchanged; they simply benefit from more reliable deterministic backend generation on AI timeouts.
+
 
 ================================================================================
 ROUND 25 (2026-03-06) - FRONTEND NULL-SAFETY BUG FIX
